@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from backend.orchestrator.runtime_metadata import RuntimeMetadata, normalize_runtime_metadata
+from backend.runtime import RuntimeContract, lifecycle_snapshot, object_state_snapshot
 from backend.security.safety_control import evaluate_execution_safety
 from backend.tools.base import ToolCall, ToolResult
 from backend.tools.registry import ToolRegistry
@@ -46,6 +48,48 @@ class SkillSpec:
     required_worker_needs: tuple[str, ...] = ()
     side_effects: tuple[str, ...] = ()
     artifact_contract: dict[str, Any] = field(default_factory=dict)
+
+    def runtime_metadata(self) -> RuntimeMetadata:
+        return normalize_runtime_metadata(
+            self.metadata,
+            object_type="skill",
+            object_id=self.name,
+            defaults={
+                "domain": self.metadata.get("domain") or self.metadata.get("owner_domain") or "skill",
+                "owner": self.metadata.get("owner") or self.metadata.get("owner_agent_id") or "skill_registry",
+                "version": self.version,
+                "status": self.metadata.get("status") or "draft",
+                "risk_level": self.risk_level,
+                "permission_scope": self.metadata.get("permission_scope") or self.confirmation_policy,
+                "cost_hint": self.cost_hint,
+                "latency_hint_ms": self.latency_hint_ms,
+                "success_rate": self.success_rate,
+                "benchmark_refs": self.metadata.get("benchmark_refs") or self.eval_cases,
+                "dependency_refs": (*self.required_capabilities, *self.required_worker_needs),
+            },
+        )
+
+    def runtime_contract(self) -> RuntimeContract:
+        resources = self.metadata.get("resources") or self.metadata.get("resource_refs") or ()
+        return RuntimeContract(
+            object_type="skill",
+            object_id=self.name,
+            input_schema=dict(self.input_schema),
+            output_schema=dict(self.output_schema),
+            resources=tuple(str(item) for item in resources),
+            permission=str(self.metadata.get("permission_scope") or self.confirmation_policy),
+            schema_ref=str(self.metadata.get("schema_ref") or ""),
+            version=self.version,
+        )
+
+    def governance_snapshot(self) -> dict[str, Any]:
+        metadata = self.runtime_metadata()
+        return {
+            "runtime_metadata": metadata.snapshot(),
+            "lifecycle": lifecycle_snapshot(object_type="skill", object_id=self.name, status=metadata.status),
+            "state_machine": object_state_snapshot(object_type="skill", object_id=self.name, state=metadata.status),
+            "contract": self.runtime_contract().snapshot(),
+        }
 
 
 @dataclass
@@ -114,6 +158,21 @@ class SkillRunner:
             )
 
         inputs = dict(inputs or {})
+        contract_validation = skill.runtime_contract().validate_input(inputs)
+        if not contract_validation.valid:
+            return self._finish(
+                SkillRunResult(
+                    False,
+                    f"Skill 输入不符合契约: {', '.join(contract_validation.issues)}",
+                    skill.name,
+                    metadata={
+                        "error_code": "skill_input_contract_violation",
+                        "contract_validation": contract_validation.snapshot(),
+                    },
+                ),
+                inputs=inputs,
+                dry_run=dry_run,
+            )
         safety = evaluate_execution_safety(
             target="skill",
             operation=skill.name,

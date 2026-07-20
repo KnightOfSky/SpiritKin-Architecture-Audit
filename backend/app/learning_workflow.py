@@ -18,6 +18,7 @@ from backend.model.training.dataset_registry import (
 from backend.model.training.workbench import export_self_training_dataset
 from backend.orchestrator.runtime_metadata import RuntimeMetadata
 from backend.prompts.review import SKILL_REVIEW_PROMPT
+from backend.runtime import ProviderContract, lifecycle_snapshot, object_state_snapshot
 from backend.state_store import resolve_state_path
 
 DEFAULT_LEARNING_DIR = Path("state/learning")
@@ -43,6 +44,8 @@ class ModelProviderConfig:
     api_key: str = field(default="", repr=False, compare=False)
 
     def snapshot(self) -> dict[str, Any]:
+        metadata = self.runtime_metadata()
+        provider_contract = self.provider_contract()
         return {
             "provider": self.provider,
             "model": self.model,
@@ -51,8 +54,29 @@ class ModelProviderConfig:
             "env_key": self.env_key,
             "display_name": self.display_name or self.provider,
             "source": self.source,
-            "runtime_metadata": self.runtime_metadata().snapshot(),
+            "runtime_metadata": metadata.snapshot(),
+            "lifecycle": lifecycle_snapshot(object_type="model", object_id=metadata.object_id, status=metadata.status),
+            "state_machine": object_state_snapshot(
+                object_type="model",
+                object_id=metadata.object_id,
+                state="active" if self.configured else "unconfigured",
+            ),
+            "provider_contract": provider_contract.snapshot(),
         }
+
+    def provider_contract(self) -> ProviderContract:
+        provider = _canonical_model_provider(self.provider)
+        local = provider in {"ollama", "lmstudio", "llamacpp"}
+        return ProviderContract(
+            provider_id=f"{provider}:{self.model or 'unconfigured'}",
+            provider_type="model",
+            version=self.model or "unconfigured",
+            capabilities=("model.generate", "model.review"),
+            status="ready" if self.configured else "unconfigured",
+            locality="local" if local else "cloud",
+            permission="local_model" if local else "cloud_model",
+            metadata={"protocol": "provider_config", "endpoint_configured": bool(self.endpoint)},
+        )
 
     def runtime_metadata(self) -> RuntimeMetadata:
         provider = _canonical_model_provider(self.provider)

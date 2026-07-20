@@ -23,6 +23,7 @@ SpiritKinAI is a cross-device, multi-agent runtime with four broad planes:
 | Concern | Main implementation | Initial classification |
 | --- | --- | --- |
 | Local runtime | `backend/app/runtime.py`, `backend/main.py` | Implemented and broad |
+| Unified runtime foundation | `backend/runtime/contracts.py`, `lifecycle.py`, `event_bus.py`, `providers.py`, `state_machine.py` | Implemented baseline with explicit lifecycle contracts |
 | API/control surface | `backend/app/command_gateway.py`, `scripts/mobile_link_receiver.py` | Implemented; boundary size should be reviewed |
 | Planning and Agent cluster | `backend/orchestrator/`, `backend/agents/` | Implemented with active evolution |
 | Workflow | `backend/orchestrator/workflow_graph.py`, `workflow_store.py`, `runtime_host.py` | Implemented; distributed guarantees require audit |

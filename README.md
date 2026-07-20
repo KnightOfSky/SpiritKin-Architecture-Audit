@@ -31,7 +31,7 @@ and architecture documents.
 
 Source snapshot: `KnightOfSky/SpiritKinAI` branch
 `codex/project-ui-governance`, commit
-`6d4cc5751b13ae5bfeb309fe4177f0c3be4cef91` (2026-07-20).
+`237b2b7b1cca846efb9adb704cd640ce8e7cbae4` (2026-07-20).
 
 Start with [AUDIT_SCOPE.md](AUDIT_SCOPE.md), then read
 [docs/repository-tree.md](docs/repository-tree.md) and
@@ -40,8 +40,8 @@ Start with [AUDIT_SCOPE.md](AUDIT_SCOPE.md), then read
 [agent](docs/agent.md), [deployment](docs/deployment.md), and
 [decisions](docs/decisions.md). Runtime data, models, build artifacts, large
 visual assets, secrets and user data are intentionally excluded. The history
-is squashed because this repository is a review baseline, not the development
-source of truth.
+contains only Audit baseline updates rather than the source repository's
+development history.
 
 The requested first pass is understanding only: establish the actual
 architecture, compare implementation with design, and classify mature,

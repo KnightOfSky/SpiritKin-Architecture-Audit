@@ -9,9 +9,9 @@ toolchains, and large visual assets.
 
 - Source repository: `KnightOfSky/SpiritKinAI`
 - Source branch: `codex/project-ui-governance`
-- Source commit: `6d4cc5751b13ae5bfeb309fe4177f0c3be4cef91`
+- Source commit: `237b2b7b1cca846efb9adb704cd640ce8e7cbae4`
 - Snapshot date: `2026-07-20`
-- Audit repository history: intentionally squashed to one baseline commit
+- Audit repository history: baseline updates only; source history is not mirrored
 
 The source repository is not modified by this audit export.
 

@@ -7,6 +7,8 @@ from typing import Any
 
 from backend.executors.base import BaseExecutor, ExecutionRequest, ExecutionResult
 from backend.orchestrator.capability_graph import CapabilityRegistry
+from backend.orchestrator.runtime_metadata import RuntimeMetadata, normalize_runtime_metadata
+from backend.runtime import ProviderContract, lifecycle_snapshot, object_state_snapshot
 from backend.security.safety_control import evaluate_execution_safety
 
 WORKER_POOL_SCHEMA_VERSION = "spiritkin.worker_pool.v1"
@@ -136,7 +138,37 @@ class WorkerDescriptor:
     queue_depth: int = 0
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def runtime_metadata(self) -> RuntimeMetadata:
+        return normalize_runtime_metadata(
+            self.metadata,
+            object_type="worker",
+            object_id=self.worker_id,
+            defaults={
+                "domain": self.metadata.get("domain") or "worker",
+                "owner": self.metadata.get("owner") or "worker_pool",
+                "version": self.metadata.get("version") or "1.0.0",
+                "status": "active" if self.health_status in {"ready", "busy"} else self.metadata.get("status") or "candidate",
+                "risk_level": self.metadata.get("risk_level") or "medium",
+                "permission_scope": self.permission_scope,
+                "tags": (self.worker_type, self.worker_subtype, *self.capability_namespaces),
+                "benchmark_refs": self.metadata.get("benchmark_refs") or (),
+                "dependency_refs": self.metadata.get("dependency_refs") or self.capabilities,
+            },
+        )
+
+    def provider_contract(self) -> ProviderContract:
+        return ProviderContract(
+            provider_id=self.worker_id,
+            provider_type="worker",
+            capabilities=self.capabilities,
+            status=self.health_status,
+            locality=str(self.metadata.get("locality") or ("workspace" if self.workspace else "local")),
+            permission=self.permission_scope,
+            metadata={"worker_type": self.worker_type, "worker_subtype": self.worker_subtype},
+        )
+
     def snapshot(self) -> dict[str, Any]:
+        metadata = self.runtime_metadata()
         return {
             "worker_id": self.worker_id,
             "label": self.label,
@@ -154,6 +186,10 @@ class WorkerDescriptor:
             "health_detail": self.health_detail,
             "queue_depth": self.queue_depth,
             "metadata": dict(self.metadata or {}),
+            "runtime_metadata": metadata.snapshot(),
+            "lifecycle": lifecycle_snapshot(object_type="worker", object_id=self.worker_id, status=metadata.status),
+            "state_machine": object_state_snapshot(object_type="worker", object_id=self.worker_id, state=self.health_status),
+            "provider_contract": self.provider_contract().snapshot(),
         }
 
 

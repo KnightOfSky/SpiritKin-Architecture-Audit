@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from backend.code_jury import evaluate_jury_gate
+from backend.orchestrator.runtime_metadata import RuntimeMetadata, normalize_runtime_metadata
+from backend.runtime import RuntimeContract, lifecycle_snapshot, object_state_snapshot
 from backend.security.safety_control import evaluate_execution_safety
 from backend.tools.base import ToolCall, ToolResult, ToolSpec
 
@@ -196,13 +198,46 @@ class WorkflowDefinition:
     nodes: tuple[WorkflowNodeDefinition, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def runtime_metadata(self) -> RuntimeMetadata:
+        return normalize_runtime_metadata(
+            self.metadata,
+            object_type="workflow",
+            object_id=self.name,
+            defaults={
+                "domain": self.metadata.get("domain") or "workflow",
+                "owner": self.metadata.get("owner") or self.metadata.get("owner_agent_id") or "workflow_registry",
+                "version": self.version,
+                "status": self.metadata.get("status") or "draft",
+                "risk_level": self.metadata.get("risk_level") or "low",
+                "permission_scope": self.metadata.get("permission_scope") or self.metadata.get("required_permission") or "",
+                "benchmark_refs": self.metadata.get("benchmark_refs") or self.metadata.get("benchmark") or (),
+                "dependency_refs": self.metadata.get("dependency_refs") or [node.node_id for node in self.nodes if node.depends_on],
+            },
+        )
+
+    def runtime_contract(self) -> RuntimeContract:
+        return RuntimeContract(
+            object_type="workflow",
+            object_id=self.name,
+            input_schema=dict(self.metadata.get("input_schema") or {}),
+            output_schema=dict(self.metadata.get("output_schema") or {}),
+            resources=tuple(str(item) for item in self.metadata.get("resources") or self.metadata.get("resource_refs") or ()),
+            permission=str(self.metadata.get("permission_scope") or self.metadata.get("required_permission") or ""),
+            schema_ref=str(self.metadata.get("schema_ref") or ""),
+            version=self.version,
+        )
+
     def snapshot(self) -> dict[str, Any]:
+        metadata = self.runtime_metadata()
         return {
             "name": self.name,
             "version": self.version,
             "description": self.description,
             "nodes": [node.snapshot() for node in self.nodes],
             "metadata": dict(self.metadata),
+            "runtime_metadata": metadata.snapshot(),
+            "lifecycle": lifecycle_snapshot(object_type="workflow", object_id=self.name, status=metadata.status),
+            "contract": self.runtime_contract().snapshot(),
         }
 
     def validate(self) -> list[str]:
@@ -299,6 +334,7 @@ class WorkflowRun:
             "events": list(self.events),
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "state_machine": object_state_snapshot(object_type="workflow", object_id=self.run_id, state=self.status),
         }
 
 
@@ -341,6 +377,8 @@ def build_agent_interaction_envelope(
 def start_workflow_run(definition: WorkflowDefinition, inputs: dict[str, Any] | None = None, *, run_id: str = "") -> WorkflowRun:
     issues = definition.validate()
     start_inputs = dict(inputs or {})
+    contract_validation = definition.runtime_contract().validate_input(start_inputs)
+    issues.extend(f"contract:{issue}" for issue in contract_validation.issues)
     issues.extend(_missing_required_start_inputs(definition, start_inputs))
     if issues:
         raise ValueError(f"invalid workflow definition: {', '.join(issues)}")

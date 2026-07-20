@@ -3,9 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from backend.runtime.lifecycle import lifecycle_snapshot
+
 RUNTIME_METADATA_SCHEMA_VERSION = "spiritkin.runtime_metadata.v1"
 
-_KNOWN_STATUSES = {"candidate", "active", "deprecated", "archived", "unknown"}
+_KNOWN_STATUSES = {"draft", "candidate", "review", "approved", "stable", "active", "deprecated", "archived", "unknown"}
 
 
 def _string_tuple(value: Any) -> tuple[str, ...]:
@@ -59,6 +61,8 @@ class RuntimeMetadata:
     context_refs: tuple[str, ...] = ()
     artifact_refs: tuple[str, ...] = ()
     audit_refs: tuple[str, ...] = ()
+    benchmark_refs: tuple[str, ...] = ()
+    dependency_refs: tuple[str, ...] = ()
     extra: dict[str, Any] = field(default_factory=dict)
 
     def snapshot(self) -> dict[str, Any]:
@@ -66,6 +70,7 @@ class RuntimeMetadata:
             "schema_version": self.schema_version,
             "object_type": self.object_type,
             "object_id": self.object_id,
+            "id": self.object_id,
             "domain": self.domain,
             "owner": self.owner,
             "version": self.version,
@@ -73,7 +78,9 @@ class RuntimeMetadata:
             "tags": list(self.tags),
             "source": self.source,
             "risk_level": self.risk_level,
+            "risk": self.risk_level,
             "permission_scope": self.permission_scope,
+            "permission": self.permission_scope,
             "cost_hint": self.cost_hint,
             "latency_hint_ms": self.latency_hint_ms,
             "success_rate": self.success_rate,
@@ -82,6 +89,15 @@ class RuntimeMetadata:
             "context_refs": list(self.context_refs),
             "artifact_refs": list(self.artifact_refs),
             "audit_refs": list(self.audit_refs),
+            "benchmark_refs": list(self.benchmark_refs),
+            "dependency_refs": list(self.dependency_refs),
+            "benchmark": list(self.benchmark_refs),
+            "dependency": list(self.dependency_refs),
+            "lifecycle": lifecycle_snapshot(
+                object_type=self.object_type,
+                object_id=self.object_id,
+                status=self.status,
+            ),
         }
         payload.update(dict(self.extra or {}))
         return payload
@@ -119,6 +135,8 @@ def normalize_runtime_metadata(
         "context_refs",
         "artifact_refs",
         "audit_refs",
+        "benchmark_refs",
+        "dependency_refs",
     }
     return RuntimeMetadata(
         object_type=str(data.get("object_type") or object_type),
@@ -140,5 +158,7 @@ def normalize_runtime_metadata(
         context_refs=_string_tuple(data.get("context_refs")),
         artifact_refs=_string_tuple(data.get("artifact_refs")),
         audit_refs=_string_tuple(data.get("audit_refs")),
+        benchmark_refs=_string_tuple(data.get("benchmark_refs") or data.get("benchmark")),
+        dependency_refs=_string_tuple(data.get("dependency_refs") or data.get("dependency")),
         extra={key: value for key, value in data.items() if key not in known},
     )

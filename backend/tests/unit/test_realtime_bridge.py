@@ -4,9 +4,27 @@ import unittest
 from unittest.mock import patch
 
 from backend.app.realtime_bridge import RealtimeEventHub
+from backend.runtime import RuntimeEventBus
 
 
 class RealtimeEventHubTests(unittest.IsolatedAsyncioTestCase):
+    async def test_hub_publishes_received_events_to_runtime_event_bus(self):
+        bus = RuntimeEventBus()
+        delivered = []
+        bus.subscribe("assistant.*", delivered.append)
+        hub = RealtimeEventHub(event_bus=bus)
+
+        await hub.publish(
+            {
+                "type": "assistant.message",
+                "payload": {"text": "hello", "workspace_id": "tenant-a", "request_id": "request-a"},
+            }
+        )
+
+        self.assertEqual(len(delivered), 1)
+        self.assertEqual(delivered[0].workspace_id, "tenant-a")
+        self.assertEqual(delivered[0].correlation_id, "request-a")
+
     def test_handshake_noise_filter_only_drops_invalid_probe_message(self):
         from backend.app.realtime_bridge import _HandshakeNoiseFilter
 

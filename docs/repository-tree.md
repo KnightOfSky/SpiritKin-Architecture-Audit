@@ -23,7 +23,7 @@ snapshot.
 |   |-- orchestrator/           planner, cluster, workflow and scheduling core
 |   |-- perception/             audio, vision and world inputs
 |   |-- remote/                 standalone Remote Worker and package security
-|   |-- runtime/                runtime events and scheduler ownership roots
+|   |-- runtime/                contracts, lifecycle, events, providers and scheduler
 |   |-- security/               auth, safety and trust-boundary helpers
 |   |-- skills/                 skill contracts, persistence and promotion
 |   |-- tools/                  callable tool definitions and worker tools

@@ -170,6 +170,7 @@ def _spec_to_snapshot(spec: SkillSpec) -> dict[str, Any]:
         "promotion_status": str(metadata.get("promotion_status") or ""),
         "review_gate": str(metadata.get("review_gate") or ""),
         "debug_summary": _skill_debug_summary(metadata),
+        **spec.governance_snapshot(),
     }
 
 

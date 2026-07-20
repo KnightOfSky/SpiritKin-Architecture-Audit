@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 from backend.app.runtime import EVENT_SCHEMA_VERSION
 from backend.app.runtime_state import build_aggregated_runtime_state_snapshot
+from backend.runtime import RuntimeBusEvent, RuntimeEventBus
 
 DEFAULT_EVENTS_HOST = os.getenv("SPIRITKIN_EVENTS_BIND_HOST") or os.getenv("SPIRITKIN_EVENTS_HOST", "127.0.0.1")
 DEFAULT_EVENTS_PORT = int(os.getenv("SPIRITKIN_EVENTS_PORT", "8765"))
@@ -86,7 +87,7 @@ def bridge_local_browser_allowed(websocket: Any) -> bool:
 class RealtimeEventHub:
     """最小事件桥：接收 runtime/avatar 发送的事件，并广播给前端订阅者。"""
 
-    def __init__(self, history_limit: int = 60):
+    def __init__(self, history_limit: int = 60, *, event_bus: RuntimeEventBus | None = None):
         self.history_limit = max(1, int(history_limit))
         self._recent_events: list[dict[str, object]] = []
         self._subscribers: set[object] = set()
@@ -97,6 +98,7 @@ class RealtimeEventHub:
         # per session and hand it to new connections in the snapshot for cold-start
         # alignment. Scoped by session so one session never drags another's avatar.
         self._avatar_state_by_session: dict[str, dict[str, object]] = {}
+        self._event_bus = event_bus or RuntimeEventBus()
 
     @property
     def recent_events(self) -> list[dict[str, object]]:
@@ -161,6 +163,16 @@ class RealtimeEventHub:
 
     async def publish(self, event: dict[str, object], *, exclude=None) -> dict[str, object]:
         stored = self.record_event(event)
+        payload = stored.get("payload") if isinstance(stored.get("payload"), dict) else {}
+        self._event_bus.publish(
+            RuntimeBusEvent(
+                topic=str(stored.get("type") or "runtime.unknown"),
+                payload=dict(payload),
+                source=str(stored.get("source") or "realtime_bridge"),
+                workspace_id=str(payload.get("workspace_id") or ""),
+                correlation_id=str(payload.get("request_id") or payload.get("correlation_id") or ""),
+            )
+        )
         stale_connections = []
         for websocket in tuple(self._subscribers):
             if websocket is exclude:

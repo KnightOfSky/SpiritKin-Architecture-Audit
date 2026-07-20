@@ -14,11 +14,13 @@ from urllib import error, request
 from urllib.parse import urlsplit
 
 from backend.app.settings import describe_model_capabilities
+from backend.orchestrator.runtime_metadata import RuntimeMetadata, normalize_runtime_metadata
 from backend.remote.package_security import (
     build_remote_package_signature,
     remote_package_canonical_json,
     verify_remote_package_signature,
 )
+from backend.runtime import lifecycle_snapshot, object_state_snapshot
 from backend.security.safety_control import evaluate_execution_safety
 from backend.state_store import resolve_state_path
 
@@ -144,7 +146,25 @@ class ManagedAgentConfig:
     notes: str = ""
     allowed_tools: tuple[str, ...] = ()
 
+    def runtime_metadata(self) -> RuntimeMetadata:
+        return normalize_runtime_metadata(
+            {},
+            object_type="agent",
+            object_id=self.agent_id,
+            defaults={
+                "domain": self.domain,
+                "owner": self.agent_id,
+                "version": self.model_id or self.model,
+                "status": "active" if self.enabled else "deprecated",
+                "risk_level": "medium",
+                "permission_scope": "agent_runtime",
+                "tags": (self.framework, self.adapter, self.role, *self.capabilities),
+                "dependency_refs": (*self.allowed_tools, *self.allowed_assistant_ids),
+            },
+        )
+
     def snapshot(self) -> dict[str, Any]:
+        metadata = self.runtime_metadata()
         return {
             "agent_id": self.agent_id,
             "label": self.label,
@@ -164,6 +184,13 @@ class ManagedAgentConfig:
             "brain_profile": self.brain_profile,
             "notes": self.notes,
             "allowed_tools": list(self.allowed_tools),
+            "runtime_metadata": metadata.snapshot(),
+            "lifecycle": lifecycle_snapshot(object_type="agent", object_id=self.agent_id, status=metadata.status),
+            "state_machine": object_state_snapshot(
+                object_type="agent",
+                object_id=self.agent_id,
+                state="active" if self.enabled else "disabled",
+            ),
         }
 
 

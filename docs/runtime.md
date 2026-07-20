@@ -5,6 +5,7 @@
 | Surface | Entry or owner | Role |
 | --- | --- | --- |
 | Local application runtime | `backend/main.py`, `backend/app/runtime.py` | Builds the interactive local runtime and Agent cluster |
+| Unified runtime foundation | `backend/runtime/contracts.py`, `lifecycle.py`, `event_bus.py`, `providers.py`, `state_machine.py` | Shared identities, lifecycle events, Provider boundary and state transitions |
 | Command gateway | `backend/app/command_gateway.py` | HTTP command, state and management API for clients |
 | Mobile/control plane | `scripts/mobile_link_receiver.py` | Mobile APIs, control-plane endpoints, artifacts and worker coordination |
 | Workflow Runtime Host | `scripts/runtime_host.py`, `backend/orchestrator/runtime_host.py` | Fenced host identity, heartbeat, claims, checkpoints and workflow execution |
@@ -49,6 +50,12 @@ The code includes local locking, atomic replacement in selected stores,
 checkpointing, host fencing and migration checks. The audit must determine
 whether these guarantees are applied consistently across all state writers and
 whether they remain correct across multiple machines and shared storage.
+
+The final source snapshot also introduces shared Runtime lifecycle contracts,
+an in-process Event Bus, Provider registration and explicit state-machine
+transitions under `backend/runtime/`. Review whether existing Agent, Skill,
+Workflow, Worker and realtime paths now converge on those contracts or still
+maintain parallel lifecycle models.
 
 ## Maturity Labels for Review
 
