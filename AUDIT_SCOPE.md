@@ -37,13 +37,32 @@ The source repository is not modified by this audit export.
 - `state/`, `runtime/`, logs, queues, databases, browser profiles and captures
 - local model weights and generated media
 - `.venv/`, Android SDKs, caches, `node_modules/`, build and distribution output
-- binary fonts, 3D reference models and design-review screenshots
+- non-build-essential web fonts, 3D reference models and design-review screenshots
+- WPF fonts and their license files are retained because the desktop project
+  declares them as required build resources
 - unrelated temporary/reference repositories and archives
 
 Secret scanning uses the default Gitleaks rules. `.gitleaks.toml` contains one
 narrow allowlist entry for the literal browser storage key
 `spiritkin_ios_capabilities_v1`, which the generic API-key rule otherwise
 misclassifies; it is not a credential.
+
+## Verification Boundary
+
+Audit CI runs the complete Python suite except three explicitly deselected,
+non-hermetic source tests:
+
+- the dynamic collaboration participant test requires local model-provider
+  state that is intentionally excluded;
+- the canonical model-route test depends on the same local collaboration/route
+  registry boundary;
+- the Android APK manifest digest test requires a generated APK artifact.
+
+These exclusions remain visible in `.github/workflows/ci.yml` for reviewer
+inspection. Ruff still scans the repository, with narrow per-file exceptions
+for six preserved source-snapshot findings; no lint category is disabled
+globally. WPF build-required fonts and their licenses are included so the
+desktop solution remains independently buildable.
 
 ## Runtime Data Flow
 

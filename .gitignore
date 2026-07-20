@@ -228,7 +228,6 @@ tools/android-sdk/
 /runtime/
 
 # Architecture audit repository: keep code and contracts, omit binary visuals.
-desktop/SpiritKinDesktop/Assets/Fonts/
 frontend/fonts/
 frontend/models/spirit3d/reference/*.glb
 frontend/models/spirit3d/reference/*.png
