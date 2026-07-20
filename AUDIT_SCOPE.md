@@ -49,14 +49,18 @@ misclassifies; it is not a credential.
 
 ## Verification Boundary
 
-Audit CI runs the complete Python suite except three explicitly deselected,
-non-hermetic source tests:
+Audit CI runs the complete Python suite except seven explicitly deselected,
+environment-bound source tests:
 
 - the dynamic collaboration participant test requires local model-provider
   state that is intentionally excluded;
 - the canonical model-route test depends on the same local collaboration/route
   registry boundary;
 - the Android APK manifest digest test requires a generated APK artifact.
+- one ecosystem inventory assertion and three installed-application discovery
+  assertions require Windows filesystem/software behavior; they pass in the
+  local Windows suite, while Audit CI covers the desktop build and 275 desktop
+  tests in a separate `windows-latest` job.
 
 These exclusions remain visible in `.github/workflows/ci.yml` for reviewer
 inspection. Ruff still scans the repository, with narrow per-file exceptions

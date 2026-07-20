@@ -38,6 +38,10 @@ jobs:
           python -m pytest -q \
             --deselect backend/tests/unit/test_collaboration_participants.py::CollaborationParticipantRegistryTests::test_registry_exposes_dynamic_chat_participants_and_aliases \
             --deselect backend/tests/unit/test_command_gateway_collaboration.py::CommandGatewayCollaborationTests::test_runtime_model_name_with_slash_routes_only_to_canonical_participant \
+            --deselect backend/tests/unit/test_ecosystem_review.py::EcosystemReviewTests::test_module_governance_snapshot_tracks_enterprise_module_inventory \
+            --deselect backend/tests/unit/test_local_pc_device.py::LocalPCDeviceTests::test_find_installed_app_dynamically_matches_scanned_software_without_alias \
+            --deselect backend/tests/unit/test_local_pc_device.py::LocalPCDeviceTests::test_find_installed_app_matches_browser_aliases \
+            --deselect backend/tests/unit/test_local_pc_device.py::LocalPCDeviceTests::test_find_installed_app_tolerates_huobao_asr_confusion \
             --deselect tests/test_mobile_link_receiver.py::MobileLinkReceiverTests::test_android_apk_manifest_contains_download_url_and_version
 
   frontend-syntax:
