@@ -1,0 +1,11 @@
+{
+  "state": "idle",
+  "position": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "gripper_opened": true,
+  "last_command": "open_gripper",
+  "transport": "local_json"
+}

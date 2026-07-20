@@ -1,0 +1,39 @@
+# 核心功能
+opencv-python>=4.8.0
+Pillow>=9.5.0
+pytesseract>=0.3.10
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+
+# 语音识别（本地 ASR）
+faster-whisper>=1.0.2
+
+# 多模态大模型（Qwen-VL 系列）
+torch>=2.1.0
+transformers>=4.37.0          # Qwen2.5-VL 需要 >=4.35，建议 4.37+
+accelerate>=0.25.0
+einops>=0.7.0
+sentencepiece>=0.1.99
+tiktoken>=0.5.1
+qwen-vl-utils[decord]>=0.0.8  # decord 用于视频帧提取（知识库 [3] 提到长视频支持）
+lmdeploy>=0.4.0               # 可选，用于 vLLM/Turbo 推理加速
+
+# WebSocket 支持（Live2D 前端通信必需）
+websockets>=12.0
+
+# 工具
+numpy>=1.24.0
+requests>=2.31.0
+gradio>=4.0.0
+APScheduler>=3.10,<4
+SQLAlchemy>=2.0,<3
+playwright>=1.40,<2
+
+# 流式 TTS（Edge-TTS，P2 可选）
+edge-tts>=6.3
+
+# 拼音处理（Live2D 口型同步，P2 可选）
+pypinyin>=0.50
+
+# 可选：GPU 加速（运行时按需安装，避免构建失败）
+# flash-attn>=2.5.0 --no-build-isolation

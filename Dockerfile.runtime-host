@@ -1,0 +1,24 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements-service.txt ./requirements-service.txt
+RUN pip install --no-cache-dir -r requirements-service.txt \
+    && useradd --system --uid 10002 --create-home --home-dir /home/spiritkin-host spiritkin-host \
+    && mkdir -p /runtime-state
+
+COPY backend ./backend
+COPY config ./config
+COPY scripts/runtime_host.py ./scripts/runtime_host.py
+
+RUN chown -R spiritkin-host:spiritkin-host /app /runtime-state \
+    && python -m py_compile scripts/runtime_host.py backend/orchestrator/runtime_host.py
+
+USER spiritkin-host
+
+VOLUME ["/runtime-state"]
+
+CMD ["python", "scripts/runtime_host.py", "--host-type", "cloud", "--state-root", "/runtime-state"]

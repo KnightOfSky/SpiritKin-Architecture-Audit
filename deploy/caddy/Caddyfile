@@ -1,0 +1,10 @@
+{$CADDY_HOST:localhost} {
+    encode gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+    }
+
+    reverse_proxy control-plane:8791
+}

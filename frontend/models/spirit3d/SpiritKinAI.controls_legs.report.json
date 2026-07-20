@@ -1,0 +1,160 @@
+{
+  "source": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\SpiritKinAI.fbx",
+  "output": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\SpiritKinAI.controls_legs.glb",
+  "blend_output": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\SpiritKinAI.controls_legs.blend",
+  "leg_split": {
+    "source": "part_1",
+    "lower_cut": -0.56301,
+    "center_gap": 0.07051,
+    "objects": {
+      "part_body_core": 240,
+      "part_left_leg": 154,
+      "part_right_leg": 154
+    }
+  },
+  "controls": {
+    "ctrl_head_assembly": {
+      "meshes": [
+        "part_0",
+        "part_4",
+        "part_5",
+        "part_6",
+        "part_7",
+        "part_8",
+        "part_9",
+        "part_10",
+        "part_11",
+        "part_12",
+        "part_13",
+        "part_14"
+      ],
+      "pivot": [
+        0.00422,
+        0.00382,
+        0.35284
+      ],
+      "bounds": {
+        "min": [
+          -0.91989,
+          -0.58734,
+          -0.29654
+        ],
+        "max": [
+          0.92833,
+          0.59499,
+          1.00222
+        ]
+      }
+    },
+    "ctrl_body": {
+      "meshes": [
+        "part_body_core"
+      ],
+      "pivot": [
+        0.00094,
+        -0.04153,
+        -0.05465
+      ],
+      "bounds": {
+        "min": [
+          -0.40466,
+          -0.4271,
+          -0.87087
+        ],
+        "max": [
+          0.40655,
+          0.34405,
+          -0.05465
+        ]
+      }
+    },
+    "ctrl_left_arm": {
+      "meshes": [
+        "part_2"
+      ],
+      "pivot": [
+        -0.24076,
+        -0.04073,
+        -0.23078
+      ],
+      "bounds": {
+        "min": [
+          -0.64784,
+          -0.17643,
+          -0.64829
+        ],
+        "max": [
+          -0.24076,
+          0.09496,
+          -0.23078
+        ]
+      }
+    },
+    "ctrl_right_arm": {
+      "meshes": [
+        "part_3"
+      ],
+      "pivot": [
+        0.2446,
+        -0.04073,
+        -0.23078
+      ],
+      "bounds": {
+        "min": [
+          0.2446,
+          -0.17643,
+          -0.64829
+        ],
+        "max": [
+          0.64646,
+          0.09496,
+          -0.23078
+        ]
+      }
+    },
+    "ctrl_left_leg": {
+      "meshes": [
+        "part_left_leg"
+      ],
+      "pivot": [
+        -0.24943,
+        -0.04153,
+        -0.51534
+      ],
+      "bounds": {
+        "min": [
+          -0.43971,
+          -0.41709,
+          -0.99606
+        ],
+        "max": [
+          -0.05915,
+          0.33403,
+          -0.51534
+        ]
+      }
+    },
+    "ctrl_right_leg": {
+      "meshes": [
+        "part_right_leg"
+      ],
+      "pivot": [
+        0.25632,
+        -0.04153,
+        -0.51534
+      ],
+      "bounds": {
+        "min": [
+          0.07105,
+          -0.41709,
+          -0.99606
+        ],
+        "max": [
+          0.4416,
+          0.33403,
+          -0.51534
+        ]
+      }
+    }
+  }
+}

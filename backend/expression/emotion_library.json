@@ -1,0 +1,113 @@
+{
+  "version": "spiritkin.avatar_reaction_library.v1",
+  "profiles": [
+    {
+      "id": "error",
+      "emotion": "error",
+      "action": "shake",
+      "intensity": 0.85,
+      "priority": 100,
+      "description": "任务失败、发生错误、无法继续或需要明确告知失败",
+      "keywords": ["失败", "出错", "错误", "无法完成", "不能执行", "执行失败", "error", "failed", "failure"]
+    },
+    {
+      "id": "speechless",
+      "emotion": "speechless",
+      "action": "shake",
+      "intensity": 0.55,
+      "priority": 92,
+      "description": "明确否定、不可能、拒绝或无奈的冷静反应",
+      "keywords": ["不可能", "做不到", "不能", "不行", "没办法", "无法", "cannot", "can't", "impossible", "no"]
+    },
+    {
+      "id": "waiting",
+      "emotion": "waiting",
+      "action": "await_confirmation",
+      "intensity": 0.45,
+      "priority": 88,
+      "description": "等待用户确认、补充信息或外部资源",
+      "keywords": ["请确认", "需要你确认", "等待确认", "等你回复", "请补充", "await confirmation", "waiting for you"]
+    },
+    {
+      "id": "alert",
+      "emotion": "alert",
+      "action": "nod",
+      "intensity": 0.62,
+      "priority": 84,
+      "description": "提醒风险、强调注意事项或重要限制",
+      "keywords": ["请注意", "需要注意", "警告", "风险", "重要", "小心", "warning", "caution", "important"]
+    },
+    {
+      "id": "sad",
+      "emotion": "sad",
+      "action": "idle",
+      "intensity": 0.48,
+      "priority": 80,
+      "description": "表达抱歉、遗憾、难过或同理心",
+      "keywords": ["抱歉", "对不起", "遗憾", "难过", "伤心", "可惜", "sorry", "sad", "unfortunately"]
+    },
+    {
+      "id": "thinking",
+      "emotion": "thinking",
+      "action": "tap_chin",
+      "intensity": 0.46,
+      "priority": 72,
+      "description": "正在思考、分析、规划、检查或比较方案",
+      "keywords": ["让我想想", "正在分析", "正在思考", "需要检查", "我来看看", "规划", "分析", "thinking", "analyzing", "planning"]
+    },
+    {
+      "id": "surprised",
+      "emotion": "surprised",
+      "action": "idle",
+      "intensity": 0.58,
+      "priority": 68,
+      "description": "对意外信息表达惊讶或新鲜感",
+      "keywords": ["没想到", "竟然", "居然", "真的吗", "令人惊讶", "wow", "surprising", "really"]
+    },
+    {
+      "id": "happy_greeting",
+      "emotion": "happy",
+      "action": "wave_hand",
+      "intensity": 0.62,
+      "priority": 64,
+      "description": "友好问候、欢迎或很高兴见到用户",
+      "keywords": ["你好", "您好", "嗨", "欢迎", "很高兴见到你", "hello", "hi", "welcome"]
+    },
+    {
+      "id": "happy_acknowledgement",
+      "emotion": "happy",
+      "action": "nod",
+      "intensity": 0.56,
+      "priority": 60,
+      "description": "积极确认、同意、顺利完成或收到好消息",
+      "keywords": ["好的", "没问题", "当然可以", "已经完成", "成功", "太好了", "收到", "明白", "ok", "sure", "done", "success"]
+    },
+    {
+      "id": "confused",
+      "emotion": "confused",
+      "action": "tilt_head",
+      "intensity": 0.44,
+      "priority": 56,
+      "description": "信息不足、含义不清或需要用户澄清",
+      "keywords": ["不清楚", "不明白", "信息不足", "请说明", "请澄清", "什么意思", "unclear", "confused", "clarify"]
+    },
+    {
+      "id": "listening",
+      "emotion": "listening",
+      "action": "listen",
+      "intensity": 0.34,
+      "priority": 48,
+      "description": "正在倾听并等待用户继续表达",
+      "keywords": ["我在听", "请继续", "你继续说", "listening", "go on"]
+    },
+    {
+      "id": "neutral",
+      "emotion": "neutral",
+      "action": "idle",
+      "intensity": 0.0,
+      "priority": 0,
+      "description": "中性、平静、没有明显情绪或动作需求",
+      "keywords": []
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<UserControl x:Class="SpiritKinDesktop.Controls.WindowCaptionButtons"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <StackPanel Orientation="Horizontal">
+        <Button x:Name="MinimizeButton" Content="-" Style="{StaticResource TitleBarButton}" Click="MinimizeButton_Click" AutomationProperties.Name="最小化窗口" ToolTip="最小化" />
+        <Button x:Name="MaximizeRestoreButton" Content="[ ]" Style="{StaticResource TitleBarButton}" Click="MaximizeRestoreButton_Click" AutomationProperties.Name="最大化或还原窗口" ToolTip="最大化/还原" />
+        <Button x:Name="CloseButton" Content="X" Style="{StaticResource CloseTitleBarButton}" Click="CloseButton_Click" AutomationProperties.Name="关闭窗口" ToolTip="关闭" />
+    </StackPanel>
+</UserControl>

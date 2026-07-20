@@ -1,0 +1,135 @@
+from backend.orchestrator.agent_adapters import AgentAdapterPolicy, NativeAgentAdapter, build_agent_adapter
+from backend.orchestrator.execution_guard import ExecutionGuard, PendingExecution
+from backend.orchestrator.planner import ExecutionPlan, Planner
+from backend.orchestrator.repair import (
+    BaseRepairAdvisor,
+    DevelopmentPlan,
+    FailureRecord,
+    NullRepairAdvisor,
+    RepairAdvice,
+    RepairPlan,
+    RuleBasedRepairAdvisor,
+    build_development_plan,
+    build_repair_plan,
+)
+from backend.orchestrator.session_manager import SessionManager
+
+_LAZY_EXPORTS = {
+    "AgentEnvelope": ("backend.orchestrator.agent_protocol", "AgentEnvelope"),
+    "AgentRoutePolicy": ("backend.orchestrator.agent_protocol", "AgentRoutePolicy"),
+    "AgentRouteResult": ("backend.orchestrator.agent_protocol", "AgentRouteResult"),
+    "AgentRouteVerdict": ("backend.orchestrator.agent_protocol", "AgentRouteVerdict"),
+    "AppendOnlyContextStore": ("backend.orchestrator.context_store", "AppendOnlyContextStore"),
+    "CapabilityCandidate": ("backend.orchestrator.capability_graph", "CapabilityCandidate"),
+    "CapabilityRecommendation": ("backend.orchestrator.capability_graph", "CapabilityRecommendation"),
+    "ContextMirrorSnapshot": ("backend.orchestrator.context_mirror", "ContextMirrorSnapshot"),
+    "ContextPatch": ("backend.orchestrator.context_store", "ContextPatch"),
+    "ContextWriteIntent": ("backend.orchestrator.context_mirror", "ContextWriteIntent"),
+    "ContextWriteIntentRecord": ("backend.orchestrator.context_write_intents", "ContextWriteIntentRecord"),
+    "ExecutionFinalizer": ("backend.orchestrator.execution_finalizer", "ExecutionFinalizer"),
+    "ExecutionSummary": ("backend.orchestrator.execution_finalizer", "ExecutionSummary"),
+    "FinalizerVerdict": ("backend.orchestrator.execution_finalizer", "FinalizerVerdict"),
+    "InMemoryAgentRouter": ("backend.orchestrator.agent_protocol", "InMemoryAgentRouter"),
+    "JsonlAgentRouteBus": ("backend.orchestrator.agent_protocol", "JsonlAgentRouteBus"),
+    "JsonlContextStore": ("backend.orchestrator.context_store", "JsonlContextStore"),
+    "JsonResourceRegistryStore": ("backend.orchestrator.resource_registry", "JsonResourceRegistryStore"),
+    "ResourceRecord": ("backend.orchestrator.resource_registry", "ResourceRecord"),
+    "ResourceRegistry": ("backend.orchestrator.resource_registry", "ResourceRegistry"),
+    "ResourceRegistrySnapshot": ("backend.orchestrator.resource_registry", "ResourceRegistrySnapshot"),
+    "RuntimeMetadata": ("backend.orchestrator.runtime_metadata", "RuntimeMetadata"),
+    "append_context_patch": ("backend.orchestrator.context_store", "append_context_patch"),
+    "approve_context_write_intent": ("backend.orchestrator.context_write_intents", "approve_context_write_intent"),
+    "build_context_write_intent_preview": ("backend.orchestrator.context_mirror", "build_context_write_intent_preview"),
+    "build_project_context_mirror": ("backend.orchestrator.context_mirror", "build_project_context_mirror"),
+    "build_project_context_mirror_from_files": ("backend.orchestrator.context_mirror", "build_project_context_mirror_from_files"),
+    "context_write_intent_snapshot": ("backend.orchestrator.context_write_intents", "context_write_intent_snapshot"),
+    "finalize_scheduler_task": ("backend.orchestrator.scheduler_task_finalizer", "finalize_scheduler_task"),
+    "load_context_patches": ("backend.orchestrator.context_store", "load_context_patches"),
+    "load_resource_registry": ("backend.orchestrator.resource_registry", "load_resource_registry"),
+    "normalize_runtime_metadata": ("backend.orchestrator.runtime_metadata", "normalize_runtime_metadata"),
+    "normalize_resource_id": ("backend.orchestrator.resource_registry", "normalize_resource_id"),
+    "reject_context_write_intent": ("backend.orchestrator.context_write_intents", "reject_context_write_intent"),
+    "resource_from_worker_descriptor": ("backend.orchestrator.resource_registry", "resource_from_worker_descriptor"),
+    "save_resource_registry": ("backend.orchestrator.resource_registry", "save_resource_registry"),
+    "scheduler_task_execution_summary": ("backend.orchestrator.scheduler_task_finalizer", "scheduler_task_execution_summary"),
+    "submit_context_write_intent": ("backend.orchestrator.context_write_intents", "submit_context_write_intent"),
+    "workflow_run_context_patches": ("backend.orchestrator.workflow_runtime_contracts", "workflow_run_context_patches"),
+    "workflow_run_contract_snapshot": ("backend.orchestrator.workflow_runtime_contracts", "workflow_run_contract_snapshot"),
+    "workflow_run_execution_summary": ("backend.orchestrator.workflow_runtime_contracts", "workflow_run_execution_summary"),
+}
+
+
+def __getattr__(name):
+    if name == "AgentCluster":
+        from backend.orchestrator.agent_cluster import AgentCluster
+
+        return AgentCluster
+    lazy_export = _LAZY_EXPORTS.get(name)
+    if lazy_export is not None:
+        module_name, attr_name = lazy_export
+        from importlib import import_module
+
+        return getattr(import_module(module_name), attr_name)
+    raise AttributeError(name)
+
+__all__ = [
+    "AgentCluster",
+    "AgentAdapterPolicy",
+    "AgentEnvelope",
+    "AgentRoutePolicy",
+    "AgentRouteResult",
+    "AgentRouteVerdict",
+    "AppendOnlyContextStore",
+    "BaseRepairAdvisor",
+    "ContextPatch",
+    "ContextMirrorSnapshot",
+    "ContextWriteIntentRecord",
+    "ContextWriteIntent",
+    "CapabilityCandidate",
+    "CapabilityRecommendation",
+    "DevelopmentPlan",
+    "ExecutionPlan",
+    "ExecutionGuard",
+    "ExecutionFinalizer",
+    "ExecutionSummary",
+    "FailureRecord",
+    "FinalizerVerdict",
+    "InMemoryAgentRouter",
+    "JsonlContextStore",
+    "JsonlAgentRouteBus",
+    "JsonResourceRegistryStore",
+    "NullRepairAdvisor",
+    "NativeAgentAdapter",
+    "PendingExecution",
+    "Planner",
+    "RepairAdvice",
+    "RepairPlan",
+    "ResourceRecord",
+    "ResourceRegistry",
+    "ResourceRegistrySnapshot",
+    "RuleBasedRepairAdvisor",
+    "SessionManager",
+    "build_agent_adapter",
+    "build_context_write_intent_preview",
+    "context_write_intent_snapshot",
+    "build_development_plan",
+    "build_project_context_mirror",
+    "build_project_context_mirror_from_files",
+    "build_repair_plan",
+    "approve_context_write_intent",
+    "append_context_patch",
+    "normalize_runtime_metadata",
+    "normalize_resource_id",
+    "resource_from_worker_descriptor",
+    "load_context_patches",
+    "load_resource_registry",
+    "reject_context_write_intent",
+    "RuntimeMetadata",
+    "save_resource_registry",
+    "submit_context_write_intent",
+    "finalize_scheduler_task",
+    "scheduler_task_execution_summary",
+    "workflow_run_context_patches",
+    "workflow_run_contract_snapshot",
+    "workflow_run_execution_summary",
+]

@@ -1,0 +1,12 @@
+<resources>
+    <!-- Generated from design/tokens.json v4; DayNight follows system appearance. -->
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/fantasy_canvas</item>
+        <item name="android:statusBarColor">@color/fantasy_canvas</item>
+        <item name="android:colorAccent">@color/fantasy_accent</item>
+    </style>
+</resources>

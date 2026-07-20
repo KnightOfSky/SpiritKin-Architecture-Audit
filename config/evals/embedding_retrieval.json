@@ -1,0 +1,25 @@
+{
+  "schema_version": "spiritkin.embedding_eval_dataset.v1",
+  "name": "spiritkin_zh_retrieval_baseline",
+  "thresholds": {
+    "recall_at_1": 0.83,
+    "recall_at_k": 1.0,
+    "mrr": 0.9
+  },
+  "documents": [
+    {"id": "python_performance", "text": "程序运行速度变慢时，应检查 Python 热点函数、内存分配和数据库查询。"},
+    {"id": "garden_care", "text": "阳台植物需要根据光照和土壤湿度调整浇水频率。"},
+    {"id": "refund_service", "text": "订单退款和售后申请需要核对订单编号、退款原因与商品状态。"},
+    {"id": "shipping_tracking", "text": "物流查询可以通过快递单号查看运输节点和预计送达时间。"},
+    {"id": "music_playback", "text": "音乐播放器支持收藏列表、播放队列、暂停和进度跳转。"},
+    {"id": "voice_call", "text": "语音通话无声音时应检查麦克风权限、输入设备和静音状态。"}
+  ],
+  "queries": [
+    {"id": "q_python", "text": "怎样让 Python 执行得更快", "relevant": ["python_performance"]},
+    {"id": "q_garden", "text": "阳台上的花应该多久浇一次水", "relevant": ["garden_care"]},
+    {"id": "q_refund", "text": "顾客申请退货退款要核对什么", "relevant": ["refund_service"]},
+    {"id": "q_shipping", "text": "快递现在到哪里了", "relevant": ["shipping_tracking"]},
+    {"id": "q_music", "text": "播放我收藏的歌曲", "relevant": ["music_playback"]},
+    {"id": "q_voice", "text": "通话时麦克风没有声音", "relevant": ["voice_call"]}
+  ]
+}

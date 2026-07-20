@@ -1,0 +1,20 @@
+{
+  "$schema": "./component-states.schema.json",
+  "version": 1,
+  "updated": "2026-07-11",
+  "token_authority": "design/tokens.json v4",
+  "components": {
+    "button": {"states": ["default", "hover", "pressed", "focus", "disabled", "loading"], "requirements": ["loading_blocks_repeat_submit", "disabled_has_shape_or_label_cue", "focus_uses_focus_ring"]},
+    "input": {"states": ["default", "hover", "focus", "invalid", "disabled", "read-only"], "requirements": ["invalid_message_is_adjacent", "invalid_preserves_value", "focus_uses_focus_ring"]},
+    "nav-list": {"states": ["default", "hover", "selected", "keyboard-focus", "unavailable"], "requirements": ["selected_and_focus_can_coexist", "unavailable_is_not_color_only"]},
+    "card-panel": {"states": ["default", "loading", "empty", "partial-error", "offline"], "requirements": ["loading_uses_skeleton_or_progress_label", "empty_has_recovery_action", "no_nested_card_decoration"]},
+    "status": {"states": ["info", "success", "warning", "danger", "unknown"], "requirements": ["uses_foreground_background_pair", "has_icon_or_text", "never_color_only"]},
+    "dialog-sheet": {"states": ["default", "destructive", "busy", "error"], "requirements": ["escape_or_back_available", "focus_is_contained", "destructive_action_is_explicit"]}
+  },
+  "platform_acceptance": {
+    "wpf": ["keyboard_focus", "200_percent_dpi", "screen_reader_name"],
+    "web": ["keyboard_focus", "200_percent_zoom", "prefers_reduced_motion"],
+    "ios": ["44pt_target", "dynamic_type", "voiceover_label"],
+    "android": ["48dp_target", "sp_text", "talkback_label"]
+  }
+}

@@ -1,0 +1,36 @@
+[tool.pytest.ini_options]
+testpaths = ["backend/tests/unit", "tests"]
+addopts = "--timeout=60 --timeout-method=thread"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [
+    "archive",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "frontend",
+    "desktop",
+    "ios",
+    "android",
+    "node_modules",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "E501",  # line length handled separately; many long literal strings
+    "B008",  # function call in default arg (FastAPI-style patterns)
+    "UP038", # isinstance with tuple is idiomatic; PEP 604 unions add no safety here
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E402"]  # scripts adjust sys.path before importing backend modules
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]

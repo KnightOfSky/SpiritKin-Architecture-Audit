@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "SpiritKin PDD Product Extractor",
+  "version": "0.1.0",
+  "description": "Consume phone-shared PDD web links, extract productData, and return audited results to SpiritKin.",
+  "permissions": [
+    "alarms",
+    "downloads",
+    "sidePanel",
+    "storage",
+    "tabs"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "host_permissions": [
+    "https://*.yangkeduo.com/*",
+    "https://*.pinduoduo.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.yangkeduo.com/*",
+        "https://*.pinduoduo.com/*"
+      ],
+      "js": [
+        "normalizer.js",
+        "page-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.yangkeduo.com/*",
+        "https://*.pinduoduo.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_title": "Open SpiritKin PDD Extractor",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

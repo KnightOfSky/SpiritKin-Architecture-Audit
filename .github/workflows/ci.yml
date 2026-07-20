@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Ruff lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check --output-format=github .
+
+  test:
+    name: Python unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      # torch/transformers are lazily imported by the runtime and not needed by
+      # the unit suite; install only what test collection actually imports
+      # (dependency set verified against a clean venv).
+      - run: pip install -r requirements-dev.txt pillow numpy opencv-python-headless faster-whisper
+      - run: python -m pytest -q
+
+  frontend-syntax:
+    name: Frontend JS syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: node --check all frontend JS
+        run: |
+          set -e
+          found=0
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+            found=1
+          done < <(find frontend -name '*.js' -not -path '*/node_modules/*' -print0)
+          [ "$found" = "1" ] && echo "All frontend JS files parsed OK"
+
+  desktop-build:
+    name: Desktop build (WPF)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet restore SpiritKinAI.sln
+      - run: dotnet build SpiritKinAI.sln -c Release --no-restore
+      - run: dotnet test SpiritKinAI.sln -c Release --no-build

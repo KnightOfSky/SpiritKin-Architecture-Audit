@@ -1,0 +1,28 @@
+# Normalize line endings across machines to prevent phantom "modified" files.
+# Default: treat everything as text, store LF in the repo, check out LF.
+* text=auto eol=lf
+
+# Windows-native scripts must keep CRLF on checkout.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary assets: never touch line endings or diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.glb binary
+*.fbx binary
+*.blend binary
+*.onnx binary
+*.bin binary
+*.pth binary
+*.pt binary
+*.moc3 binary
+*.tar.gz binary
+*.pdf binary
+*.sqlite binary
+*.sqlite3 binary
+*.db binary

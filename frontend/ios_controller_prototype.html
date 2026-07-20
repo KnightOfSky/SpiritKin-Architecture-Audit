@@ -1,0 +1,2526 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="icons/spiritkin-app-icon.png">
+  <link rel="stylesheet" href="styles/fantasy-tokens.css">
+  <script src="js/theme-bootstrap.js"></script>
+  <title>SpiritKin iOS 主控端原型</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: var(--font-ui);
+      --canvas: var(--fx-canvas);
+      --surface: var(--fx-surface);
+      --surface-2: var(--fx-surface-2);
+      --surface-3: var(--fx-surface-3);
+      --line: var(--fx-line);
+      --line-strong: var(--fx-line-strong);
+      --text: var(--fx-text);
+      --muted: var(--fx-text-muted);
+      --primary: var(--fx-primary);
+      --on-primary: var(--fx-on-primary);
+      --success: var(--fx-success);
+      --success-bg: var(--fx-success-bg);
+      --warning: var(--fx-warning);
+      --warning-bg: var(--fx-warning-bg);
+      --danger: var(--fx-danger);
+      --danger-bg: var(--fx-danger-bg);
+      --z-sticky: 20;
+      --z-dialog: 40;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { margin: 0; background: var(--canvas); color: var(--text); }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+
+    .app {
+      width: min(100%, 460px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--surface);
+      position: relative;
+      overflow-x: clip;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: var(--z-sticky);
+      height: 58px;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      align-items: center;
+      padding: 0 10px;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-title { min-width: 0; text-align: center; }
+    .topbar-title strong { display: block; font-size: 16px; line-height: 20px; }
+    .topbar-title span { display: block; color: var(--muted); font-size: 11px; line-height: 15px; }
+
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .topbar-actions { display: flex; align-items: center; }
+    .icon-button:hover { background: var(--surface-2); }
+    .icon-button:active { background: var(--surface-3); transform: scale(.96); }
+    .icon-button:focus-visible, .primary-button:focus-visible, .secondary-button:focus-visible,
+    .tab-button:focus-visible, .composer input:focus-visible, .segmented button:focus-visible,
+    .switch input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--primary) 48%, transparent); outline-offset: 2px; }
+
+    .icon {
+      width: 21px;
+      height: 21px;
+      display: inline-block;
+      flex: 0 0 auto;
+      background: currentColor;
+      -webkit-mask: var(--icon) center / contain no-repeat;
+      mask: var(--icon) center / contain no-repeat;
+    }
+
+    main { min-height: calc(100dvh - 58px); }
+    .panel { display: none; padding: 18px 16px 104px; contain: layout paint; }
+    .panel.active { display: block; animation: panel-in 140ms ease-out; }
+    #chatPanel { padding-top: 0; padding-bottom: 180px; }
+
+    @keyframes panel-in {
+      from { opacity: .65; }
+      to { opacity: 1; }
+    }
+
+    .avatar-stage {
+      position: relative;
+      height: 236px;
+      margin: 0 -16px 14px;
+      overflow: hidden;
+      background: var(--fx-ink);
+      border-bottom: 1px solid var(--line);
+    }
+    .avatar-stage iframe { width: 100%; height: 100%; display: block; border: 0; background: var(--fx-ink); }
+    .avatar-expand {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      background: color-mix(in srgb, var(--fx-ink) 80%, transparent);
+      color: var(--fx-ink-text);
+      border: 1px solid color-mix(in srgb, var(--fx-ink-text) 24%, transparent);
+      backdrop-filter: blur(10px);
+    }
+    .presence {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin: 0 0 22px;
+    }
+    .avatar-button {
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0fc2c4;
+      cursor: pointer;
+    }
+    .avatar-button img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .presence-copy { min-width: 0; flex: 1; }
+    .presence-copy strong { display: block; font-size: 15px; }
+    .presence-copy span { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; }
+    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px var(--success-bg); }
+
+    .message-list { display: grid; gap: 18px; }
+    .message { display: flex; gap: 9px; align-items: flex-start; }
+    .message.user { justify-content: flex-end; }
+    .message-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      object-fit: cover;
+      flex: 0 0 auto;
+    }
+    .message-body { max-width: min(82%, 340px); font-size: 15px; line-height: 1.55; }
+    .message-body p { margin: 0; text-wrap: pretty; }
+    .message.user .message-body {
+      padding: 10px 13px;
+      border-radius: 8px 8px 2px 8px;
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .message-time { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .message.user .message-time { color: color-mix(in srgb, var(--on-primary) 78%, transparent); text-align: right; }
+
+    .action-tool {
+      margin-top: 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+    .action-tool-head { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-bottom: 1px solid var(--line); }
+    .action-tool-head strong { flex: 1; font-size: 13px; }
+    .status { display: inline-flex; align-items: center; gap: 6px; color: var(--success); font-size: 12px; font-weight: 650; }
+    .action-tool-body { padding: 11px; }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 3px; background: var(--line); }
+    .progress-fill { width: 72%; height: 100%; background: var(--primary); }
+    .action-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 7px; color: var(--muted); font-size: 12px; }
+    .button-row { display: flex; gap: 8px; margin-top: 11px; }
+    #growthCandidateActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #growthCandidateActions #growthEscalateButton { grid-column: 1 / -1; }
+    #growthCandidateActions button { width: 100%; min-width: 0; margin: 0; white-space: normal; line-height: 1.25; }
+
+    .primary-button, .secondary-button {
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .primary-button { border: 1px solid var(--primary); background: var(--primary); color: var(--on-primary); }
+    .secondary-button { border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+    .primary-button:active, .secondary-button:active { transform: scale(.98); }
+    .primary-button[disabled], .secondary-button[disabled] { opacity: .55; cursor: default; }
+
+    .composer-wrap {
+      position: fixed;
+      z-index: var(--z-sticky);
+      left: 50%;
+      bottom: calc(64px + env(safe-area-inset-bottom));
+      width: min(100%, 460px);
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      background: linear-gradient(to bottom, transparent, var(--surface) 22%);
+    }
+    .composer-wrap[hidden] { display: none; }
+    .composer {
+      min-height: 50px;
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 40px;
+      align-items: end;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 8px 28px color-mix(in srgb, var(--text) 10%, transparent);
+    }
+    .composer input {
+      width: 100%;
+      min-width: 0;
+      height: 40px;
+      padding: 8px 4px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 15px;
+    }
+    .composer input::placeholder { color: color-mix(in srgb, var(--muted) 92%, var(--text)); }
+    .composer .send { background: var(--primary); color: var(--on-primary); }
+
+    .section-heading { margin: 0 0 14px; font-size: 22px; line-height: 1.2; letter-spacing: 0; }
+    .section-subtitle { margin: -7px 0 18px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 3px; margin-bottom: 18px; border-radius: 8px; background: var(--surface-2); }
+    .segmented button { min-height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 650; cursor: pointer; }
+    .segmented button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent); }
+    .theme-segmented { margin: 0; }
+
+    .group { margin-bottom: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+    .group-label { margin: 0 0 7px 2px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .list-row { min-height: 64px; display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-bottom: 1px solid var(--line); }
+    .list-row:last-child { border-bottom: 0; }
+    .row-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 7px; background: var(--surface-2); color: var(--primary); flex: 0 0 auto; }
+    .row-copy { min-width: 0; flex: 1; }
+    .row-copy strong { display: block; font-size: 14px; }
+    .row-copy span { display: block; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    #devicePanel .row-copy span {
+      display: -webkit-box;
+      overflow: hidden;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      white-space: normal;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    #growthCandidateDetail .row-copy span,
+    #growthBuilderDetail .row-copy span { overflow: visible; line-height: 1.4; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
+    #growthBuilderDetail .list-row { flex-wrap: wrap; align-items: flex-start; }
+    #growthBuilderDetail .list-row .row-copy { padding-top: 2px; }
+    #growthBuilderDetail .list-row .row-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: calc(100% - 47px);
+      flex: 0 0 calc(100% - 47px);
+      margin-left: 47px;
+    }
+    #growthBuilderDetail .list-row .row-actions > button { width: 100%; min-width: 0; white-space: nowrap; }
+    .row-trailing { flex: 0 0 auto; color: var(--muted); font-size: 12px; text-align: right; }
+    .row-trailing.success { color: var(--success); }
+    .row-trailing.warning { color: var(--warning); }
+
+    .workflow-row { align-items: flex-start; }
+    .workflow-row .row-copy span { white-space: normal; line-height: 1.4; }
+    .domain-card { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 11px; min-height: 78px; padding: 12px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; text-align: left; }
+    button.domain-card { width: 100%; cursor: pointer; transition: background 140ms ease-out; }
+    button.domain-card:hover, button.domain-card:focus-visible { background: var(--surface-2); outline: none; }
+    .domain-card:last-child { border-bottom: 0; }
+    .domain-card strong { display: block; font-size: 15px; }
+    .domain-card span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .domain-card .row-icon { grid-row: span 2; }
+    .domain-card .row-trailing { grid-column: 3; grid-row: 1 / span 2; }
+    .domain-terminal { margin: 0 12px 12px 63px; }
+    .domain-open { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); font-size: 12px; font-weight: 700; }
+    .domain-open .icon { width: 16px; height: 16px; }
+    .ecommerce-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+    .ecommerce-head .row-icon { margin-top: 1px; }
+    .ecommerce-head .row-copy { flex: 1; }
+    .ecommerce-head .row-copy span { white-space: normal; }
+    .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .metric { min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+    .metric strong { display: block; font-size: 19px; line-height: 1.1; }
+    .metric span { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .management-toolbar { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+    .management-toolbar .text-input { flex: 1; min-width: 0; }
+    .pool-item .row-copy span { white-space: normal; }
+    .row-actions { display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; }
+    .row-actions .icon-button { width: 30px; height: 30px; min-height: 30px; }
+    .status-chip { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+    .status-chip.success { color: var(--success); }
+    .status-chip.warning { color: var(--warning); }
+    .status-chip.danger { color: var(--danger); }
+    .ecommerce-panel-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .ecommerce-panel-actions button { flex: 1; }
+    .pairing-token { display: block; margin-top: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+    .pairing-command { max-height: 160px; margin: 8px 0 0; padding: 10px; overflow: auto; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); color: var(--text); font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+    .editor-form { display: grid; gap: 11px; }
+    .editor-form label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .editor-form textarea { min-height: 88px; resize: vertical; }
+    .editor-form label.checkbox-row { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--text); font-size: 13px; }
+    .checkbox-row input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; accent-color: var(--primary); }
+    .session-list { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .session-row { min-height: 66px; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 0; border-bottom: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
+    .session-row:last-child { border-bottom: 0; }
+    .session-row.active { background: var(--surface-2); }
+    .session-row .row-copy { flex: 1; min-width: 0; }
+    .session-row .row-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .session-select { min-width: 0; display: flex; align-items: center; gap: 10px; flex: 1; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+    .session-action { width: 34px; height: 34px; min-height: 34px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; }
+    .session-action:hover { background: var(--surface-3); color: var(--text); }
+    .session-action.danger:hover { color: var(--danger); }
+    .mini-progress { width: 68px; height: 4px; margin: 7px 0 0 auto; border-radius: 2px; background: var(--line); overflow: hidden; }
+    .mini-progress i { display: block; height: 100%; background: var(--primary); }
+
+    .switch { position: relative; width: 46px; height: 28px; flex: 0 0 auto; }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch span { display: block; width: 46px; height: 28px; padding: 2px; border-radius: 14px; background: var(--line-strong); transition: background 180ms ease-out; }
+    .switch span::after { content: ""; display: block; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0003; transition: transform 180ms ease-out; }
+    .switch input:checked + span { background: var(--success); }
+    .switch input:checked + span::after { transform: translateX(18px); }
+
+    .profile { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; }
+    .profile img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; }
+    .profile strong { display: block; font-size: 17px; }
+    .profile span { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: var(--z-sticky);
+      left: 50%;
+      bottom: 0;
+      width: min(100%, 460px);
+      height: calc(64px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      padding: 5px 8px env(safe-area-inset-bottom);
+      border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      backdrop-filter: blur(18px);
+    }
+    .tab-button {
+      min-width: 0;
+      height: 54px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .tab-button .icon { width: 20px; height: 20px; }
+    .tab-button.active { color: var(--primary); font-weight: 700; }
+    .tab-button:active { background: var(--surface-2); }
+
+    dialog {
+      width: min(calc(100% - 24px), 520px);
+      max-height: calc(100dvh - 24px);
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 24px 80px #0005;
+      z-index: var(--z-dialog);
+    }
+    dialog::backdrop { background: #07101b99; backdrop-filter: blur(3px); }
+    .dialog-head { height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--line); }
+    .dialog-head strong { flex: 1; }
+    .dialog-body { max-height: calc(100dvh - 80px); padding: 16px; overflow: auto; }
+    .avatar-dialog { width: min(calc(100% - 16px), 540px); }
+    .avatar-frame { display: block; width: 100%; height: min(72dvh, 640px); border: 0; background: var(--surface-2); }
+    .terminal-dialog { width: min(calc(100% - 12px), 1100px); height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
+    .terminal-frame { display: block; width: 100%; height: calc(100% - 54px); border: 0; background: var(--surface-2); }
+    .shortcut-list { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .shortcut-list .list-row { min-height: 58px; }
+    .integration-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .audio-button { min-width: 74px; }
+    .attachment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .attachment-grid button { min-height: 82px; display: grid; place-items: center; align-content: center; gap: 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--text); cursor: pointer; }
+    .visually-hidden-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .music-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin: 12px 0; }
+    .music-controls button { min-width: 0; min-height: 44px; padding: 8px; }
+    .range-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+    .range-row input { width: 100%; accent-color: var(--primary); }
+
+    .toast {
+      position: fixed;
+      z-index: calc(var(--z-dialog) + 1);
+      left: 50%;
+      bottom: calc(136px + env(safe-area-inset-bottom));
+      max-width: calc(100% - 32px);
+      transform: translate(-50%, 12px);
+      padding: 10px 13px;
+      border-radius: 7px;
+      background: #132231;
+      color: #fff;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease-out, transform 180ms ease-out;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (min-width: 700px) {
+      .app { border-inline: 1px solid var(--line); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 1ms !important; transition-duration: 1ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-button" id="historyButton" aria-label="会话记录" title="会话记录">
+        <span class="icon" style="--icon:url('icons/lucide/message-square.svg')" aria-hidden="true"></span>
+      </button>
+      <div class="topbar-title"><strong id="pageTitle">SpiritKin</strong><span id="pageSubtitle">主控端在线</span></div>
+      <div class="topbar-actions">
+        <button class="icon-button" id="appearanceButton" aria-label="切换外观" title="切换外观">
+          <span class="icon" style="--icon:url('icons/lucide/contrast.svg')" aria-hidden="true"></span>
+        </button>
+        <button class="icon-button" id="newButton" aria-label="新建对话" title="新建对话">
+          <span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel active" id="chatPanel" data-panel="chat" aria-labelledby="tab-chat">
+        <div class="avatar-stage" aria-label="SpiritKin 3D Avatar 常驻舞台">
+          <iframe id="avatarStageFrame" data-src="avatar_3d.html?embed=1&amp;float=1" loading="lazy" title="SpiritKin 3D Avatar"></iframe>
+          <button class="icon-button avatar-expand" id="avatarButton" aria-label="全屏查看 3D Avatar" title="全屏 Avatar">
+            <span class="icon" style="--icon:url('icons/lucide/square.svg')" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="presence">
+          <div class="avatar-button" aria-hidden="true">
+            <img src="icons/spiritkin-app-icon.png" alt="">
+          </div>
+          <div class="presence-copy"><strong>SpiritKin 已连接</strong><span>Fairy · CosyVoice 本地运行</span></div>
+          <span class="online-dot" aria-label="在线"></span>
+        </div>
+
+        <div class="message-list" id="messageList" aria-live="polite">
+          <article class="message assistant">
+            <img class="message-avatar" src="icons/spiritkin-app-icon.png" alt="">
+            <div class="message-body">
+              <p>早上好。设备与本地运行时均已连接。你可以直接描述目标，我会把需要确认的步骤放在对话中。</p>
+              <span class="message-time">刚刚</span>
+            </div>
+          </article>
+          <article class="message user">
+            <div class="message-body"><p>检查商品发布工作流，先不要提交。</p><span class="message-time">20:42</span></div>
+          </article>
+          <article class="message assistant">
+            <img class="message-avatar" src="icons/spiritkin-app-icon.png" alt="">
+            <div class="message-body">
+              <p>已进入预检模式。图片、标题和价格校验通过，正在等待你批准设备端预览。</p>
+              <div class="action-tool" aria-label="工作流运行状态">
+                <div class="action-tool-head">
+                  <span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span>
+                  <strong>商品发布 · 预检</strong>
+                  <span class="status">等待确认</span>
+                </div>
+                <div class="action-tool-body">
+                  <div class="progress-track"><div class="progress-fill" id="chatProgress"></div></div>
+                  <div class="action-meta"><span>步骤 3 / 4</span><span>不会自动提交</span></div>
+                  <div class="button-row">
+                    <button class="secondary-button" id="viewWorkflowButton">查看详情</button>
+                    <button class="primary-button" id="approveButton">批准预览</button>
+                  </div>
+                </div>
+              </div>
+              <span class="message-time">20:43</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="workflowPanel" data-panel="workflow" aria-labelledby="tab-workflow">
+        <h1 class="section-heading">板块</h1>
+        <p class="section-subtitle">每个领域拥有自己的工作流、设备动作和管理工具。</p>
+        <p class="group-label">领域</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">内置领域不可删除；自定义领域可独立管理</span><button class="icon-button" id="addDomainButton" aria-label="新增领域" title="新增领域"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></button></div>
+        <div class="group" id="domainPool"><div class="list-row"><div class="row-copy"><strong>正在读取领域</strong><span>从桌面端同步领域和工作区能力</span></div></div></div>
+        <p class="group-label">能力模块</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">可逐项开关；自定义模块支持编辑和删除</span><button class="icon-button" id="addCapabilityButton" aria-label="新增能力模块" title="新增能力模块"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></button></div>
+        <div class="group" id="capabilityPool"><div class="list-row"><div class="row-copy"><strong>正在读取能力开关</strong><span>需要主控端令牌或本机受信来源</span></div></div></div>
+        <p class="group-label">Skill 池 / Workflow 池</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">来自桌面端共享池，按工作区隔离可编辑项</span><button class="icon-button" id="managePoolsButton" aria-label="管理 Skill 和 Workflow 池" title="管理 Skill 和 Workflow 池"><span class="icon" style="--icon:url('icons/lucide/settings.svg')" aria-hidden="true"></span></button></div>
+        <div class="group" id="poolSummary"><div class="list-row"><div class="row-copy"><strong>正在同步池内容</strong><span>按领域归类后只加载轻量摘要</span></div></div></div>
+        <p class="group-label">Growth Runtime</p>
+        <div class="group" id="growthSummary"><div class="list-row"><div class="row-copy"><strong>正在读取能力成长状态</strong><span>缺口分析、候选生成、审核和注册都遵循桌面端治理</span></div></div></div>
+        <div class="segmented" aria-label="工作流筛选">
+          <button class="active" data-filter="running">进行中</button>
+          <button data-filter="review">待审批</button>
+          <button data-filter="history">历史</button>
+        </div>
+        <p class="group-label">工作流运行</p>
+        <div class="group" id="workflowRunList"><div class="list-row"><div class="row-copy"><strong>正在读取运行记录</strong><span>从桌面 Runtime 同步真实状态</span></div></div></div>
+        <button class="primary-button" id="startWorkflowButton">新建 Workflow</button>
+      </section>
+
+      <section class="panel" id="ecommercePanel" data-panel="ecommerce" aria-labelledby="ecommerceTitle">
+        <div class="ecommerce-head">
+          <button class="icon-button" id="ecommerceBackButton" aria-label="返回板块" title="返回板块"><span class="icon" style="--icon:url('icons/lucide/arrow-left.svg')" aria-hidden="true"></span></button>
+          <div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/folder.svg')" aria-hidden="true"></span></div>
+          <div class="row-copy"><h1 class="section-heading" id="ecommerceTitle" style="margin:0">电商运营</h1><span>商品、素材、发布预检与远程 Worker</span></div>
+          <button class="icon-button" id="refreshEcommerceButton" aria-label="刷新电商数据" title="刷新"><span class="icon" style="--icon:url('icons/lucide/refresh-cw.svg')" aria-hidden="true"></span></button>
+        </div>
+        <div class="metric-grid" id="ecommerceMetrics"><div class="metric"><strong>—</strong><span>任务</span></div><div class="metric"><strong>—</strong><span>Worker</span></div><div class="metric"><strong>—</strong><span>风险事件</span></div><div class="metric"><strong>—</strong><span>资源</span></div></div>
+        <p class="group-label">运营任务</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">任务直接写入桌面端队列</span><button class="icon-button" id="addEcommerceTaskButton" aria-label="新增电商任务" title="新增任务"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></button></div>
+        <div class="group" id="ecommerceTasks"><div class="list-row"><div class="row-copy"><strong>正在读取任务</strong><span>从电商任务队列同步</span></div></div></div>
+        <p class="group-label">监控与自愈</p>
+        <div class="group" id="ecommerceMonitor"><div class="list-row"><div class="row-copy"><strong>正在读取监控</strong><span>检查工作区设备、Remote Worker 和工作流运行</span></div></div></div>
+        <p class="group-label">店铺与商品</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">按工作区隔离；登录凭据只登记 Keychain/Vault 引用</span><button class="icon-button" id="addCommerceResourceButton" aria-label="新增店铺或商品" title="新增店铺或商品"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></button></div>
+        <div class="group" id="ecommerceResources"><div class="list-row"><div class="row-copy"><strong>正在读取店铺与商品</strong><span>从 Resource Registry 同步</span></div></div></div>
+        <p class="group-label">素材与文件</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">图片、文档和音频统一进入 Artifact Store</span><button class="icon-button" id="uploadArtifactButton" aria-label="上传文件" title="上传文件"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></button><input class="visually-hidden-input" id="artifactFileInput" type="file" multiple></div>
+        <div class="group" id="ecommerceArtifacts"><div class="list-row"><div class="row-copy"><strong>正在读取素材</strong><span>所有设备共享 Artifact 编号</span></div></div></div>
+        <div class="ecommerce-panel-actions"><button class="secondary-button" id="autoRepairEcommerceButton"><span class="icon" style="--icon:url('icons/lucide/settings.svg')" aria-hidden="true"></span>自动修复</button><button class="secondary-button" id="openRawTerminalButton"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span>原始 Terminal</button></div>
+      </section>
+
+      <section class="panel" id="devicePanel" data-panel="device" aria-labelledby="tab-device">
+        <h1 class="section-heading">设备与主机</h1>
+        <p class="section-subtitle">桌面、iOS、Cloud 与 Remote 都是共享 Runtime 的 Host 或 Adapter。</p>
+        <p class="group-label">Runtime Host</p>
+        <div class="management-toolbar"><span class="row-copy" style="color:var(--muted);font-size:12px">工作流属于 Runtime；主机租约使用 epoch 防止双主</span><button class="icon-button" id="refreshRuntimeHostsButton" aria-label="刷新 Runtime Host" title="刷新 Runtime Host"><span class="icon" style="--icon:url('icons/lucide/refresh-cw.svg')" aria-hidden="true"></span></button></div>
+        <div class="group" id="runtimeHostList"><div class="list-row"><div class="row-copy"><strong>正在读取 Runtime Host</strong><span>检查主机租约、Checkpoint 和迁移状态</span></div></div></div>
+        <p class="group-label">World State</p>
+        <div class="group" id="worldStateSummary"><div class="list-row"><div class="row-copy"><strong>正在读取 World State</strong><span>Observation Provider 只上传结构化观察</span></div></div></div>
+        <p class="group-label">本机与移动端</p>
+        <div class="group" id="workspaceDeviceList"><div class="list-row"><div class="row-copy"><strong>正在读取设备</strong><span>从控制面监控同步真实心跳</span></div></div></div>
+        <p class="group-label">运行节点</p>
+        <div class="group" id="runtimeNodeList"><div class="list-row"><div class="row-copy"><strong>正在读取运行节点</strong><span>从控制面监控同步真实状态</span></div></div></div>
+        <p class="group-label">iOS App 接入</p>
+        <div class="group">
+          <button class="list-row" id="shortcutsButton" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>快捷指令与 App Intents</strong><span>提问、剪贴板、截屏、通知、电量</span></div><div class="row-trailing success">6 项</div></button>
+          <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/folder.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>照片与文件</strong><span>通过系统选择器导入 Artifact Store</span></div><div class="row-trailing success">可用</div></div>
+          <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/square.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Share Extension</strong><span>原生 App 可从其他 App 的分享菜单导入文件</span></div><div class="row-trailing success">已实现</div></div>
+          <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/smartphone.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>第三方 App</strong><span>URL Scheme、快捷指令动作或公开 API</span></div><div class="row-trailing warning">按 App 授权</div></div>
+        </div>
+        <p class="group-label">权限</p>
+        <div class="group">
+          <div class="list-row"><div class="row-copy"><strong>高风险操作确认</strong><span>提交、删除与外发前需要批准</span></div><label class="switch" aria-label="高风险操作确认"><input type="checkbox" checked><span></span></label></div>
+          <div class="list-row"><div class="row-copy"><strong>离线时停止执行</strong><span>主控端断开后暂停工作流</span></div><label class="switch" aria-label="离线时停止执行"><input type="checkbox" checked><span></span></label></div>
+        </div>
+      </section>
+
+      <section class="panel" id="profilePanel" data-panel="profile" aria-labelledby="tab-profile">
+        <div class="profile">
+          <img src="icons/spiritkin-app-icon.png" alt="SpiritKin">
+          <div><strong>SpiritKin 主控端</strong><span>local-ecommerce · iOS</span></div>
+        </div>
+        <p class="group-label">体验</p>
+        <div class="group">
+          <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/message-square.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>默认助手声音</strong><span>Fairy · spiritkin.primary.v1</span></div><button class="secondary-button audio-button" id="voicePreviewButton">试听</button></div>
+          <div class="list-row" style="display:block"><div class="row-copy" style="margin-bottom:9px"><strong>外观</strong><span>三端统一语义色，默认跟随系统</span></div><div class="segmented theme-segmented" aria-label="外观模式"><button data-theme-mode="system">系统</button><button data-theme-mode="light">白天</button><button data-theme-mode="dark">黑夜</button></div></div>
+           <div class="list-row"><div class="row-copy"><strong>语音自动播放</strong><span>仅播放已批准的助手回复</span></div><label class="switch" aria-label="语音自动播放"><input type="checkbox"><span></span></label></div>
+           <div class="list-row" style="display:block"><div class="row-copy" style="margin-bottom:9px"><strong>主控端头像</strong><span>从 iPhone 照片中选择；图片只保存在当前设备</span></div><div class="button-row"><input id="avatarPhotoInput" class="text-input" type="file" accept="image/*" aria-label="从照片选择头像"><button class="secondary-button" id="resetAvatarButton">恢复默认</button></div></div>
+        </div>
+        <p class="group-label">完整主控能力</p>
+        <div class="group">
+          <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>电商 Terminal</strong><span>完整 Terminal 已归入“电商”板块，按领域管理</span></div><span class="row-trailing">板块内</span></div>
+          <button class="list-row" id="profileShortcutsButton" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>iOS 自动化中心</strong><span>快捷指令、App Intents 与跨 App 连接</span></div><span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></button>
+          <button class="list-row" id="profileMusicButton" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/play.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>音乐播放器</strong><span id="profileMusicStatus">同步桌面播放队列</span></div><span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></button>
+          <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/message-square.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>微信 iLink</strong><span id="profileWechatStatus">读取 Runtime 集中通道状态</span></div><div class="row-trailing" id="profileWechatPhase">--</div></div>
+        </div>
+        <p class="group-label">管理</p>
+        <div class="group">
+          <button class="list-row" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer" data-toast="通知设置已打开"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/info.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>通知与审批</strong><span>工作流、设备与安全事件</span></div><span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></button>
+          <button class="list-row" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer" data-toast="开发者设置已打开"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>开发者设置</strong><span>令牌、远程环境与原始 JSON</span></div><span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></button>
+          <button class="list-row" style="width:100%;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer" data-toast="关于 SpiritKin"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/circle-help.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>关于</strong><span>版本 2026.07.18 · 本地原型</span></div><span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></button>
+        </div>
+      </section>
+    </main>
+
+    <div class="composer-wrap" id="composerWrap">
+      <form class="composer" id="composerForm">
+        <button class="icon-button" type="button" id="attachButton" aria-label="添加附件" title="添加附件"><span class="icon" style="--icon:url('icons/lucide/paperclip.svg')" aria-hidden="true"></span></button>
+        <input id="composerInput" autocomplete="off" aria-label="发送消息" placeholder="向 SpiritKin 发消息">
+        <button class="icon-button send" type="submit" aria-label="发送" title="发送"><span class="icon" style="--icon:url('icons/lucide/send.svg')" aria-hidden="true"></span></button>
+      </form>
+    </div>
+
+    <nav class="bottom-nav" aria-label="主导航">
+      <button class="tab-button active" id="tab-chat" data-tab="chat" aria-selected="true"><span class="icon" style="--icon:url('icons/lucide/message-square.svg')" aria-hidden="true"></span><span>对话</span></button>
+      <button class="tab-button" id="tab-workflow" data-tab="workflow" aria-selected="false"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span><span>板块</span></button>
+      <button class="tab-button" id="tab-device" data-tab="device" aria-selected="false"><span class="icon" style="--icon:url('icons/lucide/smartphone.svg')" aria-hidden="true"></span><span>设备</span></button>
+      <button class="tab-button" id="tab-profile" data-tab="profile" aria-selected="false"><span class="icon" style="--icon:url('icons/lucide/settings.svg')" aria-hidden="true"></span><span>我的</span></button>
+    </nav>
+  </div>
+
+  <dialog class="avatar-dialog" id="avatarDialog">
+    <div class="dialog-head"><strong>SpiritKin Avatar</strong><button class="icon-button" data-close-dialog="avatarDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <iframe class="avatar-frame" data-src="avatar_3d.html?embed=1&amp;float=1" title="SpiritKin 3D Avatar"></iframe>
+  </dialog>
+
+  <dialog id="sessionDialog">
+    <div class="dialog-head"><strong>会话</strong><button class="icon-button" data-close-dialog="sessionDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body">
+      <div class="button-row"><button class="primary-button" id="newSessionButton">新建会话</button><button class="secondary-button" id="refreshSessionsButton">同步桌面会话</button></div>
+      <div class="session-list" id="sessionList"></div>
+      <p class="integration-note">会话通过 `session_id` 与桌面 Runtime 关联；切换、归档和删除会写入共享桌面状态。</p>
+    </div>
+  </dialog>
+
+  <dialog class="terminal-dialog" id="terminalDialog">
+    <div class="dialog-head"><strong>电商运营 Terminal</strong><button class="icon-button" data-close-dialog="terminalDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <iframe class="terminal-frame" data-src="http://127.0.0.1:8791/ios/terminal" title="SpiritKin iOS Terminal"></iframe>
+  </dialog>
+
+  <dialog id="shortcutsDialog">
+    <div class="dialog-head"><strong>iOS 自动化中心</strong><button class="icon-button" data-close-dialog="shortcutsDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body">
+      <div class="shortcut-list">
+        <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/message-square.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Ask Spirit</strong><span>从快捷指令向主控端提问</span></div><div class="row-trailing success">已定义</div></div>
+        <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/copy.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>读取 / 写入剪贴板</strong><span>两项独立的受控动作</span></div><div class="row-trailing success">2 项</div></div>
+        <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/circle-check.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Check Spirit Status</strong><span>检查已配对 Runtime 的健康状态</span></div><div class="row-trailing success">已注册</div></div>
+        <div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/info.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>通知与电量</strong><span>发送通知、查询设备电量</span></div><div class="row-trailing success">2 项</div></div>
+      </div>
+      <p class="integration-note">iOS 沙盒不允许主控端任意点击其他 App。可连接范围由快捷指令动作、App Intents、URL Scheme、Share Sheet 和目标 App 的公开 API 决定，高风险动作仍需确认。</p>
+      <div class="button-row"><button class="primary-button" id="openTerminalFromShortcuts">查看 Terminal 配置</button><button class="secondary-button" data-toast="已复制 /ios/schemas/shortcuts.json 路径">复制 Schema 路径</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="attachmentDialog">
+    <div class="dialog-head"><strong>添加到对话</strong><button class="icon-button" data-close-dialog="attachmentDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body attachment-grid">
+      <button data-attachment="图片"><span class="icon" style="--icon:url('icons/lucide/folder.svg')" aria-hidden="true"></span>图片</button>
+      <button data-attachment="设备截图"><span class="icon" style="--icon:url('icons/lucide/smartphone.svg')" aria-hidden="true"></span>设备截图</button>
+      <button data-attachment="工作素材"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span>工作素材</button>
+    </div>
+  </dialog>
+
+  <dialog id="deviceDialog">
+    <div class="dialog-head"><strong>Windows 主运行时</strong><button class="icon-button" data-close-dialog="deviceDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body">
+      <div class="group">
+        <div class="list-row"><div class="row-copy"><strong>模型服务</strong><span>llama.cpp · 本地 GPU</span></div><div class="row-trailing success">在线</div></div>
+        <div class="list-row"><div class="row-copy"><strong>语音服务</strong><span>CosyVoice3 · spiritkin.primary.v1</span></div><div class="row-trailing success">在线</div></div>
+        <div class="list-row"><div class="row-copy"><strong>最后心跳</strong><span>127.0.0.1</span></div><div class="row-trailing">3 秒前</div></div>
+      </div>
+      <button class="secondary-button" data-toast="运行时诊断已开始">运行诊断</button>
+    </div>
+  </dialog>
+
+  <dialog id="pairingDialog">
+    <div class="dialog-head"><strong>Remote Worker 配对</strong><button class="icon-button" data-close-dialog="pairingDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body">
+      <div id="pairingDetail" class="integration-note">正在生成一次性配对信息。</div>
+      <div class="button-row"><button class="primary-button" id="copyPairingTokenButton">复制配对码</button><button class="secondary-button" id="openPairingLinkButton" hidden>打开配对链接</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="runtimeMigrationDialog">
+    <div class="dialog-head"><strong>Workflow 迁移</strong><button class="icon-button" data-close-dialog="runtimeMigrationDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <form class="dialog-body editor-form" id="runtimeMigrationForm">
+      <label>Checkpoint<select class="text-input" id="runtimeCheckpointSelect" required></select></label>
+      <label>目标 Host<select class="text-input" id="runtimeTargetHostSelect" required></select></label>
+      <label class="checkbox-row"><input id="runtimeMigrationConfirm" type="checkbox"> <span>我确认目标 Host 从 Checkpoint 继续，执行中的副作用节点先对账</span></label>
+      <div class="button-row"><button class="secondary-button" type="button" data-close-dialog="runtimeMigrationDialog">取消</button><button class="primary-button" type="submit">请求迁移</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="poolDialog">
+    <div class="dialog-head"><strong>Skill / Workflow 池</strong><button class="icon-button" data-close-dialog="poolDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body">
+      <div class="segmented" id="poolDialogTabs" aria-label="池类型"><button class="active" data-pool-kind="skills">Skill</button><button data-pool-kind="workflows">Workflow</button></div>
+      <div class="management-toolbar"><input class="text-input" id="poolSearchInput" type="search" placeholder="搜索名称或领域" aria-label="搜索池内容"><button class="primary-button" id="addPoolItemButton"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span>新增</button></div>
+      <div class="group" id="poolManagerList"><div class="list-row"><div class="row-copy"><strong>正在读取</strong></div></div></div>
+    </div>
+  </dialog>
+
+  <dialog id="editorDialog">
+    <div class="dialog-head"><strong id="editorTitle">编辑</strong><button class="icon-button" data-close-dialog="editorDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <form class="dialog-body editor-form" id="editorForm">
+      <label>名称<input class="text-input" id="editorName" required maxlength="80"></label>
+      <label>显示名称<input class="text-input" id="editorLabel" maxlength="120"></label>
+      <label>领域<input class="text-input" id="editorDomain" maxlength="60" placeholder="general 或 ecommerce"></label>
+      <label>描述<textarea class="text-input" id="editorDetail" maxlength="500"></textarea></label>
+      <div class="button-row"><button class="secondary-button" type="button" id="editorDeleteButton" hidden>删除</button><button class="secondary-button" type="button" data-close-dialog="editorDialog">取消</button><button class="primary-button" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="growthDialog">
+    <div class="dialog-head"><strong>Growth 候选治理</strong><button class="icon-button" data-close-dialog="growthDialog" aria-label="关闭" title="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body editor-form">
+      <div class="group" id="growthCandidateDetail"><div class="list-row"><div class="row-copy"><strong>未选择候选</strong><span>从 Growth Runtime 列表选择一项</span></div></div></div>
+      <div class="group" id="growthBuilderDetail"><div class="list-row"><div class="row-copy"><strong>Builder 工件尚未准备</strong><span>本地盘点未运行</span></div><button class="secondary-button" type="button" id="growthPrepareBuilderButton">准备工件</button></div></div>
+      <label>证据 / 审核理由<textarea class="text-input" id="growthEvidenceInput" maxlength="2000" rows="5" placeholder="记录测试、来源、评测结果或审核理由"></textarea></label>
+      <label>公开搜索关键词（留空使用候选需求）<input class="text-input" id="growthResearchKeywordsInput" maxlength="160" placeholder="只填写可公开发送到 GitHub 的词语"></label>
+      <details id="growthSandboxBundleField" hidden>
+        <summary>Sandbox Bundle</summary>
+        <label>Bundle JSON<textarea class="text-input" id="growthSandboxBundleInput" maxlength="270000" rows="6" placeholder='{"files":[{"path":"probe.py","content":"print(1)"}],"command":["python","-I","probe.py"]}'></textarea></label>
+        <button class="secondary-button" type="button" id="growthPrepareSandboxBundleButton">准备代码 Bundle</button>
+      </details>
+      <details id="growthBenchmarkField" hidden>
+        <summary>Benchmark · Before / After</summary>
+        <div class="editor-form" style="margin-top:10px">
+          <div class="button-row">
+            <label>版本<input class="text-input" id="growthBenchmarkVersionInput" maxlength="80" placeholder="2.0"></label>
+            <label>基线<input class="text-input" id="growthBenchmarkBaselineInput" maxlength="80" placeholder="1.0"></label>
+          </div>
+          <label>数据集<input class="text-input" id="growthBenchmarkDatasetInput" maxlength="160" placeholder="稳定数据集名称与版本"></label>
+          <label id="growthBenchmarkSourceField">测量来源<input class="text-input" id="growthBenchmarkSourceInput" maxlength="160" placeholder="运行、评测或审计记录 ID"></label>
+          <label>Before JSON<textarea class="text-input" id="growthBenchmarkBeforeInput" rows="4" maxlength="2000" placeholder='{"success_rate":0.8,"latency_ms":1500,"cost":2,"retry_count":4,"review_count":3,"quality_score":76}'></textarea></label>
+          <label>After JSON<textarea class="text-input" id="growthBenchmarkAfterInput" rows="4" maxlength="2000" placeholder='{"success_rate":0.93,"latency_ms":1100,"cost":1.6,"retry_count":2,"review_count":1,"quality_score":89}'></textarea></label>
+          <p class="integration-note" id="growthModelJuryField" hidden>Model 候选将保持 waiting_jury，直到服务端生成可审计的多模型评审报告；客户端不能手填评审结论。</p>
+          <button class="secondary-button" type="button" id="growthRunBenchmarkButton">记录结构化 Benchmark</button>
+          <button class="secondary-button" type="button" id="growthRunModelJuryButton" hidden>请求 Model Jury</button>
+        </div>
+      </details>
+      <label id="growthEscalationField" hidden>下一类 Builder<select class="text-input" id="growthEscalationKind"></select></label>
+      <label class="checkbox-row"><input id="growthConfirmInput" type="checkbox"> <span>我确认当前治理动作；候选不会自动激活</span></label>
+      <div class="button-row" id="growthCandidateActions">
+        <button class="secondary-button" type="button" id="growthEscalateButton" hidden>创建下一级候选</button>
+        <button class="secondary-button" type="button" id="growthAdvanceButton" hidden>提交下一阶段</button>
+        <button class="secondary-button" type="button" id="growthRejectButton" hidden>驳回</button>
+        <button class="primary-button" type="button" id="growthApproveButton" hidden>审核通过</button>
+        <button class="primary-button" type="button" id="growthRegisterButton" hidden>登记 Registry</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="taskDialog">
+    <div class="dialog-head"><strong>电商任务</strong><button class="icon-button" data-close-dialog="taskDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <form class="dialog-body editor-form" id="taskForm">
+      <label>任务名称<input class="text-input" id="taskTitle" required maxlength="120" placeholder="例如：商品发布预检"></label>
+      <label>任务类型<input class="text-input" id="taskType" value="ecommerce_operation" maxlength="80"></label>
+      <label>备注<textarea class="text-input" id="taskNotes" maxlength="500"></textarea></label>
+      <div class="button-row"><button class="secondary-button" type="button" data-close-dialog="taskDialog">取消</button><button class="primary-button" type="submit">创建任务</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="commerceResourceDialog">
+    <div class="dialog-head"><strong id="commerceResourceTitle">新增店铺</strong><button class="icon-button" data-close-dialog="commerceResourceDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <form class="dialog-body editor-form" id="commerceResourceForm">
+      <label>类型<select class="text-input" id="commerceResourceType"><option value="commerce_store">店铺</option><option value="commerce_product">商品</option></select></label>
+      <label>名称<input class="text-input" id="commerceResourceLabel" required maxlength="120"></label>
+      <div id="commerceStoreFields">
+        <label>平台<select class="text-input" id="commerceStorePlatform"><option value="pdd">拼多多</option><option value="taobao">淘宝 / 天猫</option><option value="douyin">抖音电商</option><option value="jd">京东</option><option value="wechat_store">微信小店</option></select></label>
+        <label>平台店铺 ID（可选）<input class="text-input" id="commerceExternalStoreID" maxlength="120"></label>
+        <label>Keychain/Vault 引用<input class="text-input" id="commerceCredentialRef" maxlength="240" placeholder="keychain:commerce/pdd/main"></label>
+      </div>
+      <div id="commerceProductFields" hidden>
+        <label>所属店铺<select class="text-input" id="commerceProductStore"></select></label>
+        <label>SKU<input class="text-input" id="commerceProductSKU" maxlength="120"></label>
+        <label>价格<input class="text-input" id="commerceProductPrice" inputmode="decimal" maxlength="40"></label>
+      </div>
+      <label>备注<textarea class="text-input" id="commerceResourceNotes" maxlength="500"></textarea></label>
+      <p class="integration-note">Cookie、密码和 Token 不会写入 Resource。店铺只登记本机 Keychain/Vault 引用。</p>
+      <div class="button-row"><button class="secondary-button" type="button" id="deleteCommerceResourceButton" hidden>删除</button><button class="secondary-button" type="button" data-close-dialog="commerceResourceDialog">取消</button><button class="primary-button" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="musicDialog">
+    <div class="dialog-head"><strong>桌面音乐播放器</strong><button class="icon-button" data-close-dialog="musicDialog" aria-label="关闭"><span class="icon" style="--icon:url('icons/lucide/x.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-body">
+      <div class="group" id="musicNowPlaying"><div class="list-row"><div class="row-copy"><strong>正在同步</strong><span>读取桌面播放器状态</span></div></div></div>
+      <div class="music-controls"><button class="secondary-button" data-music-action="previous" aria-label="上一首">上一首</button><button class="primary-button" id="musicPlayPauseButton" data-music-action="resume">播放</button><button class="secondary-button" data-music-action="next" aria-label="下一首">下一首</button><button class="secondary-button" data-music-action="stop" aria-label="停止">停止</button></div>
+      <div class="range-row"><span>音量</span><input id="musicVolume" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="音乐音量"><span id="musicVolumeValue">80%</span></div>
+      <p class="group-label" style="margin-top:18px">播放列表</p>
+      <div class="group" id="musicQueue"><div class="list-row"><div class="row-copy"><strong>队列为空</strong><span>在素材中上传音频并加入播放器</span></div></div></div>
+      <button class="secondary-button" id="clearMusicQueueButton" style="width:100%">清空播放列表</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const pageMeta = {
+      chat: ["SpiritKin", "主控端在线"],
+      workflow: ["板块", "电商 · 内容 · 开发 · 系统"],
+      ecommerce: ["运营工作台", "电商 · 商品、素材、发布预检与远程 Worker"],
+      device: ["设备与主机", "Runtime Host · World · 移动端"],
+      profile: ["我的", "local-ecommerce"]
+    };
+    const panels = [...document.querySelectorAll("[data-panel]")];
+    const tabs = [...document.querySelectorAll("[data-tab]")];
+    const composerWrap = document.getElementById("composerWrap");
+    const toast = document.getElementById("toast");
+    let toastTimer;
+    const CONTROL_PLANE_URL = (() => {
+      const host = window.location.hostname || "127.0.0.1";
+      const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+      // 8792 serves this lightweight PWA preview; its control API lives on
+      // the authenticated 8791 receiver. Keep local 8787 previews working.
+      return `${protocol}//${host}:8791`;
+    })();
+    const SESSION_STORAGE_KEY = "spiritkin_ios_sessions_v1";
+    const CAPABILITY_STORAGE_KEY = "spiritkin_ios_capabilities_v1";
+    const WORKSPACE_STORAGE_KEY = "spiritkin_ios_workspace_v1";
+    const AVATAR_STORAGE_KEY = "spiritkin_ios_avatar_url";
+    let sessionState = { revision: 0, active_session_id: "session_ios_web", sessions: [] };
+    let pendingDeletedSessionIDs = [];
+    let capabilityState = {};
+    let domainState = {};
+    let poolState = {};
+    let ecommerceState = {};
+    let musicState = {};
+    let channelsState = {};
+    let monitorState = {};
+    let growthState = {};
+    let runtimeHostState = {};
+    let worldState = {};
+    let growthEditorCandidate = null;
+    let commerceResourceEditorItem = null;
+    let activeTab = "chat";
+    let poolKind = "skills";
+    let workflowFilter = "running";
+    let editorContext = null;
+    let latestPairing = {};
+    let monitorDeviceRenderSignature = "";
+    let monitorWorkflowRenderSignature = "";
+    let avatarFramePaused = false;
+    let avatarLoadTimer = 0;
+    const syncFlights = new Map();
+    const syncFreshUntil = new Map();
+    const backgroundJobPolls = new Map();
+    const backgroundJobSessions = new Map();
+    const DEFAULT_SYNC_TTL_MS = 8000;
+    const requestedWorkspaceID = new URLSearchParams(window.location.search).get("workspace_id") || "";
+    if (/^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$/.test(requestedWorkspaceID)) {
+      localStorage.setItem(WORKSPACE_STORAGE_KEY, requestedWorkspaceID);
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function runSync(key, task, options = {}) {
+      const current = syncFlights.get(key);
+      if (current) return current;
+      const now = Date.now();
+      if (!options.force && Number(syncFreshUntil.get(key) || 0) > now) return Promise.resolve();
+      const promise = Promise.resolve().then(task).then(result => {
+        syncFreshUntil.set(key, Date.now() + Number(options.ttlMs || DEFAULT_SYNC_TTL_MS));
+        return result;
+      }).finally(() => syncFlights.delete(key));
+      syncFlights.set(key, promise);
+      return promise;
+    }
+
+    function invalidateSync(key) {
+      syncFreshUntil.delete(key);
+    }
+
+    function pageIsVisible() {
+      return document.visibilityState !== "hidden";
+    }
+
+    function openLazyFrameDialog(dialogId) {
+      const dialog = document.getElementById(dialogId);
+      const frame = dialog.querySelector("iframe[data-src]");
+      if (frame && !frame.hasAttribute("src")) frame.src = frame.dataset.src;
+      dialog.showModal();
+    }
+
+    function openShortcuts() {
+      syncChannels({ force: true });
+      document.getElementById("shortcutsDialog").showModal();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function sessionToken() {
+      const current = sessionStorage.getItem("spiritkin_ios_token") || sessionStorage.getItem("spiritkin_control_token") || "";
+      if (current) return current;
+      // One-time migration from the legacy persistent store; control tokens
+      // should not survive a browser restart.
+      const legacy = localStorage.getItem("spiritkin_ios_token") || localStorage.getItem("spiritkin_control_token") || "";
+      if (legacy) {
+        sessionStorage.setItem("spiritkin_ios_token", legacy);
+        localStorage.removeItem("spiritkin_ios_token");
+        localStorage.removeItem("spiritkin_control_token");
+      }
+      return legacy;
+    }
+
+    function sessionHeaders(json = false) {
+      const headers = json ? { "Content-Type": "application/json" } : {};
+      const token = sessionToken();
+      if (token) headers["X-SpiritKin-iOS-Token"] = token;
+      headers["X-SpiritKin-Workspace"] = currentWorkspaceID();
+      return headers;
+    }
+
+    function currentWorkspaceID() {
+      return (localStorage.getItem(WORKSPACE_STORAGE_KEY) || "local-ecommerce").trim() || "local-ecommerce";
+    }
+
+    function controllerID() {
+      const key = "spiritkin_ios_controller_id";
+      let value = sessionStorage.getItem(key) || "";
+      if (!value) {
+        const suffix = window.crypto?.randomUUID?.().slice(0, 8) || Math.random().toString(36).slice(2, 10);
+        value = `ios-web-${suffix}`;
+        sessionStorage.setItem(key, value);
+      }
+      return value;
+    }
+
+    async function sendHeartbeat() {
+      if (!pageIsVisible()) return;
+      try {
+        await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/heartbeat`, {
+          method: "POST",
+          headers: sessionHeaders(true),
+          body: JSON.stringify({ terminal_id: controllerID(), workspace_id: currentWorkspaceID() })
+        }, 5000);
+      } catch (_) {}
+    }
+
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 16000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function avatarURL() {
+      // A photo is a profile identity, not a replacement for the 3D stage.
+      return "avatar_3d.html?embed=1&float=1";
+    }
+
+    function avatarPhotoURL() {
+      try { return localStorage.getItem(AVATAR_STORAGE_KEY) || "icons/spiritkin-app-icon.png"; }
+      catch (_) { return "icons/spiritkin-app-icon.png"; }
+    }
+
+    function renderAvatarPhoto() {
+      const photo = avatarPhotoURL();
+      document.querySelectorAll(".profile img, .presence .avatar-button img, .message-avatar").forEach(image => { image.src = photo; });
+    }
+
+    function scheduleAvatarFrameLoad() {
+      const frame = document.getElementById("avatarStageFrame");
+      if (!frame || activeTab !== "chat" || frame.getAttribute("src")) return;
+      clearTimeout(avatarLoadTimer);
+      avatarLoadTimer = setTimeout(() => {
+        avatarLoadTimer = 0;
+        if (activeTab === "chat" && !frame.getAttribute("src")) frame.src = avatarURL();
+      }, 120);
+    }
+
+    function setAvatarSource(value) {
+      const raw = String(value || "").trim();
+      if (!raw) {
+        localStorage.removeItem(AVATAR_STORAGE_KEY);
+      } else {
+        localStorage.setItem(AVATAR_STORAGE_KEY, raw);
+      }
+      const next = avatarURL();
+      const stage = document.getElementById("avatarStageFrame");
+      stage.dataset.src = next;
+      if (activeTab === "chat") {
+        clearTimeout(avatarLoadTimer);
+        stage.src = next;
+      }
+      document.querySelector("#avatarDialog iframe").dataset.src = next;
+      renderAvatarPhoto();
+      showToast(raw ? "Avatar 已更新" : "已恢复默认 Avatar");
+    }
+
+    function resizeAvatarFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("无法读取照片"));
+        reader.onload = () => {
+          const image = new Image();
+          image.onerror = () => reject(new Error("照片格式无法识别"));
+          image.onload = () => {
+            const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+            canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/webp", 0.84));
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderDomains() {
+      const box = document.getElementById("domainPool");
+      if (!box) return;
+      const items = Array.isArray(domainState.domains) ? domainState.domains.filter(item => item.enabled !== false) : [];
+      if (!items.length) {
+        box.innerHTML = `<div class="list-row"><div class="row-copy"><strong>暂无领域</strong><span>请从桌面端添加领域</span></div></div>`;
+        return;
+      }
+      box.innerHTML = items.map(item => {
+        const rawID = String(item.domain_id || item.id || "general");
+        const id = escapeHtml(rawID);
+        const label = escapeHtml(item.label || item.title || item.name || id);
+        const detail = escapeHtml(item.description || item.detail || "");
+        const count = item.workflow_count ?? item.item_count ?? "";
+        const terminal = id === "ecommerce" ? `<span class="domain-open"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span>运营工作台</span>` : `<span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span>`;
+        const iconName = id === "ecommerce" ? "folder" : (id === "system" ? "settings" : id === "development" ? "terminal" : "play");
+        return `<button class="domain-card" data-domain-id="${id}"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/${iconName}.svg')" aria-hidden="true"></span></div><div><strong>${label}</strong><span>${detail}</span></div><div class="row-trailing">${id === "ecommerce" ? terminal : escapeHtml(count ? `${count} 个` : "进入")}</div></button>`;
+      }).join("");
+      box.querySelectorAll("[data-domain-id]").forEach(button => button.addEventListener("click", () => {
+        if (button.dataset.domainId === "ecommerce") selectTab("ecommerce");
+        else {
+          const item = items.find(entry => String(entry.domain_id || entry.id || "") === button.dataset.domainId);
+          if (item) openEditor("domain", item);
+          else showToast("领域数据暂不可用");
+        }
+      }));
+    }
+
+    function syncDomains() {
+      return runSync("domains", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/domains`, { headers: sessionHeaders() });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          domainState = data;
+        } catch (error) {
+          domainState = { domains: [
+            { domain_id: "ecommerce", label: "电商", description: "商品素材、选品、发布预检、Android 上架", enabled: true },
+            { domain_id: "content", label: "内容与媒体", description: "视频、图片、语音与 AI Cover", enabled: true },
+            { domain_id: "development", label: "开发与自动化", description: "代码、浏览器、脚本、测试与远程执行", enabled: true },
+            { domain_id: "system", label: "系统与治理", description: "运行时、模型、诊断、安全与状态维护", enabled: true }
+          ] };
+          if (activeTab === "workflow") showToast(`领域同步失败：${error.message || error}`);
+        }
+        renderDomains();
+      });
+    }
+
+    function renderCapabilities() {
+      const box = document.getElementById("capabilityPool");
+      if (!box) return;
+      const items = Array.isArray(capabilityState.capabilities) ? capabilityState.capabilities : [];
+      if (!items.length) {
+        box.innerHTML = `<div class="list-row"><div class="row-copy"><strong>能力开关暂不可用</strong><span>请确认主控端令牌或本机来源</span></div></div>`;
+        return;
+      }
+      box.innerHTML = items.map(item => `<div class="list-row"><div class="row-copy"><strong>${escapeHtml(item.label || item.capability_id)}</strong><span>${escapeHtml(item.detail || "")}</span></div><div class="row-actions"><label class="switch" aria-label="${escapeHtml(item.label || item.capability_id)}"><input type="checkbox" data-capability-id="${escapeHtml(item.capability_id)}" ${item.enabled ? "checked" : ""} ${item.locked ? "disabled" : ""}><span></span></label>${item.built_in ? "" : `<button class="icon-button" data-edit-capability="${escapeHtml(item.capability_id)}" aria-label="编辑能力" title="编辑"><span class="icon" style="--icon:url('icons/lucide/pencil.svg')" aria-hidden="true"></span></button><button class="icon-button" data-delete-capability="${escapeHtml(item.capability_id)}" aria-label="删除能力" title="删除"><span class="icon" style="--icon:url('icons/lucide/trash-2.svg')" aria-hidden="true"></span></button>`}</div></div>`).join("");
+      box.querySelectorAll("[data-capability-id]").forEach(input => input.addEventListener("change", async event => {
+        const capabilityID = event.currentTarget.dataset.capabilityId;
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/capabilities`, { method: "POST", headers: sessionHeaders(true), body: JSON.stringify({ capability_id: capabilityID, enabled: event.currentTarget.checked }) });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          capabilityState = data;
+          renderCapabilities();
+          showToast(`${event.currentTarget.checked ? "已启用" : "已停用"} ${capabilityID}`);
+        } catch (error) {
+          event.currentTarget.checked = !event.currentTarget.checked;
+          showToast(`能力开关失败：${error.message || error}`);
+        }
+      }));
+      box.querySelectorAll("[data-edit-capability]").forEach(button => button.addEventListener("click", () => openEditor("capability", items.find(item => item.capability_id === button.dataset.editCapability))));
+      box.querySelectorAll("[data-delete-capability]").forEach(button => button.addEventListener("click", () => deleteCapability(button.dataset.deleteCapability)));
+    }
+
+    function syncCapabilities() {
+      return runSync("capabilities", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/capabilities`, { headers: sessionHeaders() });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          capabilityState = data;
+          localStorage.setItem(CAPABILITY_STORAGE_KEY, JSON.stringify(data));
+        } catch (_) {
+          try { capabilityState = JSON.parse(localStorage.getItem(CAPABILITY_STORAGE_KEY) || "{}"); } catch (__) { capabilityState = {}; }
+        }
+        renderCapabilities();
+      });
+    }
+
+    function syncPools() {
+      return runSync("pools", async () => {
+        const box = document.getElementById("poolSummary");
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/pools`, { headers: sessionHeaders() }, 20000);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          poolState = data;
+          renderPoolSummary();
+        } catch (error) {
+          if (box) box.innerHTML = `<div class="list-row"><div class="row-copy"><strong>池同步失败</strong><span>${escapeHtml(error.message || error)}</span></div><div class="row-trailing warning">重试</div></div>`;
+        }
+      });
+    }
+
+    function renderGrowthSummary() {
+      const box = document.getElementById("growthSummary");
+      if (!box) return;
+      const growth = growthState || {};
+      const counts = growth.status_counts || {};
+      const pending = Number(counts.candidate || 0);
+      const registered = Number(counts.registered || 0);
+      const humanRequired = Number(growth.human_required_count || 0);
+      const artifactCount = Number(growth.builder_artifacts?.count || 0);
+      const researchCount = Number(growth.research_reports?.count || 0);
+      const executionCount = Number(growth.sandbox_executions?.count || 0);
+      const benchmarkCount = Number(growth.benchmarks?.count || 0);
+      const status = ({ needs_human: "需人工", needs_review: "待审核", needs_registry: "待登记", ready: "正常" })[growth.status] || "未知";
+      const sandbox = growth.sandbox_runtime || {};
+      const sandboxStatus = sandbox.status === "ready"
+        ? (sandbox.candidate_execution_enabled ? "隔离执行可用" : "Daemon 可用 · 执行关闭")
+        : (sandbox.status === "unavailable" ? "沙箱不可用" : "沙箱未探测");
+      const sandboxAction = sandbox.candidate_execution_enabled
+        ? ""
+        : `<button class="secondary-button" type="button" id="growthProbeSandboxButton">检查沙箱</button>`;
+      const candidates = Array.isArray(growth.candidates)
+        ? [...growth.candidates]
+            .sort((left, right) => Number(right.workspace_id === currentWorkspaceID()) - Number(left.workspace_id === currentWorkspaceID()))
+            .slice(0, 8)
+        : [];
+      const candidateRows = candidates.map(candidate => {
+        const manageable = candidate.workspace_id && candidate.workspace_id === currentWorkspaceID();
+        const builder = candidate.evidence?.builder_artifact || {};
+        const manageButton = manageable ? `<button class="icon-button" data-growth-open="${escapeHtml(candidate.candidate_id || "")}" aria-label="管理 Growth 候选" title="管理候选"><span class="icon" style="--icon:url('icons/lucide/settings.svg')" aria-hidden="true"></span></button>` : "";
+        const builderMeta = builder.artifact_id ? ` · Builder 匹配 ${Number(builder.inventory_match_count || 0)}` : "";
+        return `<div class="list-row growth-candidate-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(candidate.kind || "capability")} · ${escapeHtml(candidate.title || candidate.candidate_id || "未命名候选")}</strong><span>状态 ${escapeHtml(candidate.status || "candidate")} · 阶段 ${escapeHtml(candidate.current_stage || "gap_analysis")} · ${escapeHtml(candidate.workspace_id || "全局")}${builderMeta}${manageable ? "" : " · 桌面治理"}</span></div><div class="row-actions"><span class="row-trailing ${candidate.status === "approved" ? "success" : "warning"}">${escapeHtml(candidate.promotion_status || candidate.status || "candidate")}</span>${manageButton}</div></div>`;
+      }).join("");
+      box.innerHTML = `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>能力成长 ${escapeHtml(status)}</strong><span>${escapeHtml(growth.candidate_count || 0)} 个候选 · ${pending} 待审核 · ${humanRequired} 需人工 · ${registered} 已注册 · ${artifactCount} 个 Builder 工件 · ${researchCount} 份公开研究 · ${executionCount} 次隔离测试 · ${benchmarkCount} 份 Benchmark · ${escapeHtml(sandboxStatus)} · 不自动激活</span></div><div class="row-actions">${sandboxAction}<span class="row-trailing ${pending || humanRequired ? "warning" : "success"}">${humanRequired ? "人工" : (pending ? "审核" : "就绪")}</span></div></div>${candidateRows}`;
+      box.querySelectorAll("[data-growth-open]").forEach(button => button.addEventListener("click", () => openGrowthCandidate(button.dataset.growthOpen)));
+      box.querySelector("#growthProbeSandboxButton")?.addEventListener("click", probeGrowthSandbox);
+    }
+
+    async function probeGrowthSandbox() {
+      const button = document.getElementById("growthProbeSandboxButton");
+      if (!window.confirm("沙箱探测将启动一个固定的受信探针容器，不会运行候选代码、挂载 workspace、联网或激活能力。继续？")) return;
+      if (button) { button.disabled = true; button.textContent = "检查中…"; }
+      try {
+        const data = await postJSON("/ios/growth", { action: "probe_sandbox_runtime", workspace_id: currentWorkspaceID(), confirmed: true });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        showToast(data.sandbox_runtime?.status === "ready" ? "容器沙箱可用" : "容器沙箱不可用，仍保持静态预检");
+      } catch (error) {
+        if (button) { button.disabled = false; button.textContent = "检查沙箱"; }
+        showToast(`沙箱探测失败：${error.message || error}`);
+      }
+    }
+
+    function growthNextStage(candidate) {
+      const stages = Array.isArray(candidate?.stages) ? candidate.stages : [];
+      const index = stages.indexOf(candidate?.current_stage || "gap_analysis");
+      return index >= 0 ? (stages[index + 1] || "") : "";
+    }
+
+    function growthStageLabel(stage) {
+      return ({ gap_analysis: "缺口分析", research: "研究", design: "设计", sandbox: "沙箱", dry_run: "试运行", benchmark: "评测", review: "审核", registry: "注册" })[stage] || stage || "下一阶段";
+    }
+
+    function growthKindLabel(kind) {
+      return ({ workflow: "Workflow Builder", skill: "Skill Builder", tool: "Tool Builder", code: "Code Builder", model: "Model Builder", human: "转人工处理" })[kind] || kind;
+    }
+
+    function openGrowthCandidate(candidateID) {
+      const candidates = Array.isArray(growthState.candidates) ? growthState.candidates : [];
+      growthEditorCandidate = candidates.find(item => item.candidate_id === candidateID) || null;
+      if (!growthEditorCandidate) return;
+      const candidate = growthEditorCandidate;
+      const lineage = candidate.lineage || {};
+      const resolution = candidate.resolution || {};
+      const remoteResearch = candidate.evidence?.remote_research || {};
+      const sandboxBundle = candidate.evidence?.sandbox_bundle || {};
+      const sandboxExecution = candidate.evidence?.sandbox_execution || {};
+      const benchmark = candidate.evidence?.benchmark_report || {};
+      const lineageMeta = lineage.parent_candidate_id ? ` · 父候选 ${escapeHtml(lineage.parent_candidate_id)}` : " · 根候选";
+      const resolutionMeta = resolution.status && resolution.status !== "unrouted" ? ` · 路由 ${escapeHtml(resolution.target_kind || resolution.status)}` : " · 尚未路由";
+      const researchMeta = remoteResearch.report_id ? ` · 公开研究 ${Number(remoteResearch.result_count || 0)} 条` : " · 尚未公开研究";
+      document.getElementById("growthCandidateDetail").innerHTML = `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(candidate.title || candidate.candidate_id)}</strong><span>${escapeHtml(candidate.kind || "capability")} · ${escapeHtml(candidate.current_stage || "gap_analysis")} · ${escapeHtml(candidate.workspace_id || "全局")}${lineageMeta}${resolutionMeta}${researchMeta}</span></div><div class="row-trailing warning">${escapeHtml(candidate.risk?.level || "medium")}</div></div>`;
+      const builder = candidate.evidence?.builder_artifact || {};
+      const canPrepareBuilder = !["rejected", "registered", "escalated", "needs_human"].includes(candidate.status || "candidate");
+      const canResearch = candidate.status === "candidate" && !["review", "registry"].includes(candidate.current_stage || "");
+      const verificationStages = {
+        capability: ["design"],
+        workflow: ["dry_run", "benchmark"],
+        skill: ["sandbox", "dry_run", "benchmark"],
+        tool: ["sandbox", "dry_run", "benchmark"],
+        code: ["sandbox", "dry_run", "benchmark"],
+        model: ["benchmark"]
+      };
+      const canVerifyBuilder = canPrepareBuilder && builder.artifact_id && (verificationStages[candidate.kind] || []).includes(candidate.current_stage || "");
+      const bundleStages = { skill: ["design", "sandbox", "dry_run", "benchmark"], tool: ["research", "sandbox", "dry_run", "benchmark"], code: ["design", "sandbox", "dry_run", "benchmark"] };
+      const canPrepareBundle = Boolean(builder.artifact_id) && candidate.status === "candidate" && (bundleStages[candidate.kind] || []).includes(candidate.current_stage || "");
+      const canExecuteSandbox = Boolean(sandboxBundle.bundle_id) && builder.verification_status === "passed" && growthState.sandbox_runtime?.candidate_execution_enabled === true && ["sandbox", "dry_run", "benchmark"].includes(candidate.current_stage || "");
+      const topRepository = remoteResearch.repositories?.[0]?.full_name || "";
+      const researchDetail = remoteResearch.report_id ? ` · 公开研究 ${Number(remoteResearch.result_count || 0)} 条${topRepository ? ` · ${escapeHtml(topRepository)}` : ""}` : " · 未运行公开研究";
+      const sandboxDetail = sandboxBundle.bundle_id ? ` · Bundle ${escapeHtml(sandboxBundle.bundle_id)} / ${Number(sandboxBundle.file_count || 0)} 文件 · 隔离测试 ${escapeHtml(sandboxExecution.status || "not_run")}${sandboxExecution.execution_id ? ` / exit ${Number(sandboxExecution.exit_code || 0)}` : ""}` : " · Bundle 未准备";
+      const benchmarkDetail = benchmark.benchmark_id ? ` · Benchmark ${escapeHtml(benchmark.promotion_status || "failed")} / ${Number(benchmark.overall_score || 0).toFixed(1)} / Δ ${Number(benchmark.overall_delta || 0).toFixed(1)}` : " · Benchmark 未记录";
+      document.getElementById("growthBuilderDetail").innerHTML = `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/folder.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${builder.artifact_id ? "Builder 工件已准备" : "Builder 工件尚未准备"}</strong><span>${builder.artifact_id ? `匹配 ${Number(builder.inventory_match_count || 0)} · 验证 ${escapeHtml(builder.verification_status || "not_run")} · 目标 ${escapeHtml(builder.registry_target || "--")}${builder.human_required ? " · 需人工补源" : ""}` : "本地盘点未运行"}${researchDetail}${sandboxDetail}${benchmarkDetail}</span></div><div class="row-actions">${canResearch ? `<button class="secondary-button" type="button" id="growthResearchButton">公开研究</button>` : ""}${canPrepareBuilder ? `<button class="secondary-button" type="button" id="growthPrepareBuilderButton">${builder.artifact_id ? "重新准备" : "准备工件"}</button>` : ""}${canVerifyBuilder ? `<button class="secondary-button" type="button" id="growthVerifyBuilderButton">沙箱预检</button>` : ""}${canExecuteSandbox ? `<button class="secondary-button" type="button" id="growthExecuteSandboxButton">隔离测试</button>` : ""}</div></div>`;
+      document.getElementById("growthResearchButton")?.addEventListener("click", submitGrowthRemoteResearch);
+      document.getElementById("growthPrepareBuilderButton")?.addEventListener("click", submitGrowthBuilder);
+      document.getElementById("growthVerifyBuilderButton")?.addEventListener("click", submitGrowthBuilderVerification);
+      document.getElementById("growthExecuteSandboxButton")?.addEventListener("click", submitGrowthSandboxExecution);
+      document.getElementById("growthEvidenceInput").value = "";
+      document.getElementById("growthResearchKeywordsInput").value = "";
+      document.getElementById("growthSandboxBundleInput").value = "";
+      document.getElementById("growthBenchmarkVersionInput").value = "";
+      document.getElementById("growthBenchmarkBaselineInput").value = "";
+      document.getElementById("growthBenchmarkDatasetInput").value = "";
+      document.getElementById("growthBenchmarkSourceInput").value = "";
+      document.getElementById("growthBenchmarkBeforeInput").value = "";
+      document.getElementById("growthBenchmarkAfterInput").value = "";
+      document.getElementById("growthSandboxBundleField").hidden = !canPrepareBundle;
+      document.getElementById("growthBenchmarkField").hidden = candidate.status !== "candidate" || candidate.current_stage !== "benchmark";
+      document.getElementById("growthBenchmarkSourceField").hidden = ["workflow", "skill", "tool", "code"].includes(candidate.kind);
+      document.getElementById("growthModelJuryField").hidden = candidate.kind !== "model";
+      document.getElementById("growthRunModelJuryButton").hidden = candidate.kind !== "model" || !benchmark.benchmark_id;
+      document.getElementById("growthConfirmInput").checked = false;
+      const nextStage = growthNextStage(candidate);
+      const isCandidate = candidate.status === "candidate";
+      const isReview = isCandidate && candidate.current_stage === "review";
+      const isApproved = candidate.status === "approved" && candidate.current_stage === "review";
+      const allowedTargets = growthState.pipeline?.escalation_targets?.[candidate.kind] || [];
+      const escalationField = document.getElementById("growthEscalationField");
+      const escalationSelect = document.getElementById("growthEscalationKind");
+      escalationSelect.innerHTML = allowedTargets.map(kind => `<option value="${escapeHtml(kind)}">${escapeHtml(growthKindLabel(kind))}</option>`).join("");
+      escalationField.hidden = !isCandidate || allowedTargets.length === 0;
+      document.getElementById("growthEscalateButton").hidden = escalationField.hidden;
+      const advance = document.getElementById("growthAdvanceButton");
+      const benchmarkAllowsReview = nextStage !== "review" || benchmark.promotion_status === "passed";
+      advance.hidden = !isCandidate || !nextStage || isReview || !benchmarkAllowsReview;
+      advance.textContent = nextStage ? `提交${growthStageLabel(nextStage)}证据` : "提交下一阶段";
+      document.getElementById("growthApproveButton").hidden = !isReview;
+      document.getElementById("growthRejectButton").hidden = !isCandidate || candidate.current_stage === "registry";
+      document.getElementById("growthRegisterButton").hidden = !isApproved;
+      document.getElementById("growthDialog").showModal();
+    }
+
+    async function submitGrowthRemoteResearch() {
+      const candidate = growthEditorCandidate;
+      if (!candidate?.candidate_id) return;
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认只读取公开元数据，不会克隆、安装或执行"); return; }
+      const keywords = document.getElementById("growthResearchKeywordsInput").value.trim();
+      try {
+        const data = await postJSON("/ios/growth", {
+          action: "research_candidate",
+          candidate_id: candidate.candidate_id,
+          workspace_id: currentWorkspaceID(),
+          confirmed: true,
+          keywords
+        });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast(`公开研究完成：${Number(data.research_report?.result_count || 0)} 条候选来源`);
+      } catch (error) { showToast(`公开仓库研究失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthEscalation() {
+      const candidate = growthEditorCandidate;
+      const evidenceText = document.getElementById("growthEvidenceInput").value.trim();
+      const targetKind = document.getElementById("growthEscalationKind").value;
+      if (!candidate || !targetKind || evidenceText.length < 2) { showToast("请选择下一类 Builder 并填写路由证据"); return; }
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认升级只创建候选，不会激活能力"); return; }
+      try {
+        const data = await postJSON("/ios/growth", {
+          action: "escalate_candidate",
+          candidate_id: candidate.candidate_id,
+          workspace_id: currentWorkspaceID(),
+          target_kind: targetKind,
+          reason: evidenceText,
+          evidence: { summary: evidenceText, source: "ios_controller_prototype", submitted_at: new Date().toISOString() },
+          confirmed: true
+        });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast(targetKind === "human" ? "候选已转人工处理" : `已创建 ${growthKindLabel(targetKind)} 候选`);
+      } catch (error) { showToast(`Growth 升级失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthBuilder() {
+      const candidate = growthEditorCandidate;
+      if (!candidate) return;
+      try {
+        const data = await postJSON("/ios/growth", { action: "prepare_builder_artifact", candidate_id: candidate.candidate_id, workspace_id: currentWorkspaceID() });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast("Builder 工件已准备，能力未激活");
+      } catch (error) { showToast(`Builder 工件准备失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthBuilderVerification() {
+      const candidate = growthEditorCandidate;
+      if (!candidate?.candidate_id) return;
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认只生成沙箱报告，不会推进或激活能力"); return; }
+      try {
+        const data = await postJSON("/ios/growth", { action: "verify_builder_artifact", candidate_id: candidate.candidate_id, workspace_id: currentWorkspaceID(), confirmed: true });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        const status = data.verification_report?.status || "已生成";
+        showToast(`Builder 沙箱预检${status === "passed" ? "通过" : "需要人工补源"}`);
+      } catch (error) { showToast(`Builder 沙箱预检失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthSandboxBundle() {
+      const candidate = growthEditorCandidate;
+      if (!candidate?.candidate_id) return;
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认 Bundle 不会在主机执行或自动激活"); return; }
+      let sandboxBundle;
+      try {
+        sandboxBundle = JSON.parse(document.getElementById("growthSandboxBundleInput").value.trim());
+      } catch (_error) {
+        showToast("Sandbox Bundle JSON 格式无效");
+        return;
+      }
+      try {
+        const data = await postJSON("/ios/growth", { action: "prepare_sandbox_bundle", candidate_id: candidate.candidate_id, workspace_id: currentWorkspaceID(), confirmed: true, sandbox_bundle: sandboxBundle });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast(`Bundle 已准备：${Number(data.sandbox_bundle?.file_count || 0)} 个文件，请重新运行静态预检`);
+      } catch (error) { showToast(`Sandbox Bundle 准备失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthSandboxExecution() {
+      const candidate = growthEditorCandidate;
+      if (!candidate?.candidate_id) return;
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认隔离执行动作"); return; }
+      if (!window.confirm("将在无网络、无主机挂载、只读且受资源限制的容器中运行候选代码。继续？")) return;
+      try {
+        const data = await postJSON("/ios/growth", { action: "execute_builder_sandbox", candidate_id: candidate.candidate_id, workspace_id: currentWorkspaceID(), confirmed: true, execution_ack: "run_untrusted_code_in_isolated_container" });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast(`隔离测试 ${data.sandbox_execution?.status || "完成"} · exit ${Number(data.sandbox_execution?.exit_code ?? -1)}`);
+      } catch (error) { showToast(`隔离测试失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthBenchmark() {
+      const candidate = growthEditorCandidate;
+      if (!candidate?.candidate_id || candidate.current_stage !== "benchmark") return;
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认 Benchmark 只生成评测证据，不会自动 Promotion"); return; }
+      const version = document.getElementById("growthBenchmarkVersionInput").value.trim();
+      const baselineVersion = document.getElementById("growthBenchmarkBaselineInput").value.trim();
+      const dataset = document.getElementById("growthBenchmarkDatasetInput").value.trim();
+      const source = document.getElementById("growthBenchmarkSourceInput").value.trim();
+      if (!version || !baselineVersion || !dataset) { showToast("请填写版本、基线版本和数据集"); return; }
+      let before, after;
+      try {
+        before = JSON.parse(document.getElementById("growthBenchmarkBeforeInput").value.trim());
+        after = JSON.parse(document.getElementById("growthBenchmarkAfterInput").value.trim());
+      } catch (_error) { showToast("Before 或 After JSON 格式无效"); return; }
+      if (!window.confirm("将记录同数据集 Before/After 测量并由服务端计算 Promotion Gate；不会推进阶段或激活能力。继续？")) return;
+      try {
+        const payload = {
+          action: "record_candidate_benchmark",
+          candidate_id: candidate.candidate_id,
+          workspace_id: currentWorkspaceID(),
+          confirmed: true,
+          version,
+          baseline_version: baselineVersion,
+          dataset,
+          measurement_source: source || "ios_controller_measurement",
+          before,
+          after
+        };
+        const data = await postJSON("/ios/growth", payload);
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        const report = data.benchmark_report || {};
+        showToast(`Benchmark ${report.promotion_gate?.status || "failed"} · 总分 ${Number(report.overall_score || 0).toFixed(1)}`);
+      } catch (error) { showToast(`Benchmark 记录失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthModelJury() {
+      const candidate = growthEditorCandidate;
+      if (!candidate?.candidate_id || candidate.kind !== "model") return;
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认将向已配置的模型评审团发送 Benchmark 摘要"); return; }
+      if (!window.confirm("将把受管 Benchmark 摘要发送给已配置的 Review Committee；至少两个独立结构化评审通过后才开放 Review。继续？")) return;
+      try {
+        const data = await postJSON("/ios/growth", { action: "run_model_jury", candidate_id: candidate.candidate_id, workspace_id: currentWorkspaceID(), confirmed: true });
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast(`Model Jury ${data.model_jury?.status || "insufficient_evidence"} · ${Number(data.model_jury?.structured_review_count || 0)} 份结构化评审`);
+      } catch (error) { showToast(`Model Jury 请求失败：${error.message || error}`); }
+    }
+
+    async function submitGrowthAction(action, decision = "approve") {
+      const candidate = growthEditorCandidate;
+      const evidenceText = document.getElementById("growthEvidenceInput").value.trim();
+      if (!candidate || evidenceText.length < 2) { showToast("请填写可追溯的证据或理由"); return; }
+      if (!document.getElementById("growthConfirmInput").checked) { showToast("请先确认治理动作"); return; }
+      const evidence = { summary: evidenceText, source: "ios_controller_prototype", submitted_at: new Date().toISOString() };
+      const payload = { action, candidate_id: candidate.candidate_id, workspace_id: currentWorkspaceID(), confirmed: true, evidence };
+      if (action === "advance_stage") payload.stage = growthNextStage(candidate);
+      if (action === "review_candidate") { payload.decision = decision; payload.reason = evidenceText; }
+      if (action === "register_candidate") payload.registry_evidence = evidence;
+      try {
+        const data = await postJSON("/ios/growth", payload);
+        growthState = data.growth || growthState;
+        renderGrowthSummary();
+        document.getElementById("growthDialog").close();
+        showToast(action === "register_candidate" ? "候选已登记，仍需单独激活" : "Growth 治理状态已更新");
+      } catch (error) { showToast(`Growth 操作失败：${error.message || error}`); }
+    }
+
+    function syncGrowth() {
+      return runSync("growth", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/growth`, { headers: sessionHeaders() }, 12000);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          growthState = data.growth || {};
+          renderGrowthSummary();
+        } catch (error) {
+          const box = document.getElementById("growthSummary");
+          if (box) box.innerHTML = `<div class="list-row"><div class="row-copy"><strong>能力成长暂不可用</strong><span>${escapeHtml(error.message || error)}</span></div><div class="row-trailing warning">重试</div></div>`;
+        }
+      });
+    }
+
+    function renderPoolSummary() {
+      const box = document.getElementById("poolSummary");
+      if (!box) return;
+      const skills = poolState.skills || {};
+      const workflows = poolState.workflows || {};
+      const byDomain = (workflows.items || []).reduce((acc, item) => { const key = item.domain || "general"; acc[key] = (acc[key] || 0) + 1; return acc; }, {});
+      box.innerHTML = `<button class="list-row" data-open-pool="skills" style="width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Skill 池</strong><span>${escapeHtml(skills.count || 0)} 个 · ${escapeHtml(Object.entries(skills.status_counts || {}).map(([key, value]) => `${key} ${value}`).join(" · ") || "暂无状态")}</span></div><div class="row-trailing success">管理 <span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></div></button><button class="list-row" data-open-pool="workflows" style="width:100%;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Workflow 池</strong><span>${escapeHtml(workflows.count || 0)} 个 · ${escapeHtml(Object.entries(byDomain).map(([key, value]) => `${key} ${value}`).join(" · ") || "暂无领域")}</span></div><div class="row-trailing success">管理 <span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></div></button>`;
+      box.querySelectorAll("[data-open-pool]").forEach(button => button.addEventListener("click", () => openPoolDialog(button.dataset.openPool)));
+    }
+
+    function openPoolDialog(kind = poolKind) {
+      poolKind = kind;
+      document.querySelectorAll("[data-pool-kind]").forEach(button => button.classList.toggle("active", button.dataset.poolKind === poolKind));
+      renderPoolManager();
+      document.getElementById("poolDialog").showModal();
+    }
+
+    function renderPoolManager() {
+      const list = document.getElementById("poolManagerList");
+      const query = String(document.getElementById("poolSearchInput")?.value || "").trim().toLowerCase();
+      const items = ((poolState[poolKind] || {}).items || []).filter(item => !query || `${item.name} ${item.display_name || ""} ${item.domain || ""} ${item.description || ""}`.toLowerCase().includes(query));
+      if (!items.length) {
+        list.innerHTML = `<div class="list-row"><div class="row-copy"><strong>暂无${poolKind === "skills" ? " Skill" : " Workflow"}</strong><span>可以新增一个工作区级定义</span></div></div>`;
+        return;
+      }
+      list.innerHTML = items.map(item => `<div class="list-row pool-item"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/${poolKind === "skills" ? "terminal" : "workflow"}.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.display_name || item.name)}</strong><span>${escapeHtml(item.description || item.domain || "未分类")} · ${escapeHtml(item.workspace_id ? "工作区项" : "全局项")}</span></div><div class="row-actions">${item.editable ? `<button class="icon-button" data-edit-pool="${escapeHtml(item.name)}" aria-label="编辑" title="编辑"><span class="icon" style="--icon:url('icons/lucide/pencil.svg')" aria-hidden="true"></span></button>` : ""}${item.deletable ? `<button class="icon-button" data-delete-pool="${escapeHtml(item.name)}" aria-label="删除" title="删除"><span class="icon" style="--icon:url('icons/lucide/trash-2.svg')" aria-hidden="true"></span></button>` : ""}</div></div>`).join("");
+      list.querySelectorAll("[data-edit-pool]").forEach(button => button.addEventListener("click", () => openEditor(poolKind === "skills" ? "skill" : "workflow", items.find(item => item.name === button.dataset.editPool))));
+      list.querySelectorAll("[data-delete-pool]").forEach(button => button.addEventListener("click", () => deletePoolItem(button.dataset.deletePool)));
+    }
+
+    async function postJSON(path, body) {
+      const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}${path}`, { method: "POST", headers: sessionHeaders(true), body: JSON.stringify(body) }, 20000);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || data.message || `HTTP ${response.status}`);
+      return data;
+    }
+
+    function openEditor(kind, item = null) {
+      editorContext = { kind, item };
+      document.getElementById("editorTitle").textContent = `${item ? "编辑" : "新增"}${kind === "capability" ? "能力模块" : kind === "skill" ? " Skill" : kind === "workflow" ? " Workflow" : "领域"}`;
+      document.getElementById("editorName").value = item?.capability_id || item?.name || item?.domain_id || item?.id || "";
+      document.getElementById("editorLabel").value = item?.label || item?.display_name || item?.title || "";
+      document.getElementById("editorDomain").value = item?.domain || "general";
+      document.getElementById("editorDetail").value = item?.detail || item?.description || "";
+      document.getElementById("editorName").readOnly = Boolean(item && ["capability", "domain"].includes(kind));
+      const deleteButton = document.getElementById("editorDeleteButton");
+      deleteButton.hidden = !(item && (item.deletable || (kind === "domain" && !item.built_in)));
+      deleteButton.textContent = kind === "domain" ? "删除领域" : "删除";
+      document.getElementById("editorDialog").showModal();
+    }
+
+    async function deleteCapability(id) {
+      if (!confirm(`删除能力模块“${id}”？`)) return;
+      try { capabilityState = await postJSON("/ios/capabilities", { action: "delete", capability_id: id }); renderCapabilities(); showToast("能力模块已删除"); }
+      catch (error) { showToast(`删除失败：${error.message || error}`); }
+    }
+
+    async function deleteDomain(id) {
+      if (!confirm(`删除领域“${id}”？`)) return;
+      try { domainState = await postJSON("/ios/domains", { action: "delete", id }); renderDomains(); document.getElementById("editorDialog").close(); showToast("领域已删除"); }
+      catch (error) { showToast(`删除失败：${error.message || error}`); }
+    }
+
+    async function deletePoolItem(name) {
+      if (!confirm(`删除“${name}”？`)) return;
+      try { poolState = await postJSON("/ios/pools", { pool: poolKind, action: "delete", name, workflow_name: name }); renderPoolSummary(); renderPoolManager(); showToast("池项目已删除"); }
+      catch (error) { showToast(`删除失败：${error.message || error}`); }
+    }
+
+    function commerceStores() {
+      return Array.isArray(ecommerceState?.stores?.items) ? ecommerceState.stores.items : [];
+    }
+
+    function openCommerceResourceEditor(item = null, type = "commerce_store") {
+      commerceResourceEditorItem = item;
+      const resourceType = item?.resource_type || type;
+      const metadata = item?.metadata || {};
+      const stores = commerceStores();
+      document.getElementById("commerceResourceTitle").textContent = `${item ? "编辑" : "新增"}${resourceType === "commerce_store" ? "店铺" : "商品"}`;
+      document.getElementById("commerceResourceType").value = resourceType;
+      document.getElementById("commerceResourceType").disabled = Boolean(item);
+      document.getElementById("commerceResourceLabel").value = item?.label || "";
+      document.getElementById("commerceStorePlatform").value = item?.platform || "pdd";
+      document.getElementById("commerceExternalStoreID").value = metadata.external_store_id || "";
+      document.getElementById("commerceCredentialRef").value = item?.credential_ref || "";
+      document.getElementById("commerceProductSKU").value = metadata.sku || "";
+      document.getElementById("commerceProductPrice").value = metadata.price || "";
+      document.getElementById("commerceResourceNotes").value = metadata.notes || "";
+      const storeSelect = document.getElementById("commerceProductStore");
+      storeSelect.innerHTML = stores.map(store => `<option value="${escapeHtml(store.resource_id)}">${escapeHtml(store.label || store.resource_id)}</option>`).join("");
+      storeSelect.value = metadata.store_resource_id || stores[0]?.resource_id || "";
+      document.getElementById("deleteCommerceResourceButton").hidden = !item?.deletable;
+      syncCommerceResourceFields();
+      document.getElementById("commerceResourceDialog").showModal();
+    }
+
+    function syncCommerceResourceFields() {
+      const isStore = document.getElementById("commerceResourceType").value === "commerce_store";
+      document.getElementById("commerceStoreFields").hidden = !isStore;
+      document.getElementById("commerceProductFields").hidden = isStore;
+      document.getElementById("commerceResourceTitle").textContent = `${commerceResourceEditorItem ? "编辑" : "新增"}${isStore ? "店铺" : "商品"}`;
+    }
+
+    async function saveCommerceResource() {
+      const type = document.getElementById("commerceResourceType").value;
+      const isStore = type === "commerce_store";
+      const label = document.getElementById("commerceResourceLabel").value.trim();
+      const storeID = document.getElementById("commerceProductStore").value;
+      if (!label) throw new Error("请填写名称");
+      if (!isStore && !storeID) throw new Error("请先登记所属店铺");
+      const platform = isStore
+        ? document.getElementById("commerceStorePlatform").value
+        : (commerceStores().find(item => item.resource_id === storeID)?.platform || "commerce");
+      const metadata = {
+        notes: document.getElementById("commerceResourceNotes").value.trim(),
+        ...(isStore ? {
+          external_store_id: document.getElementById("commerceExternalStoreID").value.trim()
+        } : {
+          store_resource_id: storeID,
+          sku: document.getElementById("commerceProductSKU").value.trim(),
+          price: document.getElementById("commerceProductPrice").value.trim()
+        })
+      };
+      const resource = {
+        resource_id: commerceResourceEditorItem?.resource_id || `${type}:${globalThis.crypto?.randomUUID?.() || `ios-${Date.now()}-${Math.random().toString(16).slice(2)}`}`,
+        label,
+        resource_type: type,
+        platform,
+        owner_agent: "ecommerce",
+        credential_ref: isStore ? document.getElementById("commerceCredentialRef").value.trim() : "",
+        health_status: "ready",
+        supported_capabilities: isStore ? ["commerce.product.publish", "commerce.price.update"] : ["commerce.product.review", "commerce.product.publish"],
+        tags: ["ecommerce", isStore ? "store" : "product"],
+        metadata
+      };
+      await postJSON("/ios/resources", { action: commerceResourceEditorItem ? "update" : "create", resource });
+      document.getElementById("commerceResourceDialog").close();
+      invalidateSync("ecommerce");
+      await syncEcommerce({ force: true });
+      showToast(`${isStore ? "店铺" : "商品"}已保存`);
+    }
+
+    async function deleteCommerceResource() {
+      const item = commerceResourceEditorItem;
+      if (!item || !confirm(`删除“${item.label || item.resource_id}”？`)) return;
+      await postJSON("/ios/resources", { action: "delete", resource_id: item.resource_id });
+      document.getElementById("commerceResourceDialog").close();
+      invalidateSync("ecommerce");
+      await syncEcommerce({ force: true });
+      showToast("Resource 已删除");
+    }
+
+    function formatBytes(value) {
+      const bytes = Math.max(0, Number(value || 0));
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    function readFileDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error(`无法读取 ${file.name}`));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadArtifacts(files) {
+      const selected = Array.from(files || []).slice(0, 8);
+      const total = selected.reduce((sum, file) => sum + file.size, 0);
+      if (!selected.length) return;
+      if (selected.some(file => file.size > 8 * 1024 * 1024) || total > 12 * 1024 * 1024) throw new Error("单个文件不超过 8 MB，总大小不超过 12 MB");
+      const payloadFiles = await Promise.all(selected.map(async file => ({
+        name: file.name,
+        mime_type: file.type || "application/octet-stream",
+        data_url: await readFileDataURL(file)
+      })));
+      await postJSON("/mobile/artifacts", {
+        workspace_id: currentWorkspaceID(),
+        source: "ios_pwa_controller",
+        purpose: "ios_work_file",
+        tags: ["ios", "pwa", "file"],
+        files: payloadFiles
+      });
+      invalidateSync("ecommerce");
+      await syncEcommerce({ force: true });
+      showToast(`已上传 ${selected.length} 个文件`);
+    }
+
+    async function downloadArtifact(artifactID, fileIndex, fileName) {
+      const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/mobile/artifacts/${encodeURIComponent(artifactID)}?file_index=${encodeURIComponent(fileIndex)}&workspace_id=${encodeURIComponent(currentWorkspaceID())}`, { headers: sessionHeaders() }, 20000);
+      if (!response.ok) throw new Error(`下载失败 HTTP ${response.status}`);
+      const url = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName || "artifact";
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function renderEcommerce() {
+      const ecommerce = ecommerceState || {};
+      const queue = ecommerce.queue || {};
+      const monitor = ecommerce.monitor || {};
+      const incidents = monitor.incidents || [];
+      const workers = ecommerce.remote_workers || {};
+      const metrics = document.getElementById("ecommerceMetrics");
+      metrics.innerHTML = `<div class="metric"><strong>${escapeHtml(queue.count || 0)}</strong><span>任务</span></div><div class="metric"><strong>${escapeHtml(workers.count || 0)}</strong><span>Remote Worker</span></div><div class="metric"><strong>${escapeHtml(incidents.length)}</strong><span>风险事件</span></div><div class="metric"><strong>${escapeHtml((ecommerce.resources || {}).count || 0)}</strong><span>资源</span></div>`;
+      const taskList = document.getElementById("ecommerceTasks");
+      const tasks = queue.items || [];
+      taskList.innerHTML = tasks.length ? tasks.slice(0, 20).map(item => `<div class="list-row pool-item"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.title || item.id)}</strong><span>${escapeHtml(item.task_type || "ecommerce_operation")} · ${escapeHtml(item.status || "pending")}</span></div><div class="row-actions"><button class="icon-button" data-delete-task="${escapeHtml(item.id)}" aria-label="删除任务" title="删除"><span class="icon" style="--icon:url('icons/lucide/trash-2.svg')" aria-hidden="true"></span></button></div></div>`).join("") : `<div class="list-row"><div class="row-copy"><strong>暂无电商任务</strong><span>新增任务后会同步到桌面端队列</span></div></div>`;
+      taskList.querySelectorAll("[data-delete-task]").forEach(button => button.addEventListener("click", async () => { if (!confirm("删除这个电商任务？")) return; try { ecommerceState = (await postJSON("/ios/ecommerce", { action: "delete_task", task_id: button.dataset.deleteTask })).ecommerce; renderEcommerce(); showToast("任务已删除"); } catch (error) { showToast(`删除失败：${error.message || error}`); } }));
+      const monitorBox = document.getElementById("ecommerceMonitor");
+      monitorBox.innerHTML = incidents.length ? incidents.slice(0, 8).map(item => `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/triangle-alert.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.title || item.code || "监控事件")}</strong><span>${escapeHtml(item.detail || item.message || "需要检查")}</span></div><span class="status-chip ${item.severity === "high" ? "danger" : "warning"}">${escapeHtml(item.severity || "warning")}</span></div>`).join("") : `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/circle-check.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>当前没有风险事件</strong><span>工作区设备和远程 Worker 状态正常</span></div><span class="status-chip success">正常</span></div>`;
+      const resourceList = document.getElementById("ecommerceResources");
+      const stores = Array.isArray(ecommerce.stores?.items) ? ecommerce.stores.items : [];
+      const products = Array.isArray(ecommerce.products?.items) ? ecommerce.products.items : [];
+      const commerceItems = [...stores, ...products];
+      resourceList.innerHTML = commerceItems.length ? commerceItems.slice(0, 24).map(item => {
+        const isStore = item.resource_type === "commerce_store";
+        const metadata = item.metadata || {};
+        const detail = isStore ? [item.platform, metadata.external_store_id].filter(Boolean).join(" · ") : [metadata.sku, metadata.price].filter(Boolean).join(" · ");
+        return `<button class="list-row" data-commerce-resource="${escapeHtml(item.resource_id)}" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/${isStore ? "folder" : "square"}.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.label || item.resource_id)}</strong><span>${escapeHtml(detail || (isStore ? "店铺" : "商品"))}</span></div><span class="status-chip ${item.health_status === "ready" ? "success" : "warning"}">${isStore ? "店铺" : "商品"}</span></button>`;
+      }).join("") : `<div class="list-row"><div class="row-copy"><strong>尚未登记店铺</strong><span>先新增店铺，再为该店铺创建商品</span></div></div>`;
+      resourceList.querySelectorAll("[data-commerce-resource]").forEach(button => button.addEventListener("click", () => openCommerceResourceEditor(commerceItems.find(item => item.resource_id === button.dataset.commerceResource))));
+
+      const artifactList = document.getElementById("ecommerceArtifacts");
+      const artifacts = Array.isArray(ecommerce.artifacts?.recent) ? ecommerce.artifacts.recent : [];
+      const files = artifacts.flatMap(artifact => (artifact.files || []).map((file, fileIndex) => ({ artifact, file, fileIndex })));
+      artifactList.innerHTML = files.length ? files.slice(0, 20).map(({ artifact, file, fileIndex }) => {
+        return `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/folder.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(file.name || artifact.artifact_id)}</strong><span>${escapeHtml(file.mime_type || "file")} · ${escapeHtml(formatBytes(file.size_bytes))}</span></div><div class="row-actions"><button class="icon-button" data-download-artifact="${escapeHtml(artifact.artifact_id)}" data-file-index="${fileIndex}" data-file-name="${escapeHtml(file.name || "artifact")}" aria-label="下载文件" title="下载"><span class="icon" style="--icon:url('icons/lucide/arrow-right.svg')" aria-hidden="true"></span></button></div></div>`;
+      }).join("") : `<div class="list-row"><div class="row-copy"><strong>暂无素材</strong><span>上传图片、文档或音频后会在所有已配对端可见</span></div></div>`;
+      artifactList.querySelectorAll("[data-download-artifact]").forEach(button => button.addEventListener("click", async () => {
+        try { await downloadArtifact(button.dataset.downloadArtifact, Number(button.dataset.fileIndex || 0), button.dataset.fileName); }
+        catch (error) { showToast(error.message || String(error)); }
+      }));
+    }
+
+    function formatMonitorTime(value) {
+      if (!value) return "无心跳";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString([], { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function monitorStatusClass(status) {
+      return ["online", "active", "healthy", "completed", "succeeded"].includes(String(status || "").toLowerCase()) ? "success" : "warning";
+    }
+
+    function monitorStatusLabel(status) {
+      const value = String(status || "unknown").toLowerCase();
+      return ({
+        online: "在线",
+        active: "活动",
+        healthy: "正常",
+        completed: "完成",
+        succeeded: "成功",
+        queued: "排队中",
+        pending: "等待中",
+        running: "运行中",
+        in_progress: "进行中",
+        blocked: "已阻断",
+        waiting_review: "待审核",
+        waiting_approval: "待批准",
+        requires_review: "需审核",
+        failed: "失败",
+        canceled: "已取消",
+        cancelled: "已取消",
+        expired: "已过期",
+        offline: "离线",
+        disabled: "已停用",
+        revoked: "已撤销",
+        unknown: "未知"
+      })[value] || value;
+    }
+
+    function monitorDeviceRow(item, label) {
+      const id = item.device_id || item.terminal_id || item.worker_id || label;
+      const status = item.status || "unknown";
+      return `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/smartphone.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(id)}</strong><span>${escapeHtml(label)} · 最近心跳 ${escapeHtml(formatMonitorTime(item.last_seen_at))}</span></div><span class="row-trailing ${monitorStatusClass(status)}">${escapeHtml(monitorStatusLabel(status))}</span></div>`;
+    }
+
+    function renderWorkflowRuns() {
+      const list = document.getElementById("workflowRunList");
+      if (!list) return;
+      const signature = JSON.stringify([workflowFilter, monitorState.error || "", monitorState.workflow_runs?.recent || []]);
+      if (signature === monitorWorkflowRenderSignature) return;
+      monitorWorkflowRenderSignature = signature;
+      if (monitorState.error) {
+        list.innerHTML = `<div class="list-row"><div class="row-copy"><strong>运行记录同步失败</strong><span>${escapeHtml(monitorState.error)}</span></div><span class="row-trailing warning">重试</span></div>`;
+        return;
+      }
+      const runs = Array.isArray(monitorState.workflow_runs?.recent) ? monitorState.workflow_runs.recent : [];
+      const groups = {
+        running: new Set(["queued", "pending", "running", "in_progress"]),
+        review: new Set(["blocked", "waiting_review", "waiting_approval", "requires_review"]),
+        history: new Set(["completed", "succeeded", "failed", "canceled", "cancelled", "expired"])
+      };
+      const allowed = groups[workflowFilter] || groups.running;
+      const filtered = runs.filter(item => allowed.has(String(item.status || "").toLowerCase())).slice(0, 20);
+      if (!Object.keys(monitorState).length) {
+        list.innerHTML = `<div class="list-row"><div class="row-copy"><strong>正在读取运行记录</strong><span>从桌面 Runtime 同步真实状态</span></div></div>`;
+        return;
+      }
+      list.innerHTML = filtered.length ? filtered.map(item => {
+        const status = item.status || "unknown";
+        return `<div class="list-row workflow-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/workflow.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.workflow_name || item.template_id || item.run_id || "Workflow")}</strong><span>${escapeHtml(item.run_id || "--")} · 更新于 ${escapeHtml(formatMonitorTime(item.updated_at || item.created_at))}</span></div><span class="row-trailing ${monitorStatusClass(status)}">${escapeHtml(monitorStatusLabel(status))}</span></div>`;
+      }).join("") : `<div class="list-row"><div class="row-copy"><strong>当前筛选没有运行记录</strong><span>只显示桌面 Runtime 返回的真实运行状态</span></div></div>`;
+    }
+
+    function renderMonitorViews() {
+      renderWorkflowRuns();
+      const devices = document.getElementById("workspaceDeviceList");
+      const nodes = document.getElementById("runtimeNodeList");
+      if (!devices || !nodes) return;
+      const signature = JSON.stringify([
+        monitorState.error || "",
+        monitorState.workspace_id || "",
+        monitorState.status || "",
+        monitorState.workspace_devices || {},
+        monitorState.remote_workers || {}
+      ]);
+      if (signature === monitorDeviceRenderSignature) return;
+      monitorDeviceRenderSignature = signature;
+      if (monitorState.error) {
+        const errorRow = `<div class="list-row"><div class="row-copy"><strong>监控同步失败</strong><span>${escapeHtml(monitorState.error)}</span></div><span class="row-trailing warning">重试</span></div>`;
+        devices.innerHTML = errorRow;
+        nodes.innerHTML = errorRow;
+        return;
+      }
+      const workspaces = Array.isArray(monitorState.workspace_devices?.items) ? monitorState.workspace_devices.items : [];
+      const workspace = workspaces.find(item => item.workspace_id === currentWorkspaceID()) || workspaces[0] || {};
+      const iosDevices = Array.isArray(workspace.ios_controllers) ? workspace.ios_controllers : [];
+      const androidDevices = Array.isArray(workspace.android_devices) ? workspace.android_devices : [];
+      const remoteWorkers = Array.isArray(workspace.remote_workers) ? workspace.remote_workers : (Array.isArray(monitorState.remote_workers?.items) ? monitorState.remote_workers.items : []);
+      const allDevices = [
+        ...iosDevices.map(item => ({ item, label: "iOS 主控" })),
+        ...androidDevices.map(item => ({ item, label: "Android Bridge" }))
+      ].sort((left, right) => {
+        const onlineDifference = Number(["online", "active"].includes(String(right.item.status || "").toLowerCase())) - Number(["online", "active"].includes(String(left.item.status || "").toLowerCase()));
+        if (onlineDifference) return onlineDifference;
+        return String(right.item.last_seen_at || "").localeCompare(String(left.item.last_seen_at || ""));
+      });
+      const deviceRows = allDevices.slice(0, 6).map(entry => monitorDeviceRow(entry.item, entry.label));
+      if (allDevices.length > 6) {
+        deviceRows.push(`<div class="list-row"><div class="row-copy"><strong>还有 ${allDevices.length - 6} 个历史设备</strong><span>完整记录和撤销操作在桌面设备管理中</span></div><span class="row-trailing">已汇总</span></div>`);
+      }
+      devices.innerHTML = deviceRows.length ? deviceRows.join("") : `<div class="list-row"><div class="row-copy"><strong>暂无已登记移动端</strong><span>绑定后才会显示设备与真实心跳</span></div></div>`;
+      const monitorReady = Boolean(monitorState.generated_at);
+      const localStatus = monitorReady ? (monitorState.status || "healthy") : "unknown";
+      const localRow = `<button class="list-row" id="desktopDeviceButton" style="width:100%;border-inline:0;border-top:0;background:transparent;color:inherit;text-align:left;cursor:pointer"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Windows 主运行时</strong><span>控制 API · ${escapeHtml(monitorState.workspace_id || currentWorkspaceID())}</span></div><span class="row-trailing ${monitorStatusClass(localStatus)}">${escapeHtml(monitorStatusLabel(localStatus))}</span></button>`;
+      const remoteRows = remoteWorkers.map(item => {
+        const status = item.status || "unknown";
+        return `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.worker_id || item.device_id || "Remote Worker")}</strong><span>${escapeHtml((item.capabilities || []).slice(0, 4).join(" · ") || "未上报能力")} · ${escapeHtml(formatMonitorTime(item.last_seen_at))}</span></div><span class="row-trailing ${monitorStatusClass(status)}">${escapeHtml(monitorStatusLabel(status))}</span></div>`;
+      }).join("");
+      const pairingRow = `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/plus.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>Remote Worker</strong><span>${remoteWorkers.length ? `${remoteWorkers.length} 个已登记节点` : "尚未绑定执行节点"}</span></div><button class="secondary-button" id="pairButton">${remoteWorkers.length ? "新增" : "配对"}</button></div>`;
+      nodes.innerHTML = `${localRow}${remoteRows}${pairingRow}`;
+      nodes.querySelector("#desktopDeviceButton")?.addEventListener("click", () => document.getElementById("deviceDialog").showModal());
+      nodes.querySelector("#pairButton")?.addEventListener("click", requestRemoteWorkerPairing);
+      pageMeta.device[1] = `${1 + iosDevices.length + androidDevices.length + remoteWorkers.length} 个已检测节点`;
+      if (activeTab === "device") document.getElementById("pageSubtitle").textContent = pageMeta.device[1];
+    }
+
+    function renderRuntimeHosts() {
+      const list = document.getElementById("runtimeHostList");
+      const summary = document.getElementById("worldStateSummary");
+      if (!list || !summary) return;
+      if (runtimeHostState.error) {
+        list.innerHTML = `<div class="list-row"><div class="row-copy"><strong>Runtime Host 暂不可用</strong><span>${escapeHtml(runtimeHostState.error)}</span></div><span class="row-trailing warning">重试</span></div>`;
+      } else {
+        const registry = runtimeHostState.registry || {};
+        const hosts = Array.isArray(registry.hosts) ? registry.hosts : [];
+        const lease = (Array.isArray(registry.leases) ? registry.leases : [])[0] || {};
+        const rows = hosts.map(host => {
+          const execution = host.execution?.status || "not_reported";
+          const role = host.can_execute_workflows ? `执行器 ${execution === "not_reported" ? "未报告" : execution}` : (host.can_observe ? "Observation Adapter" : "控制 Adapter");
+          return `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/terminal.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(host.label || host.host_id || "Runtime Host")}</strong><span>${escapeHtml(host.host_type || "host")} · ${escapeHtml(role)} · epoch ${host.host_id === lease.host_id ? Number(lease.epoch || 0) : "—"}</span></div><span class="row-trailing ${monitorStatusClass(host.effective_status || host.status)}">${escapeHtml(monitorStatusLabel(host.effective_status || host.status || "unknown"))}</span></div>`;
+        });
+        const checkpoints = Array.isArray(runtimeHostState.checkpoints?.checkpoints) ? runtimeHostState.checkpoints.checkpoints : [];
+        const targets = hosts.filter(host => host.can_execute_workflows && host.effective_status === "online" && !["fenced", "error", "not_reported"].includes(host.execution?.status || "not_reported") && host.host_id !== lease.host_id);
+        const migrate = checkpoints.length && targets.length ? `<div class="list-row"><div class="row-copy"><strong>Checkpoint 迁移</strong><span>${checkpoints.length} 个 Checkpoint · ${targets.length} 个可接管 Host</span></div><button class="secondary-button" id="openRuntimeMigrationButton">迁移</button></div>` : "";
+        list.innerHTML = rows.length ? `${rows.join("")}${migrate}` : `<div class="list-row"><div class="row-copy"><strong>暂无 Runtime Host</strong><span>请先启动桌面或 Cloud Host</span></div></div>`;
+        list.querySelector("#openRuntimeMigrationButton")?.addEventListener("click", openRuntimeMigration);
+      }
+      if (worldState.error) {
+        summary.innerHTML = `<div class="list-row"><div class="row-copy"><strong>World State 暂不可用</strong><span>${escapeHtml(worldState.error)}</span></div><span class="row-trailing warning">重试</span></div>`;
+        return;
+      }
+      const world = worldState.world || {};
+      const providers = Array.isArray(world.provider_states) ? world.provider_states : [];
+      const latest = providers[0] || {};
+      summary.innerHTML = `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/square.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${Number(world.entity_count || 0)} 个实体 · ${Number(world.relation_count || 0)} 条关系</strong><span>${providers.length} 个 Observation Provider${latest.provider_type ? ` · 最近 ${escapeHtml(latest.provider_type)} / ${escapeHtml(formatMonitorTime(latest.last_observed_at))}` : " · 等待 iOS / Android / Browser 观察"}</span></div><span class="row-trailing ${Number(world.current_entity_count || 0) ? "success" : "warning"}">${Number(world.current_entity_count || 0) ? "当前" : "空"}</span></div><div class="list-row"><div class="row-copy"><strong>数据保留</strong><span>原始图像、Depth Map 与点云不接收；Observation 中期、World 长期</span></div><span class="row-trailing success">结构化</span></div>`;
+    }
+
+    function syncRuntimeHosts(options = {}) {
+      return runSync("runtime-host", async () => {
+        try {
+          const [hostResponse, worldResponse] = await Promise.all([
+            fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/runtime-host`, { headers: sessionHeaders() }, 12000),
+            fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/world`, { headers: sessionHeaders() }, 12000)
+          ]);
+          const hostData = await hostResponse.json();
+          const worldData = await worldResponse.json();
+          if (!hostResponse.ok) throw new Error(hostData.error || `HTTP ${hostResponse.status}`);
+          if (!worldResponse.ok) throw new Error(worldData.error || `HTTP ${worldResponse.status}`);
+          runtimeHostState = hostData.runtime_host || {};
+          worldState = worldData.world_state || {};
+        } catch (error) {
+          runtimeHostState = { error: error.message || String(error) };
+          worldState = { error: error.message || String(error) };
+        }
+        renderRuntimeHosts();
+      }, options);
+    }
+
+    function openRuntimeMigration() {
+      const registry = runtimeHostState.registry || {};
+      const lease = (Array.isArray(registry.leases) ? registry.leases : [])[0] || {};
+      const checkpoints = Array.isArray(runtimeHostState.checkpoints?.checkpoints) ? runtimeHostState.checkpoints.checkpoints : [];
+      const targets = (Array.isArray(registry.hosts) ? registry.hosts : []).filter(host => host.can_execute_workflows && host.effective_status === "online" && !["fenced", "error", "not_reported"].includes(host.execution?.status || "not_reported") && host.host_id !== lease.host_id);
+      document.getElementById("runtimeCheckpointSelect").innerHTML = checkpoints.map(item => `<option value="${escapeHtml(item.checkpoint_id || "")}">${escapeHtml(item.workflow_name || item.run_id || "Workflow")} · #${Number(item.sequence || 0)}</option>`).join("");
+      document.getElementById("runtimeTargetHostSelect").innerHTML = targets.map(host => `<option value="${escapeHtml(host.host_id || "")}">${escapeHtml(host.label || host.host_id || "Runtime Host")}</option>`).join("");
+      document.getElementById("runtimeMigrationConfirm").checked = false;
+      document.getElementById("runtimeMigrationDialog").showModal();
+    }
+
+    function syncMonitor() {
+      return runSync("monitor", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/monitor`, { headers: sessionHeaders() }, 12000);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          monitorState = data.monitor || {};
+        } catch (error) {
+          monitorState = { error: error.message || String(error) };
+        }
+        renderMonitorViews();
+      });
+    }
+
+    async function requestRemoteWorkerPairing(event) {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "生成中";
+      try {
+        const query = new URLSearchParams({
+          workspace_id: currentWorkspaceID(),
+          device_role: "remote_worker",
+          requested_by: "ios_pwa_controller",
+          ttl_minutes: "10",
+          format: "json"
+        });
+        const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/control/pairing?${query}`, { headers: sessionHeaders() }, 12000);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        latestPairing = data.pairing || {};
+        const token = latestPairing.pairing_token || "";
+        document.getElementById("pairingDetail").innerHTML = `<strong>${escapeHtml(latestPairing.workspace_id || currentWorkspaceID())}</strong><span class="pairing-token">${escapeHtml(token || "未返回配对码")}</span>${latestPairing.pairing_command ? `<pre class="pairing-command">${escapeHtml(latestPairing.pairing_command)}</pre>` : ""}<span>有效期至 ${escapeHtml(formatMonitorTime(latestPairing.expires_at))}</span>`;
+        const linkButton = document.getElementById("openPairingLinkButton");
+        linkButton.hidden = !latestPairing.deep_link;
+        document.getElementById("pairingDialog").showModal();
+        showToast("一次性 Remote Worker 配对信息已生成");
+      } catch (error) {
+        showToast(`配对请求失败：${error.message || error}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = "配对";
+      }
+    }
+
+    function syncEcommerce(options = {}) {
+      return runSync("ecommerce", async () => {
+        try { const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/ecommerce`, { headers: sessionHeaders() }, 20000); const data = await response.json(); if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`); ecommerceState = data.ecommerce || {}; monitorState = ecommerceState.monitor || monitorState; renderEcommerce(); renderMonitorViews(); }
+        catch (error) { document.getElementById("ecommerceMonitor").innerHTML = `<div class="list-row"><div class="row-copy"><strong>电商数据暂不可用</strong><span>${escapeHtml(error.message || error)}</span></div><span class="status-chip warning">重试</span></div>`; }
+      }, options);
+    }
+
+    function renderMusic() {
+      const status = musicState.status || "empty";
+      const queue = Array.isArray(musicState.queue) ? musicState.queue : [];
+      const currentIndex = Number(musicState.current_index ?? -1);
+      const current = musicState.current_track || queue[currentIndex] || {};
+      document.getElementById("profileMusicStatus").textContent = queue.length ? `${current.title || "未命名音频"} · ${queue.length} 首` : "播放列表为空";
+      const now = document.getElementById("musicNowPlaying");
+      now.innerHTML = `<div class="list-row"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/play.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(current.title || "暂无播放内容")}</strong><span>${escapeHtml(status)} · ${Math.floor(Number(musicState.position_seconds || 0) / 60)}:${String(Math.floor(Number(musicState.position_seconds || 0) % 60)).padStart(2, "0")} / ${Math.floor(Number(musicState.duration_seconds || 0) / 60)}:${String(Math.floor(Number(musicState.duration_seconds || 0) % 60)).padStart(2, "0")}</span></div><span class="status-chip ${musicState.controller_online ? "success" : "warning"}">${musicState.controller_online ? "桌面在线" : "等待桌面"}</span></div>`;
+      const playPause = document.getElementById("musicPlayPauseButton");
+      playPause.dataset.musicAction = status === "playing" ? "pause" : "resume";
+      playPause.textContent = status === "playing" ? "暂停" : "播放";
+      const volume = Math.max(0, Math.min(1, Number(musicState.volume ?? 0.8)));
+      document.getElementById("musicVolume").value = String(volume);
+      document.getElementById("musicVolumeValue").textContent = `${Math.round(volume * 100)}%`;
+      const list = document.getElementById("musicQueue");
+      list.innerHTML = queue.length ? queue.map((item, index) => `<div class="list-row"><button class="session-select" data-select-track="${index}"><div class="row-icon"><span class="icon" style="--icon:url('icons/lucide/${index === currentIndex ? "play" : "square"}.svg')" aria-hidden="true"></span></div><div class="row-copy"><strong>${escapeHtml(item.title || `曲目 ${index + 1}`)}</strong><span>${item.is_remote ? "远程音频" : "桌面文件"}</span></div></button><button class="icon-button" data-remove-track="${index}" aria-label="移除曲目" title="移除"><span class="icon" style="--icon:url('icons/lucide/trash-2.svg')" aria-hidden="true"></span></button></div>`).join("") : `<div class="list-row"><div class="row-copy"><strong>播放列表为空</strong><span>在素材中上传音频并点击播放</span></div></div>`;
+      list.querySelectorAll("[data-select-track]").forEach(button => button.addEventListener("click", () => runMusicAction("select", { index: Number(button.dataset.selectTrack) })));
+      list.querySelectorAll("[data-remove-track]").forEach(button => button.addEventListener("click", () => runMusicAction("remove", { index: Number(button.dataset.removeTrack) })));
+      document.getElementById("clearMusicQueueButton").disabled = !queue.length;
+    }
+
+    function renderChannels() {
+      const channel = channelsState.wechat_ilink || {};
+      document.getElementById("profileWechatStatus").textContent = channel.message || "由桌面 Runtime 集中连接；iOS 不保存 Bot Token";
+      const phase = document.getElementById("profileWechatPhase");
+      phase.textContent = channel.phase || "未配置";
+      phase.className = `row-trailing ${channel.phase === "running" ? "success" : "warning"}`;
+    }
+
+    function syncMusic(options = {}) {
+      return runSync("music", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/music`, { headers: sessionHeaders() }, 12000);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          musicState = data.music || {};
+          renderMusic();
+        } catch (error) {
+          musicState = { status: "offline", error: error.message || String(error), queue: [] };
+          renderMusic();
+        }
+      }, options);
+    }
+
+    function syncChannels(options = {}) {
+      return runSync("channels", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/channels`, { headers: sessionHeaders() }, 12000);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+          channelsState = data.channels || {};
+        } catch (error) {
+          channelsState = { wechat_ilink: { phase: "offline", message: error.message || String(error) } };
+        }
+        renderChannels();
+      }, options);
+    }
+
+    async function runMusicAction(action, extra = {}) {
+      try {
+        const data = await postJSON("/ios/music", { action, ...extra });
+        musicState = data.music || musicState;
+        renderMusic();
+        showToast("播放器命令已发送");
+        setTimeout(() => { invalidateSync("music"); syncMusic({ force: true }); }, 700);
+      } catch (error) {
+        showToast(`音乐操作失败：${error.message || error}`);
+      }
+    }
+
+    function localSessionState() {
+      try {
+        return JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || "null") || sessionState;
+      } catch (_) { return sessionState; }
+    }
+
+    function saveLocalSessionState() {
+      try { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionState)); } catch (_) {}
+    }
+
+    function renderSessionMessages() {
+      const active = sessionState.sessions.find(item => item.id === sessionState.active_session_id);
+      const list = document.getElementById("messageList");
+      if (!list) return;
+      if (!active || !active.messages.length) {
+        list.innerHTML = `<article class="message assistant"><img class="message-avatar" src="icons/spiritkin-app-icon.png" alt=""><div class="message-body"><p>这是一个新的会话。你可以直接描述目标。</p><span class="message-time">现在</span></div></article>`;
+        return;
+      }
+      list.innerHTML = "";
+      active.messages.forEach(message => {
+        const article = document.createElement("article");
+        article.className = `message ${message.role === "user" ? "user" : "assistant"}`;
+        if (message.role === "user") {
+          article.innerHTML = `<div class="message-body"><p></p><span class="message-time">已同步</span></div>`;
+        } else {
+          article.innerHTML = `<img class="message-avatar" src="icons/spiritkin-app-icon.png" alt=""><div class="message-body"><p></p><span class="message-time">已同步</span></div>`;
+        }
+        article.querySelector("p").textContent = message.text || "";
+        list.appendChild(article);
+      });
+    }
+
+    function renderSessions() {
+      const list = document.getElementById("sessionList");
+      if (!list) return;
+      if (!sessionState.sessions.length) {
+        list.innerHTML = `<div class="list-row"><div class="row-copy"><strong>暂无会话</strong><span>新建后会同步到桌面端</span></div></div>`;
+        return;
+      }
+      list.innerHTML = sessionState.sessions.slice().sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0)).map(session => `
+        <div class="session-row ${session.id === sessionState.active_session_id ? "active" : ""}">
+          <button class="session-select" data-session-id="${escapeHtml(session.id)}">
+            <span class="icon" style="--icon:url('icons/lucide/message-square.svg')" aria-hidden="true"></span>
+            <span class="row-copy"><strong>${escapeHtml(session.title || "未命名会话")}</strong><span>${(session.messages || []).length} 条 · ${session.status === "archived" ? "已归档" : "进行中"}</span></span>
+            ${session.id === sessionState.active_session_id ? `<span class="icon" style="--icon:url('icons/lucide/circle-check.svg')" aria-hidden="true"></span>` : ""}
+          </button>
+          <button class="session-action" data-session-archive="${escapeHtml(session.id)}" aria-label="归档" title="归档"><span class="icon" style="--icon:url('icons/lucide/folder.svg')" aria-hidden="true"></span></button>
+          <button class="session-action danger" data-session-delete="${escapeHtml(session.id)}" aria-label="删除" title="删除"><span class="icon" style="--icon:url('icons/lucide/trash-2.svg')" aria-hidden="true"></span></button>
+        </div>`).join("");
+      list.querySelectorAll("[data-session-id]").forEach(button => button.addEventListener("click", () => selectSession(button.dataset.sessionId)));
+      list.querySelectorAll("[data-session-archive]").forEach(button => button.addEventListener("click", () => archiveSession(button.dataset.sessionArchive)));
+      list.querySelectorAll("[data-session-delete]").forEach(button => button.addEventListener("click", () => deleteSession(button.dataset.sessionDelete)));
+    }
+
+    function syncSessions() {
+      return runSync("sessions", async () => {
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/sessions`, { headers: sessionHeaders() });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          sessionState = await response.json();
+          saveLocalSessionState();
+        } catch (_) {
+          sessionState = localSessionState();
+          if (!sessionState.sessions.length) createSession(false);
+          showToast("桌面会话暂不可用，已使用本机缓存");
+        }
+        renderSessions();
+        renderSessionMessages();
+      });
+    }
+
+    let sessionPersistFlight = Promise.resolve();
+
+    async function persistSessions() {
+      const next = sessionPersistFlight.catch(() => {}).then(async () => {
+        saveLocalSessionState();
+        invalidateSync("sessions");
+        try {
+          const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/sessions`, { method: "POST", headers: sessionHeaders(true), body: JSON.stringify({ ...sessionState, deleted_session_ids: pendingDeletedSessionIDs }) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const saved = await response.json();
+          // Keep local mutations made while the request was in flight. A full
+          // replacement here could discard a queued model placeholder or reply.
+          if (Number.isFinite(Number(saved.revision))) sessionState.revision = Number(saved.revision);
+          pendingDeletedSessionIDs = [];
+          saveLocalSessionState();
+        } catch (_) {
+          showToast("已保存本机会话，桌面同步将在连接恢复后重试");
+        }
+        renderSessions();
+      });
+      sessionPersistFlight = next.catch(() => {});
+      return next;
+    }
+
+    function updateSessionJobMessage(sessionID, messageID, role, text) {
+      const session = sessionState.sessions.find(item => item.id === sessionID);
+      if (!session) return Promise.resolve();
+      session.messages = session.messages || [];
+      const now = Date.now() / 1000;
+      const existing = session.messages.find(item => item.id === messageID);
+      if (existing) {
+        existing.role = role;
+        existing.text = text;
+        existing.updated_at = now;
+      } else {
+        session.messages.push({ id: messageID, role, text, created_at: now, updated_at: now });
+      }
+      session.updated_at = now;
+      if (session.id === sessionState.active_session_id) renderSessionMessages();
+      return persistSessions();
+    }
+
+    function startSpiritJobPoll(jobID, sessionID, placeholderID) {
+      if (!jobID || backgroundJobPolls.has(jobID)) return;
+      const task = (async () => {
+        for (let attempt = 0; attempt < 180; attempt += 1) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          if (backgroundJobPolls.get(jobID) !== task) return;
+          const jobResponse = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/jobs/${encodeURIComponent(jobID)}`, { headers: sessionHeaders() }, 5000);
+          const jobData = await jobResponse.json();
+          if (!jobResponse.ok) throw new Error(jobData.error || `HTTP ${jobResponse.status}`);
+          const job = jobData.job || {};
+          if (["queued", "running"].includes(job.status)) continue;
+          if (job.status === "failed") {
+            await updateSessionJobMessage(sessionID, placeholderID, "system", `桌面 Runtime 任务失败：${job.error || "请查看运行监控。"}`);
+            return;
+          }
+          const result = job.result || job;
+          const reply = result.shortcut_output?.result || result.reply?.text || result.text || result.error || "桌面 Runtime 未返回有效回复。";
+          await updateSessionJobMessage(sessionID, placeholderID, result.error ? "system" : "assistant", result.error ? `桌面 Runtime 任务失败：${result.error}` : reply);
+          return;
+        }
+        await updateSessionJobMessage(sessionID, placeholderID, "system", "任务仍在桌面 Runtime 队列中，可在设备/监控页面继续查看。");
+      })().catch(async error => {
+        await updateSessionJobMessage(sessionID, placeholderID, "system", `后台回复同步失败：${error.message || error}`);
+      }).finally(() => {
+        if (backgroundJobPolls.get(jobID) === task) {
+          backgroundJobPolls.delete(jobID);
+          backgroundJobSessions.delete(jobID);
+        }
+      });
+      backgroundJobPolls.set(jobID, task);
+      backgroundJobSessions.set(jobID, sessionID);
+    }
+
+    function createSession(persist = true) {
+      const now = Date.now() / 1000;
+      const session = { id: `session_ios_${crypto.randomUUID ? crypto.randomUUID() : now}`, title: "新对话", status: "active", created_at: now, updated_at: now, messages: [] };
+      sessionState.sessions.push(session);
+      sessionState.active_session_id = session.id;
+      renderSessionMessages();
+      if (persist) persistSessions();
+      return session;
+    }
+
+    function selectSession(sessionID) {
+      if (!sessionID || !sessionState.sessions.some(item => item.id === sessionID)) return;
+      sessionState.active_session_id = sessionID;
+      renderSessions();
+      renderSessionMessages();
+      persistSessions();
+      document.getElementById("sessionDialog").close();
+      showToast("已切换会话");
+    }
+
+    function archiveSession(sessionID) {
+      const session = sessionState.sessions.find(item => item.id === sessionID);
+      if (!session) return;
+      session.status = "archived";
+      session.updated_at = Date.now() / 1000;
+      persistSessions();
+      showToast("会话已归档");
+    }
+
+    function deleteSession(sessionID) {
+      if (!sessionID || !confirm("删除这条会话？桌面端共享记录也会删除。")) return;
+      for (const [jobID, pendingSessionID] of backgroundJobSessions.entries()) {
+        if (pendingSessionID === sessionID) {
+          backgroundJobPolls.delete(jobID);
+          backgroundJobSessions.delete(jobID);
+        }
+      }
+      sessionState.sessions = sessionState.sessions.filter(item => item.id !== sessionID);
+      if (!pendingDeletedSessionIDs.includes(sessionID)) pendingDeletedSessionIDs.push(sessionID);
+      if (!sessionState.sessions.length) createSession(false);
+      if (sessionState.active_session_id === sessionID) sessionState.active_session_id = sessionState.sessions[0].id;
+      renderSessions();
+      renderSessionMessages();
+      persistSessions();
+      showToast("会话已删除");
+    }
+
+    function storedThemeMode() {
+      try { return localStorage.getItem("spiritkin_theme_mode") || "system"; }
+      catch (_) { return "system"; }
+    }
+
+    function syncThemeButtons(mode) {
+      document.querySelectorAll("[data-theme-mode]").forEach(button => {
+        const active = button.dataset.themeMode === mode;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+    }
+
+    function selectTab(tab) {
+      if (!pageMeta[tab] || activeTab === tab) return;
+      activeTab = tab;
+      tabs.forEach(button => {
+        const active = button.dataset.tab === tab;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", String(active));
+      });
+      panels.forEach(panel => panel.classList.toggle("active", panel.dataset.panel === tab));
+      document.getElementById("pageTitle").textContent = pageMeta[tab][0];
+      document.getElementById("pageSubtitle").textContent = pageMeta[tab][1];
+      composerWrap.hidden = tab !== "chat";
+      document.getElementById("historyButton").style.visibility = tab === "chat" ? "visible" : "hidden";
+      document.getElementById("newButton").style.visibility = tab === "chat" ? "visible" : "hidden";
+      window.scrollTo({ top: 0, behavior: "auto" });
+      const avatar = document.getElementById("avatarStageFrame");
+      if (avatar?.contentWindow && avatarFramePaused !== (tab !== "chat")) {
+        avatarFramePaused = tab !== "chat";
+        avatar.contentWindow.postMessage({ type: "spiritkin.avatar.pause", paused: avatarFramePaused }, "*");
+      }
+      if (tab === "chat") scheduleAvatarFrameLoad();
+      else clearTimeout(avatarLoadTimer);
+      if (tab === "workflow") { syncDomains(); syncCapabilities(); syncPools(); syncGrowth(); syncMonitor(); }
+      if (tab === "device") { syncMonitor(); syncRuntimeHosts(); }
+      if (tab === "ecommerce") syncEcommerce();
+      if (tab === "profile") { syncMusic(); syncChannels(); }
+    }
+
+    tabs.forEach(button => button.addEventListener("click", () => selectTab(button.dataset.tab)));
+    document.getElementById("avatarButton").addEventListener("click", () => openLazyFrameDialog("avatarDialog"));
+    document.getElementById("avatarStageFrame").dataset.src = avatarURL();
+    scheduleAvatarFrameLoad();
+    renderAvatarPhoto();
+    document.getElementById("avatarPhotoInput").addEventListener("change", async event => {
+      const file = event.currentTarget.files?.[0];
+      if (!file) return;
+      try { setAvatarSource(await resizeAvatarFile(file)); showToast("已从照片设置主控端头像"); } catch (error) { showToast(error.message || String(error)); }
+      event.currentTarget.value = "";
+    });
+    document.getElementById("resetAvatarButton").addEventListener("click", () => setAvatarSource(""));
+    document.getElementById("avatarDialog").addEventListener("close", event => {
+      event.currentTarget.querySelector("iframe").removeAttribute("src");
+    });
+    document.addEventListener("visibilitychange", () => {
+      const paused = document.visibilityState === "hidden" || activeTab !== "chat";
+      const avatar = document.getElementById("avatarStageFrame");
+      if (avatar?.contentWindow && avatarFramePaused !== paused) {
+        avatarFramePaused = paused;
+        avatar.contentWindow.postMessage({ type: "spiritkin.avatar.pause", paused }, "*");
+      }
+      if (pageIsVisible()) {
+        if (activeTab === "chat") scheduleAvatarFrameLoad();
+        if (activeTab === "workflow") { syncDomains(); syncCapabilities(); syncPools(); syncGrowth(); syncMonitor(); }
+        if (activeTab === "device") { syncMonitor(); syncRuntimeHosts(); }
+        if (activeTab === "ecommerce") syncEcommerce();
+        if (activeTab === "profile") { syncMusic(); syncChannels(); }
+      }
+    });
+    document.getElementById("terminalDialog").addEventListener("close", event => event.currentTarget.querySelector("iframe").removeAttribute("src"));
+    ["shortcutsButton", "profileShortcutsButton"].forEach(id => document.getElementById(id).addEventListener("click", openShortcuts));
+    document.getElementById("openTerminalFromShortcuts").addEventListener("click", () => {
+      document.getElementById("shortcutsDialog").close();
+      openLazyFrameDialog("terminalDialog");
+    });
+    document.getElementById("ecommerceBackButton").addEventListener("click", () => selectTab("workflow"));
+    document.getElementById("refreshEcommerceButton").addEventListener("click", syncEcommerce);
+    document.getElementById("refreshRuntimeHostsButton").addEventListener("click", () => { invalidateSync("runtime-host"); syncRuntimeHosts({ force: true }); });
+    document.getElementById("runtimeMigrationForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!document.getElementById("runtimeMigrationConfirm").checked) { showToast("请先确认迁移与副作用对账规则"); return; }
+      try {
+        const data = await postJSON("/ios/runtime-host", {
+          action: "request_migration",
+          checkpoint_id: document.getElementById("runtimeCheckpointSelect").value,
+          target_host_id: document.getElementById("runtimeTargetHostSelect").value,
+          confirmed: true
+        });
+        runtimeHostState = data.runtime_host || runtimeHostState;
+        document.getElementById("runtimeMigrationDialog").close();
+        renderRuntimeHosts();
+        showToast("迁移请求已交给目标 Runtime Host");
+      } catch (error) { showToast(`迁移请求失败：${error.message || error}`); }
+    });
+    document.getElementById("openRawTerminalButton").addEventListener("click", () => openLazyFrameDialog("terminalDialog"));
+    document.getElementById("autoRepairEcommerceButton").addEventListener("click", async event => {
+      event.currentTarget.disabled = true;
+      try { await postJSON("/ios/monitor", { action: "auto_repair" }); invalidateSync("ecommerce"); await syncEcommerce(); showToast("监控项已执行自动修复"); }
+      catch (error) { showToast(`自动修复失败：${error.message || error}`); }
+      finally { event.currentTarget.disabled = false; }
+    });
+    document.getElementById("managePoolsButton").addEventListener("click", () => openPoolDialog("skills"));
+    document.getElementById("addCapabilityButton").addEventListener("click", () => openEditor("capability"));
+    document.getElementById("growthAdvanceButton").addEventListener("click", () => submitGrowthAction("advance_stage"));
+    document.getElementById("growthEscalateButton").addEventListener("click", submitGrowthEscalation);
+    document.getElementById("growthApproveButton").addEventListener("click", () => submitGrowthAction("review_candidate"));
+    document.getElementById("growthRejectButton").addEventListener("click", () => submitGrowthAction("review_candidate", "reject"));
+    document.getElementById("growthRegisterButton").addEventListener("click", () => submitGrowthAction("register_candidate"));
+    document.getElementById("growthPrepareSandboxBundleButton").addEventListener("click", submitGrowthSandboxBundle);
+    document.getElementById("growthRunBenchmarkButton").addEventListener("click", submitGrowthBenchmark);
+    document.getElementById("growthRunModelJuryButton").addEventListener("click", submitGrowthModelJury);
+    document.querySelectorAll("[data-pool-kind]").forEach(button => button.addEventListener("click", () => { poolKind = button.dataset.poolKind; document.querySelectorAll("[data-pool-kind]").forEach(item => item.classList.toggle("active", item === button)); renderPoolManager(); }));
+    document.getElementById("poolSearchInput").addEventListener("input", renderPoolManager);
+    document.getElementById("addPoolItemButton").addEventListener("click", () => openEditor(poolKind === "skills" ? "skill" : "workflow"));
+    document.getElementById("editorForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const name = document.getElementById("editorName").value.trim();
+      const label = document.getElementById("editorLabel").value.trim();
+      const domain = document.getElementById("editorDomain").value.trim() || "general";
+      const detail = document.getElementById("editorDetail").value.trim();
+      if (!name) return;
+      try {
+        if (editorContext.kind === "domain") {
+          domainState = await postJSON("/ios/domains", { action: editorContext.item ? "update" : "create", id: name, title: label || name, description: detail });
+          renderDomains();
+        } else if (editorContext.kind === "capability") {
+          capabilityState = await postJSON("/ios/capabilities", { action: editorContext.item ? "update" : "create", capability_id: name, label, detail, enabled: editorContext.item?.enabled ?? true });
+          renderCapabilities();
+        } else if (editorContext.kind === "skill") {
+          const existing = editorContext.item;
+          poolState = await postJSON("/ios/pools", { pool: "skills", action: existing ? "update" : "create", name, description: detail, metadata: { domain, status: "draft" } });
+          renderPoolSummary();
+        } else {
+          const existing = editorContext.item;
+          const definition = { name, domain, description: detail, metadata: { display_name: label || name, description: detail, domain } };
+          poolState = await postJSON("/ios/pools", { pool: "workflows", action: existing ? "update" : "create", name, workflow_name: name, definition });
+          renderPoolSummary();
+        }
+        document.getElementById("editorDialog").close();
+        if (document.getElementById("poolDialog").open) renderPoolManager();
+        showToast("已保存");
+      } catch (error) { showToast(`保存失败：${error.message || error}`); }
+    });
+    document.getElementById("editorDeleteButton").addEventListener("click", () => {
+      if (!editorContext?.item) return;
+      if (editorContext.kind === "domain") deleteDomain(editorContext.item.domain_id || editorContext.item.id);
+      else if (editorContext.kind === "capability") deleteCapability(editorContext.item.capability_id);
+      else deletePoolItem(editorContext.item.name);
+    });
+    document.getElementById("addDomainButton").addEventListener("click", () => openEditor("domain"));
+    document.getElementById("addEcommerceTaskButton").addEventListener("click", () => document.getElementById("taskDialog").showModal());
+    document.getElementById("addCommerceResourceButton").addEventListener("click", () => openCommerceResourceEditor());
+    document.getElementById("commerceResourceType").addEventListener("change", syncCommerceResourceFields);
+    document.getElementById("commerceResourceForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      try { await saveCommerceResource(); }
+      catch (error) { showToast(`保存失败：${error.message || error}`); }
+    });
+    document.getElementById("deleteCommerceResourceButton").addEventListener("click", async () => {
+      try { await deleteCommerceResource(); }
+      catch (error) { showToast(`删除失败：${error.message || error}`); }
+    });
+    document.getElementById("uploadArtifactButton").addEventListener("click", () => document.getElementById("artifactFileInput").click());
+    document.getElementById("artifactFileInput").addEventListener("change", async event => {
+      try { await uploadArtifacts(event.currentTarget.files); }
+      catch (error) { showToast(`上传失败：${error.message || error}`); }
+      finally { event.currentTarget.value = ""; }
+    });
+    document.getElementById("profileMusicButton").addEventListener("click", async () => {
+      document.getElementById("musicDialog").showModal();
+      invalidateSync("music");
+      await syncMusic({ force: true });
+    });
+    document.querySelectorAll("[data-music-action]").forEach(button => button.addEventListener("click", () => runMusicAction(button.dataset.musicAction)));
+    document.getElementById("musicVolume").addEventListener("input", event => { document.getElementById("musicVolumeValue").textContent = `${Math.round(Number(event.currentTarget.value) * 100)}%`; });
+    document.getElementById("musicVolume").addEventListener("change", event => runMusicAction("volume", { volume: Number(event.currentTarget.value) }));
+    document.getElementById("clearMusicQueueButton").addEventListener("click", () => runMusicAction("clear"));
+    document.getElementById("taskForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      try { ecommerceState = (await postJSON("/ios/ecommerce", { action: "create_task", title: document.getElementById("taskTitle").value.trim(), task_type: document.getElementById("taskType").value.trim() || "ecommerce_operation", notes: document.getElementById("taskNotes").value.trim() })).ecommerce; document.getElementById("taskDialog").close(); renderEcommerce(); showToast("电商任务已创建"); }
+      catch (error) { showToast(`创建失败：${error.message || error}`); }
+    });
+    document.getElementById("attachButton").addEventListener("click", () => document.getElementById("attachmentDialog").showModal());
+    document.getElementById("historyButton").addEventListener("click", () => { renderSessions(); document.getElementById("sessionDialog").showModal(); });
+    document.getElementById("newSessionButton").addEventListener("click", () => { createSession(); document.getElementById("sessionDialog").close(); document.getElementById("composerInput").focus(); });
+    document.getElementById("refreshSessionsButton").addEventListener("click", syncSessions);
+    document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close()));
+    document.querySelectorAll("[data-attachment]").forEach(button => button.addEventListener("click", () => {
+      document.getElementById("attachmentDialog").close();
+      showToast(`${button.dataset.attachment}已添加到输入区`);
+    }));
+    document.querySelectorAll("[data-toast]").forEach(button => button.addEventListener("click", () => showToast(button.dataset.toast)));
+
+    document.getElementById("composerForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const input = document.getElementById("composerInput");
+      const text = input.value.trim();
+      if (!text) { showToast("请输入消息"); input.focus(); return; }
+      let active = sessionState.sessions.find(item => item.id === sessionState.active_session_id);
+      if (!active) active = createSession(false);
+      const requestSessionID = active.id;
+      const now = Date.now() / 1000;
+      active.messages = active.messages || [];
+      active.messages.push({ id: `message_${now}`, role: "user", text, created_at: now, updated_at: now });
+      active.updated_at = now;
+      if (active.title === "新对话") active.title = text.slice(0, 32);
+      persistSessions();
+      const user = document.createElement("article");
+      user.className = "message user";
+      user.innerHTML = `<div class="message-body"><p></p><span class="message-time">现在</span></div>`;
+      user.querySelector("p").textContent = text;
+      document.getElementById("messageList").appendChild(user);
+      input.value = "";
+      requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" }));
+      try {
+        const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/shortcut`, { method: "POST", headers: sessionHeaders(true), body: JSON.stringify({ shortcut_name: "Ask Spirit", action: "ask_spirit", input_text: text, async: true, metadata: { frontend: "ios_controller_prototype", session_id: requestSessionID } }) }, 5000);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || data.error || `HTTP ${response.status}`);
+        if (data.job_id) {
+          showToast("请求已进入桌面 Runtime 队列");
+          const placeholderID = `job_${data.job_id}`;
+          const targetSession = sessionState.sessions.find(item => item.id === requestSessionID);
+          if (!targetSession) throw new Error("目标会话已被删除，无法继续同步模型任务");
+          targetSession.messages = targetSession.messages || [];
+          targetSession.messages.push({ id: placeholderID, role: "system", text: "请求已进入桌面 Runtime 队列，iOS 将在后台继续同步结果。", created_at: Date.now() / 1000, updated_at: Date.now() / 1000 });
+          targetSession.updated_at = Date.now() / 1000;
+          persistSessions();
+          renderSessionMessages();
+          startSpiritJobPoll(data.job_id, requestSessionID, placeholderID);
+          return;
+        }
+        const replyText = data.error
+          ? `桌面 Runtime 任务失败：${data.error}`
+          : (data.shortcut_output?.result || data.reply?.text || data.text || "桌面 Runtime 未返回有效回复。");
+        const targetSession = sessionState.sessions.find(item => item.id === requestSessionID);
+        if (!targetSession) throw new Error("目标会话已被删除，无法保存模型回复");
+        targetSession.messages = targetSession.messages || [];
+        targetSession.messages.push({ id: `message_${Date.now()}`, role: "assistant", text: replyText, created_at: Date.now() / 1000, updated_at: Date.now() / 1000 });
+        targetSession.updated_at = Date.now() / 1000;
+        persistSessions();
+        renderSessionMessages();
+      } catch (error) {
+        const reply = document.createElement("article");
+        reply.className = "message assistant";
+        reply.innerHTML = `<img class="message-avatar" src="icons/spiritkin-app-icon.png" alt=""><div class="message-body"><p></p><span class="message-time">主控未完成</span></div>`;
+        reply.querySelector("p").textContent = `桌面 Runtime 未完成本次请求：${error.message || error}`;
+        document.getElementById("messageList").appendChild(reply);
+      }
+    });
+
+    document.getElementById("approveButton").addEventListener("click", event => {
+      event.currentTarget.disabled = true;
+      event.currentTarget.textContent = "已批准";
+      document.getElementById("chatProgress").style.width = "100%";
+      event.currentTarget.closest(".action-tool").querySelector(".status").textContent = "预览已下发";
+      showToast("已批准设备端预览，仍不会自动提交");
+    });
+    document.getElementById("viewWorkflowButton").addEventListener("click", () => selectTab("workflow"));
+    document.getElementById("startWorkflowButton").addEventListener("click", () => openEditor("workflow"));
+    document.getElementById("copyPairingTokenButton").addEventListener("click", async () => {
+      const token = latestPairing.pairing_token || "";
+      if (!token) { showToast("当前没有可复制的配对码"); return; }
+      try { await navigator.clipboard.writeText(token); showToast("一次性配对码已复制"); }
+      catch (_) { showToast("浏览器未授权剪贴板，请在窗口中手动复制"); }
+    });
+    document.getElementById("openPairingLinkButton").addEventListener("click", () => {
+      if (latestPairing.deep_link) window.location.href = latestPairing.deep_link;
+    });
+    document.getElementById("newButton").addEventListener("click", () => { createSession(); document.getElementById("composerInput").focus(); showToast("已开始新对话"); });
+    document.getElementById("appearanceButton").addEventListener("click", () => {
+      const next = { system: "light", light: "dark", dark: "system" }[storedThemeMode()];
+      window.SPIRITKIN_THEME.apply(next, { persist: true });
+      syncThemeButtons(next);
+      showToast(next === "system" ? "外观已跟随系统" : next === "light" ? "已切换白天模式" : "已切换黑夜模式");
+    });
+    document.getElementById("voicePreviewButton").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "播放中";
+      let objectURL = "";
+      let restored = false;
+      const restore = () => {
+        if (restored) return;
+        restored = true;
+        button.disabled = false;
+        button.textContent = "试听";
+        if (objectURL) URL.revokeObjectURL(objectURL);
+      };
+      try {
+        const response = await fetchWithTimeout(`${CONTROL_PLANE_URL}/ios/voice-preview`, { headers: sessionHeaders() }, 12000);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        objectURL = URL.createObjectURL(await response.blob());
+        const audio = new Audio(objectURL);
+        audio.addEventListener("ended", restore, { once: true });
+        audio.addEventListener("error", () => { restore(); showToast("参考音频暂不可播放"); }, { once: true });
+        await audio.play();
+      } catch (_) {
+        restore();
+        showToast("请允许浏览器播放本地音频");
+      }
+    });
+
+    document.querySelectorAll("[data-theme-mode]").forEach(button => button.addEventListener("click", () => {
+      const mode = button.dataset.themeMode;
+      window.SPIRITKIN_THEME.apply(mode, { persist: true });
+      syncThemeButtons(mode);
+      showToast(mode === "system" ? "外观已跟随系统" : mode === "light" ? "已切换白天模式" : "已切换黑夜模式");
+    }));
+    syncThemeButtons(storedThemeMode());
+
+    document.querySelectorAll("[data-filter]").forEach(button => button.addEventListener("click", () => {
+      workflowFilter = button.dataset.filter;
+      button.parentElement.querySelectorAll("[data-filter]").forEach(item => item.classList.toggle("active", item === button));
+      renderWorkflowRuns();
+    }));
+    renderMonitorViews();
+    syncSessions();
+    sendHeartbeat();
+    window.setInterval(sendHeartbeat, 60000);
+    window.setInterval(() => {
+      if (!pageIsVisible()) return;
+      if (activeTab === "workflow") { syncDomains(); syncCapabilities(); syncPools(); syncGrowth(); syncMonitor(); }
+      if (activeTab === "device") syncMonitor();
+      if (activeTab === "ecommerce") syncEcommerce();
+      if (activeTab === "profile") { syncMusic(); syncChannels(); }
+    }, 30000);
+  </script>
+</body>
+</html>

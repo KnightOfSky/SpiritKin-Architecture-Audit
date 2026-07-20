@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SpiritKin PDD Extractor</title>
+  <link rel="icon" href="icons/icon16.png">
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="app-header">
+      <div class="brand-lockup">
+        <img src="icons/icon32.png" width="28" height="28" alt="">
+        <div>
+          <strong>商品抓取</strong>
+          <span>SpiritKin · PDD Web</span>
+        </div>
+      </div>
+      <div class="connection" id="connectionState" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>未配对</span>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="扩展视图">
+      <button class="tab active" data-tab="queue" aria-selected="true">队列</button>
+      <button class="tab" data-tab="results" aria-selected="false">结果 <span id="resultCount">0</span></button>
+      <button class="tab" data-tab="settings" aria-selected="false">设置</button>
+    </nav>
+
+    <main>
+      <section class="view active" id="view-queue" aria-labelledby="queueHeading">
+        <div class="status-band" id="serviceBand">
+          <div>
+            <h1 id="queueHeading">手机链接队列</h1>
+            <p id="serviceText">配对后可领取手机回传的 PDD 网页链接</p>
+          </div>
+          <button class="button secondary compact" id="testConnectionBtn">检查连接</button>
+        </div>
+
+        <section class="task-section">
+          <div class="section-heading">
+            <h2>当前页面</h2>
+            <span class="subtle" id="activePageState">等待检测</span>
+          </div>
+          <div class="command-row">
+            <button class="button secondary" id="extractCurrentBtn">抓取当前商品</button>
+            <button class="button ghost" id="openLoginBtn">打开 PDD 登录页</button>
+          </div>
+        </section>
+
+        <section class="task-section queue-section">
+          <div class="section-heading">
+            <h2>待抓取链接</h2>
+            <span class="subtle" id="lastSyncText">尚未同步</span>
+          </div>
+          <div class="queue-controls">
+            <button class="button primary" id="syncBtn">领取并抓取</button>
+            <button class="button danger hidden" id="stopBtn">停止</button>
+          </div>
+
+          <div class="progress-block" id="progressBlock">
+            <div class="progress-meta">
+              <span id="phaseText">空闲</span>
+              <span id="progressText">0 / 0</span>
+            </div>
+            <div class="progress-track" aria-hidden="true"><span id="progressFill"></span></div>
+          </div>
+
+          <div class="metrics" aria-label="本轮抓取统计">
+            <div><span>总数</span><strong id="totalMetric">0</strong></div>
+            <div><span>完成</span><strong class="success-text" id="completedMetric">0</strong></div>
+            <div><span>失败</span><strong class="danger-text" id="failedMetric">0</strong></div>
+          </div>
+
+          <div class="current-task" id="currentTask">
+            <span class="task-marker" aria-hidden="true"></span>
+            <div>
+              <strong>暂无运行任务</strong>
+              <p>仅处理 yangkeduo.com / pinduoduo.com 网页链接</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="task-section log-section">
+          <div class="section-heading">
+            <h2>运行记录</h2>
+            <button class="text-button" id="clearLogsBtn">清空</button>
+          </div>
+          <div class="log-list" id="logList"><div class="empty-state">暂无运行记录</div></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-results" aria-labelledby="resultsHeading">
+        <div class="view-header">
+          <div>
+            <h1 id="resultsHeading">抓取结果</h1>
+            <p>rawData、图片、SKU 与完整性门禁</p>
+          </div>
+          <button class="button secondary compact" id="exportBtn">导出最新 JSON</button>
+        </div>
+        <div class="result-list" id="resultList"><div class="empty-state">暂无抓取结果</div></div>
+      </section>
+
+      <section class="view" id="view-settings" aria-labelledby="settingsHeading">
+        <div class="view-header">
+          <div>
+            <h1 id="settingsHeading">扩展设置</h1>
+            <p id="extensionIdentity">浏览器扩展尚未初始化</p>
+          </div>
+        </div>
+
+        <form id="settingsForm">
+          <fieldset>
+            <legend>控制面</legend>
+            <label class="field">
+              <span>服务地址</span>
+              <input id="controlPlaneUrl" type="url" autocomplete="url" placeholder="http://127.0.0.1:8791">
+            </label>
+            <div class="field-row">
+              <label class="field">
+                <span>工作区</span>
+                <input id="workspaceId" type="text" readonly>
+              </label>
+              <label class="field small-field">
+                <span>每批领取</span>
+                <input id="claimLimit" type="number" min="1" max="20">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>配对</legend>
+            <label class="field">
+              <span>一次性配对 Token</span>
+              <input id="pairingToken" type="password" autocomplete="off" placeholder="pairing token">
+            </label>
+            <div class="command-row">
+              <button class="button primary" id="pairBtn" type="button">配对扩展</button>
+              <span class="subtle" id="pairingState">未保存管理 Token</span>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>自动化</legend>
+            <label class="toggle-row">
+              <span><strong>自动检查队列</strong><small>每分钟检查一次网页链接</small></span>
+              <input id="autoPoll" type="checkbox">
+            </label>
+            <label class="toggle-row">
+              <span><strong>完成后关闭标签页</strong><small>登录异常时保留页面</small></span>
+              <input id="autoCloseTabs" type="checkbox">
+            </label>
+          </fieldset>
+
+          <button class="button primary full" type="submit">保存设置</button>
+          <p class="form-message" id="formMessage" role="status"></p>
+        </form>
+      </section>
+    </main>
+  </div>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

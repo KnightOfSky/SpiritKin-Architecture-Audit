@@ -1,0 +1,32 @@
+name: Native iOS source build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  xcodegen-build:
+    name: Generate and build SpiritKin iOS
+    runs-on: macos-14
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ios/SpiritKinTerminal
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Verify Share Extension target
+        run: xcodebuild -project SpiritKinTerminal.xcodeproj -list | grep SpiritKinShare
+      - name: Build unsigned simulator target
+        run: >-
+          xcodebuild -project SpiritKinTerminal.xcodeproj
+          -scheme SpiritKinTerminal
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          SWIFT_TREAT_WARNINGS_AS_ERRORS=NO
+          build

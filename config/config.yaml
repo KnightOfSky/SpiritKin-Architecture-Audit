@@ -1,0 +1,97 @@
+hotword:
+  threshold: 0.65
+  model_path: "perception/models/hotword.onnx"
+
+runtime:
+  hotword: "Spirit"
+  knowledge_backend: "embedding"
+
+growth:
+  sandbox:
+    # Candidate code still requires an explicit governance confirmation and
+    # runs with no network, no host mounts, a read-only root and hard limits.
+    execution_enabled: true
+    approved_images:
+      - "python@sha256:d764629ce0ddd8c71fd371e9901efb324a95789d2315a47db7e4d27e78f1b0e9"
+    probe_command: ["python", "-I", "-c", "print('spiritkin-sandbox-probe')"]
+
+search:
+  web_provider: "brave,duckduckgo"
+
+knowledge:
+  backend: "embedding"
+  embedding:
+    # Dedicated llama-server instance: --embedding --pooling mean --port 8081
+    provider: "llamacpp"
+    model: "text-embedding-nomic-embed-text-v1.5"
+    base_url: "http://127.0.0.1:8081/v1"
+    api_key: ""
+  reranker:
+    # LLM-based rerank; reuses the llama.cpp chat instance on :8080.
+    provider: "llamacpp"
+    model: "qwen/qwen3.6-35b-a3b"
+    base_url: "http://127.0.0.1:8080/v1"
+    api_key: ""
+
+models:
+  text:
+    default:
+      provider: "llamacpp"
+      model: "qwen/qwen3.6-35b-a3b"
+      base_url: "http://127.0.0.1:8080/v1"
+      api_key: ""
+    # base_url override via LLAMACPP_BASE_URL, api_key via LLAMACPP_API_KEY.
+    default_mode: "balanced"
+    modes:
+      fast:
+        temperature: 0.6
+        top_p: 0.85
+        max_new_tokens: 256
+      balanced:
+        temperature: 0.4
+        top_p: 0.85
+        max_new_tokens: 512
+      strong:
+        temperature: 0.2
+        top_p: 0.9
+        max_new_tokens: 1024
+  vision:
+    default:
+      provider: "llamacpp"
+      model: "qwen/qwen3.6-35b-a3b"
+      base_url: "http://127.0.0.1:8080/v1"
+      api_key: ""
+    default_mode: "default"
+    modes:
+      default:
+        temperature: 0.0
+        max_tokens: 25
+      fast:
+        temperature: 0.0
+        max_tokens: 20
+      detailed:
+        temperature: 0.0
+        max_tokens: 80
+
+vision:
+  camera_id: 0
+  resolution: [640, 480]
+  qwen_vl_model: "qwen/qwen3.6-35b-a3b"
+
+tts:
+  enabled: true
+  provider: "cosyvoice"
+  voice_profile: "spiritkin.primary.v1"
+  voice_profile_path: "state/voice-profiles/spiritkin.primary.v1/profile.json"
+  base_url: "http://127.0.0.1:50000"
+  timeout_seconds: 30
+  voice: "Fairy"
+  rate: "+0%"
+  fallback_provider: "edge_tts"
+  pyttsx3:
+    rate: 175
+    volume: 0.95
+
+live2d:
+  default_model: "haru"
+  idle_animation_interval: 15

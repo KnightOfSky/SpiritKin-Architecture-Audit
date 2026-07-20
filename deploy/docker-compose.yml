@@ -1,0 +1,18 @@
+# deploy/docker-compose.yml
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    runtime: nvidia  # 启用 GPU
+    ports:
+      - "8765:8765"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix  # Linux GUI（可选）
+      - /dev/video0:/dev/video0        # 摄像头
+    environment:
+      - SPIRIT_HOTWORD=${SPIRIT_HOTWORD:-Spirit}
+      - SPIRIT_KNOWLEDGE_BACKEND=${SPIRIT_KNOWLEDGE_BACKEND:-keyword}
+      - DISPLAY=${DISPLAY:-}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}

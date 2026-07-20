@@ -1,0 +1,25 @@
+<resources>
+    <!-- Generated from design/tokens.json v4 (light). -->
+    <color name="fantasy_canvas">#EEF5FA</color>
+    <color name="fantasy_surface">#F5FBFF</color>
+    <color name="fantasy_surface_2">#E9F2F7</color>
+    <color name="fantasy_surface_3">#DEEAF1</color>
+    <color name="fantasy_line">#C4D4DF</color>
+    <color name="fantasy_control_border">#70869A</color>
+    <color name="fantasy_text">#273A4C</color>
+    <color name="fantasy_muted">#4D667B</color>
+    <color name="fantasy_faint">#5F7689</color>
+    <color name="fantasy_accent">#126DB6</color>
+    <color name="fantasy_on_accent">#FFFFFF</color>
+    <color name="fantasy_accent_2">#0E6F9F</color>
+    <color name="fantasy_copper">#B44A00</color>
+    <color name="fantasy_on_copper">#FFFFFF</color>
+    <color name="fantasy_success_fg">#187A43</color>
+    <color name="fantasy_success_bg">#E7F5EC</color>
+    <color name="fantasy_warning_fg">#875900</color>
+    <color name="fantasy_warning_bg">#FFF3D6</color>
+    <color name="fantasy_danger_fg">#B52A2E</color>
+    <color name="fantasy_danger_bg">#FCEBEC</color>
+    <color name="fantasy_info_fg">#126DB6</color>
+    <color name="fantasy_info_bg">#E8F2FB</color>
+</resources>

@@ -1,0 +1,256 @@
+{
+  "version": "spiritkin.avatar3d.v1",
+  "format": "glb",
+  "name": "SpiritKinAI Rigged",
+  "model": "models/spirit3d/SpiritKinAI.rigged.glb",
+  "camera": {
+    "fov": 35,
+    "near": 0.1,
+    "far": 100,
+    "position": [
+      0,
+      1.05,
+      3.4
+    ],
+    "target": [
+      0,
+      0.95,
+      0
+    ]
+  },
+  "controls": {
+    "min_distance": 1.2,
+    "max_distance": 5.8
+  },
+  "lights": {
+    "hemisphere_intensity": 1.8,
+    "directional_intensity": 2.4,
+    "directional_position": [
+      2,
+      4,
+      3
+    ]
+  },
+  "stage": {
+    "floor_radius": 1.0,
+    "floor_opacity": 0,
+    "floor_visible": false
+  },
+  "fit": {
+    "base_scale": 1,
+    "target_size": 1.7,
+    "auto_fit": true,
+    "center": true,
+    "ground": true
+  },
+  "transform": {
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "rotation_deg": [
+      0,
+      0,
+      0
+    ],
+    "scale": 1
+  },
+  "motion": {
+    "idle_bob": 0.006,
+    "speaking_bob": 0.035,
+    "idle_yaw": 0.025,
+    "speaking_yaw": 0.06,
+    "breathing_scale": 0.01,
+    "bone_motion": 0.045
+  },
+  "visemes": {
+    "idle": {
+      "keywords": [
+        "mouth",
+        "jaw",
+        "viseme"
+      ],
+      "intensity": 0
+    },
+    "open": {
+      "keywords": [
+        "mouthopen",
+        "jawopen",
+        "open",
+        "viseme_aa",
+        "aa"
+      ],
+      "intensity": 1
+    },
+    "a": {
+      "keywords": [
+        "aa",
+        "ah",
+        "viseme_aa",
+        "mouthopen"
+      ],
+      "intensity": 1
+    },
+    "aa": {
+      "keywords": [
+        "aa",
+        "ah",
+        "viseme_aa",
+        "mouthopen"
+      ],
+      "intensity": 1
+    },
+    "o": {
+      "keywords": [
+        "oo",
+        "ou",
+        "oh",
+        "viseme_oh",
+        "mouth_o"
+      ],
+      "intensity": 0.85
+    },
+    "ou": {
+      "keywords": [
+        "oo",
+        "ou",
+        "oh",
+        "viseme_oh",
+        "mouth_o"
+      ],
+      "intensity": 0.85
+    },
+    "oh": {
+      "keywords": [
+        "oo",
+        "ou",
+        "oh",
+        "viseme_oh",
+        "mouth_o"
+      ],
+      "intensity": 0.85
+    },
+    "i": {
+      "keywords": [
+        "ih",
+        "ee",
+        "viseme_ih",
+        "mouth_i"
+      ],
+      "intensity": 0.75
+    },
+    "ih": {
+      "keywords": [
+        "ih",
+        "ee",
+        "viseme_ih",
+        "mouth_i"
+      ],
+      "intensity": 0.75
+    },
+    "ee": {
+      "keywords": [
+        "ih",
+        "ee",
+        "viseme_ih",
+        "mouth_i"
+      ],
+      "intensity": 0.75
+    }
+  },
+  "expressions": {
+    "neutral": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "happy": {
+      "keywords": [
+        "smile",
+        "happy",
+        "joy"
+      ],
+      "intensity": 0.65,
+      "pose": {
+        "yaw": 0.06,
+        "bob": 0.012,
+        "scale": 1.03
+      }
+    },
+    "thinking": {
+      "keywords": [
+        "think",
+        "squint",
+        "blink"
+      ],
+      "intensity": 0.28,
+      "pose": {
+        "yaw": -0.05,
+        "bob": 0.004,
+        "scale": 1.01
+      }
+    },
+    "waiting": {
+      "keywords": [
+        "blink",
+        "idle"
+      ],
+      "intensity": 0.22,
+      "pose": {
+        "yaw": 0.025,
+        "bob": 0.004,
+        "scale": 1.01
+      }
+    },
+    "alert": {
+      "keywords": [
+        "surprise",
+        "alert",
+        "wide"
+      ],
+      "intensity": 0.55,
+      "pose": {
+        "yaw": 0.1,
+        "bob": 0.008,
+        "scale": 1.04
+      }
+    },
+    "error": {
+      "keywords": [
+        "sad",
+        "frown",
+        "angry"
+      ],
+      "intensity": 0.45,
+      "pose": {
+        "yaw": -0.08,
+        "bob": -0.006,
+        "scale": 0.97
+      }
+    },
+    "confused": {
+      "keywords": [
+        "confused",
+        "brow",
+        "squint"
+      ],
+      "intensity": 0.45,
+      "pose": {
+        "yaw": -0.1,
+        "bob": 0.004,
+        "scale": 1.02
+      }
+    }
+  },
+  "pipeline": {
+    "source": "blender_avatar3d_pipeline.py",
+    "rigging": "heuristic_auto_weights",
+    "expressions": "heuristic_shape_keys",
+    "requires_manual_polish": true
+  }
+}

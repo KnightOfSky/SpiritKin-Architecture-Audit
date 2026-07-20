@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "updated": "2026-07-11",
+  "policy": {
+    "brand_latin": "Orbitron is limited to pure-Latin brand display text.",
+    "mono": "JetBrains Mono is used for code, terminals, ports, and structured data.",
+    "cjk": "CJK text uses platform fonts and is not bundled.",
+    "forbidden_production_family": "New Rocker"
+  },
+  "fonts": {
+    "orbitron": {
+      "family": "Orbitron",
+      "version": "2.001",
+      "license": "OFL-1.1",
+      "repository": "https://github.com/googlefonts/orbitron-vf",
+      "revision": "f16482824e0ce4d008dee59b9b632e9ce9663359",
+      "license_upstream_path": "OFL.txt",
+      "assets": [
+        {
+          "platform": "wpf",
+          "format": "ttf",
+          "weight": "400-900",
+          "upstream_path": "fonts/variable/Orbitron[wght].ttf",
+          "path": "desktop/SpiritKinDesktop/Assets/Fonts/Orbitron-Variable.ttf",
+          "sha256": "f42db2dd16e642258e35782916eceb1dcdbea06fb958d77ad71dc5963587e8fd"
+        },
+        {
+          "platform": "web",
+          "format": "woff2",
+          "weight": "800",
+          "upstream_path": "fonts/webfonts/Orbitron-ExtraBold.woff2",
+          "path": "frontend/fonts/orbitron-latin.woff2",
+          "sha256": "ebd2aeb384f860ac9aabbd256cb483d5ed8c862646cd147377b3d294ddbca63a"
+        }
+      ],
+      "license_paths": [
+        "desktop/SpiritKinDesktop/Assets/Fonts/OFL-Orbitron.txt",
+        "frontend/fonts/OFL-Orbitron.txt"
+      ],
+      "license_sha256": "ab609b0e110d622435ff337cdf233288556e011bbf9bd0550be98846c0630819"
+    },
+    "jetbrains_mono": {
+      "family": "JetBrains Mono",
+      "version": "2.305",
+      "license": "OFL-1.1",
+      "repository": "https://github.com/JetBrains/JetBrainsMono",
+      "revision": "19371302b95d218af43299bce79ddbddd0bc364d",
+      "license_upstream_path": "OFL.txt",
+      "assets": [
+        {
+          "platform": "wpf",
+          "format": "ttf",
+          "weight": "100-800",
+          "upstream_path": "fonts/variable/JetBrainsMono[wght].ttf",
+          "path": "desktop/SpiritKinDesktop/Assets/Fonts/JetBrainsMono-Variable.ttf",
+          "sha256": "3cfafa86e28b87184d592fef82846e8c10cb48653c62efcda34f082da225ec34"
+        },
+        {
+          "platform": "web",
+          "format": "woff2",
+          "weight": "100-800",
+          "upstream_path": "fonts/webfonts/JetBrainsMono[wght].woff2",
+          "path": "frontend/fonts/jetbrains-mono.woff2",
+          "sha256": "31ec365b93e4bad6f202ce23352a56d01ca4462b2afc782ed2cf6fa42ca9ac0e"
+        }
+      ],
+      "license_paths": [
+        "desktop/SpiritKinDesktop/Assets/Fonts/OFL-JetBrainsMono.txt",
+        "frontend/fonts/OFL-JetBrainsMono.txt"
+      ],
+      "license_sha256": "a76abf002c49097d146e86740a3105a5d00450b1592e820a1109a8c5680cd697"
+    }
+  }
+}

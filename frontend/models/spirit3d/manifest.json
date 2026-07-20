@@ -1,0 +1,578 @@
+{
+  "version": "spiritkin.avatar3d.v1",
+  "format": "glb",
+  "name": "Bangboo PMX Visor Panel",
+  "model": "models/spirit3d/reference/bangboo_pmx_glb_screen.glb?v=bangboo-visor-panel-41",
+  "camera": {
+    "fov": 35,
+    "near": 0.1,
+    "far": 100,
+    "position": [
+      0,
+      0.5,
+      5.6
+    ],
+    "target": [
+      0,
+      0.45,
+      0
+    ],
+    "fit_distance_multiplier": 6.6,
+    "fit_y_offset_multiplier": 0.18,
+    "fit_target_y_offset_multiplier": 0.5,
+    "follow_lerp": 0.09,
+    "position_lerp": 0.065
+  },
+  "controls": {
+    "min_distance": 1.25,
+    "max_distance": 7.2
+  },
+  "lights": {
+    "hemisphere_intensity": 1.8,
+    "directional_intensity": 2.4,
+    "directional_position": [
+      2,
+      4,
+      3
+    ]
+  },
+  "stage": {
+    "floor_radius": 1.8,
+    "floor_opacity": 0,
+    "floor_visible": false,
+    "background_reference_size": [
+      1672,
+      941
+    ],
+    "model_background_anchor": [
+      0.5,
+      0.75
+    ],
+    "model_screen_offset_px": [
+      0,
+      0
+    ],
+    "model_screen_y_offset_ratio": 0.25,
+    "model_screen_y_offset_px": 0
+  },
+  "fit": {
+    "base_scale": 1,
+    "target_size": 0.86,
+    "auto_fit": true,
+    "center": true,
+    "ground": true
+  },
+  "transform": {
+    "position": [
+      0,
+      -0.16,
+      0
+    ],
+    "root_y_offset": 0,
+    "rotation_deg": [
+      0,
+      0,
+      0
+    ],
+    "scale": 1
+  },
+  "screen_expression": {
+    "enabled": false,
+    "show_reply_text": false,
+    "auto_fit_to_model": true,
+    "fit_to_bounds": true,
+    "bounds_anchor": [
+      0.5,
+      1.37,
+      1
+    ],
+    "parent_to_target": false,
+    "target_parts": [],
+    "offset": [
+      0,
+      0.02,
+      0.06
+    ],
+    "size_scale": [
+      0.62,
+      0.18
+    ],
+    "position": [
+      0,
+      0.16,
+      0.58
+    ],
+    "rotation_deg": [
+      0,
+      0,
+      0
+    ],
+    "size": [
+      0.82,
+      0.28
+    ],
+    "opacity": 0.92,
+    "color": "#a6ff00",
+    "secondary_color": "#fbbf24",
+    "background_opacity": 0.82,
+    "canvas_width": 512,
+    "canvas_height": 192
+  },
+  "builtin_face_expression": {
+    "enabled": true,
+    "show_reply_text": false,
+    "style": "bangboo_black_screen",
+    "target_materials": [
+      "Bangboo_GLBScreen_Display"
+    ],
+    "body_target_materials": [],
+    "body_texture": "",
+    "base_color": "#b7ff00",
+    "dark_color": "#000000",
+    "accent_color": "#b7ff00",
+    "emissive_intensity": 0.72,
+    "canvas_width": 2048,
+    "canvas_height": 640
+  },
+  "voice_output": {
+    "enabled": true,
+    "backend_tts": true,
+    "show_subtitle": false,
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural",
+    "rate": 1.06,
+    "pitch": 1.35,
+    "volume": 0.92,
+    "max_chars": 140
+  },
+  "component_motion": {
+    "enabled": true,
+    "strength": 1.55,
+    "speaking_motion": true,
+    "spring": {
+      "enabled": true,
+      "stiffness": 20,
+      "damping": 0.68
+    },
+    "controls": {
+      "head_assembly": "ctrl_head_assembly",
+      "body": "ctrl_body",
+      "left_arm": "ctrl_left_arm",
+      "right_arm": "ctrl_right_arm",
+      "left_leg": "ctrl_left_leg",
+      "right_leg": "ctrl_right_leg"
+    },
+    "assembly_offsets": {
+      "head_assembly": [
+        0,
+        -0.3,
+        0
+      ],
+      "body": [
+        0,
+        0,
+        0
+      ],
+      "left_arm": [
+        0.2,
+        0.34,
+        0.05
+      ],
+      "right_arm": [
+        -0.2,
+        0.34,
+        0.05
+      ],
+      "left_leg": [
+        0,
+        0.18,
+        0
+      ],
+      "right_leg": [
+        0,
+        0.18,
+        0
+      ]
+    },
+    "action_profiles": {
+      "nod": {
+        "duration_ms": 820,
+        "strength": 1.65,
+        "head_pitch": -0.18,
+        "head_y": -0.032,
+        "squash": 0.055,
+        "arm_out": 0
+      },
+      "shake": {
+        "duration_ms": 980,
+        "strength": 1.65,
+        "head_yaw": 0.32,
+        "arm_out": 0
+      },
+      "wave": {
+        "duration_ms": 1400,
+        "strength": 1.55,
+        "side": "screen_right",
+        "arm_out": 0.09,
+        "arm_in": 0,
+        "arm_forward": -0.03,
+        "arm_back": 0,
+        "arm_lift": 0.16,
+        "arm_roll": 0.42,
+        "arm_pitch": 0.12,
+        "arm_wave_roll": 0.24,
+        "head_yaw": 0.05,
+        "body_y": 0.026
+      },
+      "walk": {
+        "duration_ms": 1800,
+        "strength": 1.25,
+        "head_x": 0.028,
+        "head_y": 0.022,
+        "body_x": 0.04,
+        "body_y": 0.034,
+        "arm_swing": 0.08,
+        "arm_lift": 0.03,
+        "leg_swing": 0.18,
+        "leg_lift": 0.055,
+        "leg_forward": 0.06,
+        "squash": 0.04
+      }
+    },
+    "parts": {
+      "head_assembly": [
+        "part_0",
+        "part_4",
+        "part_5",
+        "part_6",
+        "part_7",
+        "part_8",
+        "part_9",
+        "part_10",
+        "part_11",
+        "part_12",
+        "part_13",
+        "part_14"
+      ],
+      "body": [
+        "part_body_core"
+      ],
+      "left_arm": [
+        "part_2"
+      ],
+      "right_arm": [
+        "part_3"
+      ],
+      "left_leg": [
+        "part_left_leg"
+      ],
+      "right_leg": [
+        "part_right_leg"
+      ],
+      "screen": []
+    }
+  },
+  "motion": {
+    "root_motion_enabled": true,
+    "idle_life": true,
+    "idle_life_amp": 2.0,
+    "idle_wander": false,
+    "idle_bob": 0,
+    "speaking_bob": 0,
+    "idle_yaw": 0,
+    "speaking_yaw": 0,
+    "breathing_scale": 0,
+    "bone_motion": 0,
+    "procedural_bones": true,
+    "auto_play_clips": false,
+    "initial_locomotion": {
+      "x": 0,
+      "z": 0.2,
+      "yaw": 0
+    },
+    "action_profiles": {
+      "nod": {
+        "duration_ms": 820,
+        "strength": 1.0,
+        "root_pitch": 0,
+        "head_pitch": 0.14
+      },
+      "shake": {
+        "duration_ms": 980,
+        "strength": 1.0,
+        "root_yaw": 0,
+        "head_yaw": 0.3,
+        "neck_yaw": 0
+      },
+      "wave": {
+        "duration_ms": 1400,
+        "strength": 1.0,
+        "side": "screen_right",
+        "root_bob": 0,
+        "root_yaw": 0,
+        "root_roll": 0,
+        "head_yaw": 0.05,
+        "body_roll": 0.05,
+        "shoulder_roll": 0.85,
+        "shoulder_pitch": -0.16,
+        "arm_roll": 1.0,
+        "arm_pitch": -0.24,
+        "arm_wave_roll": 0.34,
+        "elbow_bend": 0.45,
+        "wrist_wave": 0.55,
+        "ear_sway": 0.1
+      },
+      "walk": {
+        "duration_ms": 1800,
+        "strength": 1.35,
+        "root_travel": 0.34,
+        "depth_travel": 0.28,
+        "back_depth_travel": 0.14,
+        "scene_step_scale": 1,
+        "scene_bounds": {
+          "x": [
+            -0.72,
+            0.72
+          ],
+          "z": [
+            -0.08,
+            1.2
+          ]
+        },
+        "depth_visual_scale": 0.42,
+        "depth_scale_min": 0.96,
+        "depth_scale_max": 1.46,
+        "depth_visual_y": -0.22,
+        "turn_fraction": 0.34,
+        "turn_pivot_foot_offset": 0.075,
+        "root_bob": 0.028,
+        "root_turn": 1,
+        "turn_lerp": 0.075,
+        "turn_ease_power": 1.8,
+        "root_sway": 0.02,
+        "root_roll": 0.01,
+        "hip_yaw": 0.03,
+        "arm_swing": 0.07,
+        "leg_swing": 0.3,
+        "leg_y": 0.09,
+        "leg_z": 0.085,
+        "knee_bend": 0.22,
+        "knee_y": 0.06,
+        "ankle_counter": 0.08,
+        "ankle_z": 0.06,
+        "toe_counter": 0.11,
+        "toe_z": 0.075
+      }
+    }
+  },
+  "bone_roles": {
+    "head": [
+      "頭"
+    ],
+    "torso": [
+      "上半身"
+    ],
+    "hips": [
+      "腰",
+      "センター"
+    ],
+    "left_shoulder": [
+      "肩.L"
+    ],
+    "right_shoulder": [
+      "肩.R"
+    ],
+    "left_arm": [
+      "腕.L"
+    ],
+    "right_arm": [
+      "腕.R"
+    ],
+    "left_elbow": [
+      "ひじ.L"
+    ],
+    "right_elbow": [
+      "ひじ.R"
+    ],
+    "left_wrist": [
+      "手首.L"
+    ],
+    "right_wrist": [
+      "手首.R"
+    ],
+    "left_leg": [
+      "足.L"
+    ],
+    "right_leg": [
+      "足.R"
+    ],
+    "left_knee": [
+      "ひざ.L"
+    ],
+    "right_knee": [
+      "ひざ.R"
+    ],
+    "left_ankle": [
+      "足首.L",
+      "足首L",
+      "足首D.L",
+      "足首DL"
+    ],
+    "right_ankle": [
+      "足首.R",
+      "足首R",
+      "足首D.R",
+      "足首DR"
+    ],
+    "left_toe": [
+      "つま先.L",
+      "つま先L",
+      "つま先ＩＫ.L",
+      "つま先ＩＫL"
+    ],
+    "right_toe": [
+      "つま先.R",
+      "つま先R",
+      "つま先ＩＫ.R",
+      "つま先ＩＫR"
+    ],
+    "left_eye": [
+      "目.L"
+    ],
+    "right_eye": [
+      "目.R"
+    ]
+  },
+  "visemes": {
+    "idle": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "open": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "a": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "aa": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "o": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "ou": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "oh": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "i": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "ih": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "ee": {
+      "keywords": [],
+      "intensity": 0
+    }
+  },
+  "expressions": {
+    "neutral": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "happy": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "thinking": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "waiting": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "alert": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "error": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "confused": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    }
+  },
+  "pipeline": {
+    "source": "blender_bangboo_glb_screen.py",
+    "rigging": "bangboo_reference_no_original_eye_faces",
+    "expressions": "compact_arch_visor_panel_with_visible_screen_background",
+    "frontend_motion_mode": "pmx_bones_low_amplitude_with_front_rendered_visor_panel",
+    "reference": {
+      "pmx_report": "models/spirit3d/reference/bangboo_pmx.raw_report.json",
+      "notes": "PMX reference uses separate eye material, 72 bones, 27 rigid bodies and 26 joints. It is used as structure reference only."
+    },
+    "experimental_assets": [
+      "SpiritKinAI.fbx",
+      "SpiritKinAI.cleanrig.glb",
+      "SpiritKinAI.rigged.glb",
+      "SpiritKinAI.controls.blend",
+      "SpiritKinAI.riglite.blend",
+      "SpiritKinAI.controls_legs.blend"
+    ],
+    "rejected_default_assets": [
+      {
+        "asset": "SpiritKinAI.riglite.glb",
+        "reason": "body mesh was split for leg controls and exposes broken seams/holes; do not use as default"
+      }
+    ],
+    "requires_manual_polish": false
+  }
+}

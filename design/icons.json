@@ -1,0 +1,49 @@
+{
+  "$schema": "./icons.schema.json",
+  "version": 1,
+  "updated": "2026-07-11",
+  "policy": {
+    "shared_semantics": "All platforms share semantic ids; visual asset names never cross platform boundaries.",
+    "native_rendering": "WPF uses Segoe Fluent Icons, Web uses locally packaged Lucide SVGs, iOS uses SF Symbols, and Android uses Material Symbols.",
+    "accessible_names": "Icon-only controls require a localized accessible name and a visible tooltip or platform label."
+  },
+  "web_library": {
+    "name": "lucide-static",
+    "version": "1.24.0",
+    "repository": "https://github.com/lucide-icons/lucide",
+    "license": "ISC",
+    "package_shasum": "5ef8af100305a3aae29148856a7d2786b1977c59",
+    "license_path": "frontend/icons/lucide/LICENSE"
+  },
+  "icons": {
+    "action.add": {"label_zh": "新建", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E710"}, "web": {"kind": "lucide", "name": "plus"}, "ios": {"kind": "sf_symbol", "name": "plus"}, "android": {"kind": "material_symbol", "name": "add"}},
+    "action.close": {"label_zh": "关闭", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E711"}, "web": {"kind": "lucide", "name": "x"}, "ios": {"kind": "sf_symbol", "name": "xmark"}, "android": {"kind": "material_symbol", "name": "close"}},
+    "action.more": {"label_zh": "更多操作", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E712"}, "web": {"kind": "lucide", "name": "ellipsis"}, "ios": {"kind": "sf_symbol", "name": "ellipsis"}, "android": {"kind": "material_symbol", "name": "more_horiz"}},
+    "action.refresh": {"label_zh": "刷新", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E72C"}, "web": {"kind": "lucide", "name": "refresh-cw"}, "ios": {"kind": "sf_symbol", "name": "arrow.clockwise"}, "android": {"kind": "material_symbol", "name": "refresh"}},
+    "action.search": {"label_zh": "搜索", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E721"}, "web": {"kind": "lucide", "name": "search"}, "ios": {"kind": "sf_symbol", "name": "magnifyingglass"}, "android": {"kind": "material_symbol", "name": "search"}},
+    "action.send": {"label_zh": "发送", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E724"}, "web": {"kind": "lucide", "name": "send"}, "ios": {"kind": "sf_symbol", "name": "paperplane"}, "android": {"kind": "material_symbol", "name": "send"}},
+    "action.attach": {"label_zh": "添加附件", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E723"}, "web": {"kind": "lucide", "name": "paperclip"}, "ios": {"kind": "sf_symbol", "name": "paperclip"}, "android": {"kind": "material_symbol", "name": "attach_file"}},
+    "action.copy": {"label_zh": "复制", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E8C8"}, "web": {"kind": "lucide", "name": "copy"}, "ios": {"kind": "sf_symbol", "name": "doc.on.doc"}, "android": {"kind": "material_symbol", "name": "content_copy"}},
+    "action.edit": {"label_zh": "编辑", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E70F"}, "web": {"kind": "lucide", "name": "pencil"}, "ios": {"kind": "sf_symbol", "name": "pencil"}, "android": {"kind": "material_symbol", "name": "edit"}},
+    "action.delete": {"label_zh": "删除", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E74D"}, "web": {"kind": "lucide", "name": "trash-2"}, "ios": {"kind": "sf_symbol", "name": "trash"}, "android": {"kind": "material_symbol", "name": "delete"}},
+    "action.play": {"label_zh": "运行", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E768"}, "web": {"kind": "lucide", "name": "play"}, "ios": {"kind": "sf_symbol", "name": "play.fill"}, "android": {"kind": "material_symbol", "name": "play_arrow"}},
+    "action.stop": {"label_zh": "停止", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E71A"}, "web": {"kind": "lucide", "name": "square"}, "ios": {"kind": "sf_symbol", "name": "stop.fill"}, "android": {"kind": "material_symbol", "name": "stop"}},
+    "action.resume": {"label_zh": "恢复", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E768"}, "web": {"kind": "lucide", "name": "rotate-ccw"}, "ios": {"kind": "sf_symbol", "name": "arrow.counterclockwise"}, "android": {"kind": "material_symbol", "name": "restart_alt"}},
+    "action.settings": {"label_zh": "设置", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E713"}, "web": {"kind": "lucide", "name": "settings"}, "ios": {"kind": "sf_symbol", "name": "gearshape"}, "android": {"kind": "material_symbol", "name": "settings"}},
+    "action.terminal": {"label_zh": "终端", "category": "action", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E756"}, "web": {"kind": "lucide", "name": "terminal"}, "ios": {"kind": "sf_symbol", "name": "apple.terminal"}, "android": {"kind": "material_symbol", "name": "terminal"}},
+    "navigation.expand": {"label_zh": "展开", "category": "navigation", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E70D"}, "web": {"kind": "lucide", "name": "chevron-down"}, "ios": {"kind": "sf_symbol", "name": "chevron.down"}, "android": {"kind": "material_symbol", "name": "expand_more"}},
+    "navigation.collapse": {"label_zh": "收起", "category": "navigation", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E70E"}, "web": {"kind": "lucide", "name": "chevron-up"}, "ios": {"kind": "sf_symbol", "name": "chevron.up"}, "android": {"kind": "material_symbol", "name": "expand_less"}},
+    "navigation.back": {"label_zh": "返回", "category": "navigation", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E72B"}, "web": {"kind": "lucide", "name": "arrow-left"}, "ios": {"kind": "sf_symbol", "name": "chevron.backward"}, "android": {"kind": "material_symbol", "name": "arrow_back"}},
+    "navigation.forward": {"label_zh": "前进", "category": "navigation", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E72A"}, "web": {"kind": "lucide", "name": "arrow-right"}, "ios": {"kind": "sf_symbol", "name": "chevron.forward"}, "android": {"kind": "material_symbol", "name": "arrow_forward"}},
+    "entity.chat": {"label_zh": "会话", "category": "entity", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E8BD"}, "web": {"kind": "lucide", "name": "message-square"}, "ios": {"kind": "sf_symbol", "name": "message"}, "android": {"kind": "material_symbol", "name": "chat_bubble"}},
+    "entity.project": {"label_zh": "项目", "category": "entity", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E8B7"}, "web": {"kind": "lucide", "name": "folder"}, "ios": {"kind": "sf_symbol", "name": "folder"}, "android": {"kind": "material_symbol", "name": "folder"}},
+    "entity.workflow": {"label_zh": "工作流", "category": "entity", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E89E"}, "web": {"kind": "lucide", "name": "workflow"}, "ios": {"kind": "sf_symbol", "name": "point.3.connected.trianglepath.dotted"}, "android": {"kind": "material_symbol", "name": "account_tree"}},
+    "entity.mobile": {"label_zh": "手机端", "category": "entity", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E8EA"}, "web": {"kind": "lucide", "name": "smartphone"}, "ios": {"kind": "sf_symbol", "name": "iphone"}, "android": {"kind": "material_symbol", "name": "smartphone"}},
+    "state.info": {"label_zh": "信息", "category": "state", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E946"}, "web": {"kind": "lucide", "name": "info"}, "ios": {"kind": "sf_symbol", "name": "info.circle"}, "android": {"kind": "material_symbol", "name": "info"}},
+    "state.success": {"label_zh": "成功", "category": "state", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E73E"}, "web": {"kind": "lucide", "name": "circle-check"}, "ios": {"kind": "sf_symbol", "name": "checkmark.circle"}, "android": {"kind": "material_symbol", "name": "check_circle"}},
+    "state.warning": {"label_zh": "警告", "category": "state", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E7BA"}, "web": {"kind": "lucide", "name": "triangle-alert"}, "ios": {"kind": "sf_symbol", "name": "exclamationmark.triangle"}, "android": {"kind": "material_symbol", "name": "warning"}},
+    "state.danger": {"label_zh": "错误", "category": "state", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E783"}, "web": {"kind": "lucide", "name": "circle-x"}, "ios": {"kind": "sf_symbol", "name": "xmark.circle"}, "android": {"kind": "material_symbol", "name": "error"}},
+    "state.unknown": {"label_zh": "未知", "category": "state", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E9CE"}, "web": {"kind": "lucide", "name": "circle-help"}, "ios": {"kind": "sf_symbol", "name": "questionmark.circle"}, "android": {"kind": "material_symbol", "name": "help"}},
+    "state.loading": {"label_zh": "加载中", "category": "state", "wpf": {"kind": "fluent_glyph", "font": "Segoe Fluent Icons", "glyph": "E895"}, "web": {"kind": "lucide", "name": "loader-circle"}, "ios": {"kind": "sf_symbol", "name": "progress.indicator"}, "android": {"kind": "material_symbol", "name": "progress_activity"}}
+  }
+}

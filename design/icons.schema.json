@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritkin.local/schemas/semantic-icons-v1.json",
+  "title": "SpiritKin semantic icon registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "policy", "web_library", "icons"],
+  "properties": {
+    "$schema": {"const": "./icons.schema.json"},
+    "version": {"const": 1},
+    "updated": {"type": "string", "format": "date"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shared_semantics", "native_rendering", "accessible_names"],
+      "properties": {
+        "shared_semantics": {"type": "string", "minLength": 1},
+        "native_rendering": {"type": "string", "minLength": 1},
+        "accessible_names": {"type": "string", "minLength": 1}
+      }
+    },
+    "web_library": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "repository", "license", "package_shasum", "license_path"],
+      "properties": {
+        "name": {"const": "lucide-static"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "repository": {"type": "string", "format": "uri"},
+        "license": {"const": "ISC"},
+        "package_shasum": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "license_path": {"type": "string", "minLength": 1}
+      }
+    },
+    "icons": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/icon"}
+    }
+  },
+  "$defs": {
+    "icon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label_zh", "category", "wpf", "web", "ios", "android"],
+      "properties": {
+        "label_zh": {"type": "string", "minLength": 1},
+        "category": {"enum": ["action", "navigation", "entity", "state"]},
+        "wpf": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "font", "glyph"],
+          "properties": {
+            "kind": {"const": "fluent_glyph"},
+            "font": {"const": "Segoe Fluent Icons"},
+            "glyph": {"type": "string", "pattern": "^[0-9A-F]{4,6}$"}
+          }
+        },
+        "web": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name"],
+          "properties": {
+            "kind": {"const": "lucide"},
+            "name": {"type": "string", "pattern": "^[a-z0-9-]+$"}
+          }
+        },
+        "ios": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name"],
+          "properties": {
+            "kind": {"const": "sf_symbol"},
+            "name": {"type": "string", "minLength": 1}
+          }
+        },
+        "android": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name"],
+          "properties": {
+            "kind": {"const": "material_symbol"},
+            "name": {"type": "string", "pattern": "^[a-z0-9_]+$"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Browser storage key misclassified as a generic API key"
+regexTarget = "match"
+regexes = ['''spiritkin_ios_capabilities_v1''']

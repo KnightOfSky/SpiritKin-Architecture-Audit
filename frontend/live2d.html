@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SpiritKin Live2D Avatar</title>
+  <style>
+    :root{--card:#0f172a;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--ok:#34d399;--warn:#fbbf24}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1e1b4b,#07111f 54%);color:var(--text);font-family:Inter,system-ui,"Microsoft YaHei",sans-serif}
+    main{max-width:980px;margin:0 auto;padding:18px}.card{background:rgba(15,23,42,.86);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
+    input,button{background:#020617;color:var(--text);border:1px solid #475569;border-radius:10px;padding:9px 11px}button{cursor:pointer}.muted{color:var(--muted);font-size:13px}.ok{color:var(--ok)}.warn{color:var(--warn)}
+    .row{display:flex;gap:8px;flex-wrap:wrap}.row input{min-width:220px}.ws{flex:1}.model{flex:2}.hint{line-height:1.55}
+    #stage{height:68vh;min-height:420px;display:grid;place-items:center;position:relative;overflow:hidden;touch-action:manipulation}canvas{width:100%;height:100%}
+    .fallback{display:grid;place-items:center;text-align:center}.orb{width:210px;height:210px;border-radius:999px;display:grid;place-items:center;font-size:90px;background:linear-gradient(135deg,#312e81,#0f766e);box-shadow:0 0 80px rgba(167,139,250,.45)}.speaking .orb{animation:pulse .72s infinite alternate}@keyframes pulse{to{transform:scale(1.06)}}
+    #touchTip{position:absolute;inset:auto 14px 14px;display:none;gap:8px;align-items:center;justify-content:center;padding:10px;border-radius:14px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px)}
+    @media (max-width:720px){main{padding:10px}h1{font-size:20px}.card{border-radius:14px;padding:10px}.row input,.row button{width:100%;min-width:0}#stage{height:74vh;min-height:360px}.orb{width:168px;height:168px;font-size:72px}#touchTip{display:flex}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>SpiritKin Live2D Avatar</h1>
+  <div class="card">
+    <div class="row">
+      <input id="wsUrl" class="ws" placeholder="ws://127.0.0.1:8765">
+      <input id="modelUrl" class="model" placeholder="Live2D model3.json URL，可留空使用 manifest 角色配置">
+      <button id="connectBtn">连接</button><button id="loadBtn">加载模型</button>
+    </div>
+    <p id="status" class="muted hint">支持 URL 参数：ws、model、role、config、autoload=1、maxDpr=1.5、scale=0.22、mobile=1。</p>
+  </div>
+  <section id="stage" class="card fallback"></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@7/dist/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/index.min.js"></script>
+<script src="js/realtime_contract.js"></script>
+<script src="js/realtime_bridge.js"></script>
+<script>
+const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
+const emoji={happy:"😊",thinking:"🤔",confused:"❓",speaking:"💬",neutral:"😐",error:"❌",waiting:"⏳",listening:"👂",idle:"🤖"};
+let app=null, model=null, lastSpeaking=false, mouthResetTimer=null, live2dManifest={defaultRole:"",roles:{}}, roleConfig={}, lastAvatar={emotion:"neutral", action:"idle", message:"等待事件..."};
+function setStatus(t,c="muted"){$("status").className=c+" hint";$("status").textContent=t}
+function isMobile(){return params.get("mobile")==="1"||matchMedia("(max-width:720px)").matches} function numParam(name,def){const v=Number(params.get(name));return Number.isFinite(v)&&v>0?v:def}
+function configUrl(){return params.get("config")||localStorage.getItem("spiritkin_live2d_config")||"models/manifest.json"}
+function currentRole(){return params.get("role")||localStorage.getItem("spiritkin_live2d_role")||live2dManifest.defaultRole||""}
+function resolveRoleConfig(){const role=currentRole(); const roles=live2dManifest.roles||{}; roleConfig=roles[role]||{}; if(role)localStorage.setItem("spiritkin_live2d_role",role); return roleConfig}
+function roleResourceLabel(){const role=currentRole()||"custom"; if(roleConfig.enabled===false)return `role=${role} 已禁用：当前使用降级头像`; if(roleConfig.ready===false)return `role=${role} 资源未就绪：请放入 model3.json/.moc3/贴图后把 ready 改为 true`; return `role=${role} 资源配置已就绪`}
+async function loadManifest(){const url=configUrl(); localStorage.setItem("spiritkin_live2d_config",url); try{const res=await fetch(url,{cache:"no-store"}); if(!res.ok) return; const data=await res.json(); if(data&&typeof data==="object"){live2dManifest=data; resolveRoleConfig(); if(roleConfig.enabled===false&&!params.get("model")){$('modelUrl').value="";localStorage.removeItem("spiritkin_live2d_model")}else if(!$('modelUrl').value && roleConfig.model) $('modelUrl').value=roleConfig.model; setStatus(`已加载 Live2D manifest：${url}；${roleResourceLabel()}`, roleConfig.enabled===false?"muted":roleConfig.ready===false?"warn":"muted")}}catch(_){}}
+function fallback(){const e=lastAvatar.emotion||"neutral";$("stage").className="card fallback";$("stage").innerHTML=`<div><div class="orb" id="emoji">🤖</div><h2 id="emotion"></h2><p id="message" class="muted"></p><div id="touchTip"><span>移动端建议触摸进入全屏</span><button id="fullscreenBtn">全屏</button></div></div>`;$("emoji").textContent=emoji[e]||emoji.neutral;$("emotion").textContent=`${e} / ${lastAvatar.action||"idle"}`;$("message").textContent=lastAvatar.message||"--";$("stage").classList.toggle("speaking",!!lastAvatar.speaking);$("fullscreenBtn").onclick=requestFullscreenSafe}
+function webglAvailable(){try{const c=document.createElement("canvas");return !!(window.WebGLRenderingContext&&(c.getContext("webgl")||c.getContext("experimental-webgl")))}catch(_){return false}}
+function requestFullscreenSafe(){const el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen().catch(()=>setStatus("当前浏览器拒绝全屏，请手动添加到主屏幕或横屏使用。","warn"));else setStatus("当前浏览器不支持标准全屏 API，iOS Safari 可用添加到主屏幕替代。","warn")}
+function applyAvatar(payload={}){const p=payload.payload||payload; lastAvatar={...lastAvatar,...p}; const e=lastAvatar.emotion||"neutral"; const stage=$("stage"); const emojiEl=$("emoji"), emotionEl=$("emotion"), messageEl=$("message"); if(emojiEl)emojiEl.textContent=emoji[e]||emoji.neutral; if(emotionEl)emotionEl.textContent=`${e} / ${lastAvatar.action||"idle"}`; if(messageEl)messageEl.textContent=lastAvatar.message||"--"; stage.classList.toggle("speaking",!!lastAvatar.speaking); if(model){try{const expression=(roleConfig.expressions||{})[e]||e; const motionMap=roleConfig.motions||{}; const motion=motionMap[lastAvatar.action]||motionMap[e]||motionMap.idle||"TapBody"; model.expression(expression); if(lastAvatar.speaking&&!lastSpeaking)model.motion(motion,0,2)}catch(_){}} lastSpeaking=!!lastAvatar.speaking}
+function mouthOpenFor(shape){if(["open","wide_open","open_round","A","ah"].includes(shape))return 1;if(["round","round_close","O","ou"].includes(shape))return .75;if(["wide","I","ih"].includes(shape))return .45;if(["closed","closed_dental"].includes(shape))return .08;return .35}
+function applyPhoneme(payload={}){const p=payload.payload||payload, shape=p.mouth_shape||p.viseme||p.phoneme||"mid", open=mouthOpenFor(shape); lastAvatar={...lastAvatar,speaking:true}; const stage=$("stage"); stage.classList.toggle("speaking",true); if(model){try{const core=model.internalModel?.coreModel; if(core?.setParameterValueById)core.setParameterValueById("ParamMouthOpenY",open)}catch(_){}} clearTimeout(mouthResetTimer); mouthResetTimer=setTimeout(()=>{lastAvatar.speaking=false;stage.classList.toggle("speaking",false);try{const core=model?.internalModel?.coreModel; if(core?.setParameterValueById)core.setParameterValueById("ParamMouthOpenY",0)}catch(_){}},Number(p.duration_ms||150)+80)}
+function applySpeechLifecycle(type,p={}){if(type==="speech.started"){$("stage").classList.toggle("speaking",true)}else if(type==="speech.interrupted"||type==="speech.ended"){$("stage").classList.toggle("speaking",false);try{const core=model?.internalModel?.coreModel; if(core?.setParameterValueById)core.setParameterValueById("ParamMouthOpenY",0)}catch(_){}}}
+function applyEvent(ev){if(!ev)return; if(ev.type==="runtime.snapshot"){(ev.payload?.events||[]).forEach(applyEvent);return} if(ev.type==="avatar.state")applyAvatar(ev.payload); if(ev.type==="speech.phoneme"||ev.type==="speech.viseme")applyPhoneme(ev.payload); if(ev.type==="speech.started"||ev.type==="speech.ended"||ev.type==="speech.interrupted")applySpeechLifecycle(ev.type,ev.payload)}
+const conn=window.SPIRITKIN_BRIDGE.createRealtimeConnection({getUrl:()=>{const url=$("wsUrl").value.trim()||window.SPIRITKIN_BRIDGE.defaultWsUrl();localStorage.setItem("spiritkin_live2d_ws",url);return url},getToken:()=>params.get("token")||localStorage.getItem("spiritkin_console_token")||"",onEvent:applyEvent,onStatus:(status,detail)=>{if(status==="connected")setStatus("已连接 runtime 事件桥","ok");else if(status==="error")setStatus("连接失败，请检查 ws 地址和防火墙。","warn");else if(status==="reconnecting")setStatus(`已断开，${Math.round(detail.delayMs/1000)}s 后自动重连。请确认事件桥运行中`,"warn")}});
+function connect(){conn.connect()}
+async function loadModel(){resolveRoleConfig(); if(roleConfig.enabled===false&&!params.get("model")){$("modelUrl").value="";localStorage.removeItem("spiritkin_live2d_model");fallback();setStatus(`${roleResourceLabel()}。`,"muted");return} const explicitModel=!!params.get("model")||!!$("modelUrl").value.trim(); const url=$("modelUrl").value.trim()||roleConfig.model||""; $("modelUrl").value=url; localStorage.setItem("spiritkin_live2d_model",url); if(roleConfig.ready===false&&!explicitModel){fallback();setStatus(`${roleResourceLabel()}。当前使用降级头像。`,"warn");return} if(!url){fallback();setStatus("未配置模型，使用降级头像。可提供 role/config 自动载入。","muted");return} try{if(!webglAvailable())throw new Error("WebGL 不可用"); if(!window.PIXI||!window.PIXI.live2d)throw new Error("pixi-live2d-display 未加载"); const dpr=Math.min(window.devicePixelRatio||1,numParam("maxDpr",isMobile()?1.5:2)); if(app)app.destroy(true,{children:true,texture:false,baseTexture:false}); app=new PIXI.Application({resizeTo:$("stage"),backgroundAlpha:0,resolution:dpr,autoDensity:true,antialias:!isMobile()}); $("stage").className="card";$("stage").innerHTML="";$("stage").appendChild(app.view); model=await PIXI.live2d.Live2DModel.from(url); const scale=numParam("scale",Number(roleConfig.scale)|| (isMobile()?0.18:0.22)); model.scale.set(scale); model.x=app.renderer.width/(2*dpr); model.y=app.renderer.height*0.96/dpr; if(model.anchor)model.anchor.set(0.5,1); app.stage.addChild(model); applyAvatar(lastAvatar); setStatus(`Live2D 模型已加载，role=${currentRole()||"custom"}，DPR=${dpr}。`,`ok`)}catch(err){model=null;fallback();setStatus(`Live2D 加载失败：${err.message||err}，已降级。`,"warn")}}
+async function init(){fallback(); $("wsUrl").value=params.get("ws")||localStorage.getItem("spiritkin_live2d_ws")||window.SPIRITKIN_BRIDGE.defaultWsUrl(); $("modelUrl").value=params.get("model")||localStorage.getItem("spiritkin_live2d_model")||""; $("connectBtn").onclick=connect; $("loadBtn").onclick=loadModel; if(isMobile())setStatus("移动端已启用保守渲染：限制 DPR，模型失败时自动降级。","muted"); await loadManifest(); connect(); if(params.get("autoload")==="1"||currentRole())loadModel()}
+init();
+</script>
+</body>
+</html>

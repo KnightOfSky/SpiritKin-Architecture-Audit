@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SpiritKin Automation Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #101418;
+      --surface: #191f24;
+      --surface-2: #222a30;
+      --line: #3a454d;
+      --text: #eef4f2;
+      --muted: #9ca9ad;
+      --mint: #62d6a7;
+      --gold: #f2be5c;
+      --cyan: #60b9dc;
+      --danger: #ef6b68;
+    }
+    * { box-sizing: border-box; letter-spacing: 0; }
+    html, body { width: 100%; min-height: 100%; margin: 0; background: var(--canvas); color: var(--text); font-family: Inter, "Noto Sans SC", "Microsoft YaHei UI", sans-serif; }
+    body { display: grid; place-items: center; padding: 18px; }
+    .game-shell { width: min(1120px, 100%); min-width: 0; }
+    .hud { min-height: 52px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center; padding: 0 4px 10px; }
+    .mission { min-width: 0; }
+    .mission strong { display: block; font-size: 14px; font-weight: 650; }
+    .mission span, .status { color: var(--muted); font-size: 11px; }
+    .meter { display: flex; align-items: center; gap: 8px; font: 12px "Cascadia Mono", Consolas, monospace; }
+    .meter-bar { width: 128px; height: 6px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+    .meter-fill { width: 0; height: 100%; background: var(--mint); transition: width 160ms ease; }
+    .commands { display: flex; gap: 6px; }
+    button { min-width: 64px; height: 30px; padding: 0 12px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font: inherit; font-size: 11px; }
+    button:hover { border-color: var(--cyan); background: var(--surface-2); }
+    button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+    .playfield { position: relative; width: 100%; min-width: 0; aspect-ratio: 16 / 9; min-height: 320px; max-height: calc(100vh - 120px); background: #12191d; border: 1px solid var(--line); overflow: hidden; }
+    canvas { display: block; width: 100%; max-width: 100%; min-width: 0; height: 100%; }
+    .overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(16, 20, 24, .78); opacity: 0; pointer-events: none; transition: opacity 120ms ease; }
+    .overlay.visible { opacity: 1; pointer-events: auto; }
+    .overlay-content { text-align: center; max-width: 340px; padding: 20px; }
+    .overlay-content strong { display: block; font-size: 20px; margin-bottom: 6px; }
+    .overlay-content span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+    .hint { margin-top: 8px; color: var(--muted); font-size: 10px; text-align: right; }
+    @media (max-width: 640px) {
+      body { padding: 8px; place-items: start center; }
+      .hud { grid-template-columns: 1fr auto; gap: 8px; }
+      .meter { grid-column: 1 / -1; grid-row: 2; }
+      .meter-bar { flex: 1; }
+      .commands button { min-width: 54px; padding: 0 8px; }
+      .playfield { min-height: 260px; }
+      .hint { text-align: left; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="hud" aria-label="游戏状态">
+      <div class="mission">
+        <strong>回收能量核心</strong>
+        <span id="stateText">运行中</span>
+      </div>
+      <div class="meter" aria-label="任务进度">
+        <span id="scoreText">0 / 5</span>
+        <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+      </div>
+      <div class="commands">
+        <button id="pauseButton" type="button">暂停</button>
+        <button id="resetButton" type="button">重置</button>
+      </div>
+    </header>
+    <section class="playfield" id="playfield" aria-label="本地自动化测试游戏">
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="overlay-content">
+          <strong id="overlayTitle">已暂停</strong>
+          <span id="overlayText">恢复焦点后可继续。</span>
+          <button id="resumeButton" type="button">继续</button>
+        </div>
+      </div>
+    </section>
+    <div class="hint">方向键移动 · 空格回收 · Shift + Esc 立即停止</div>
+  </main>
+  <script>
+    (() => {
+      "use strict";
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const stateText = document.getElementById("stateText");
+      const scoreText = document.getElementById("scoreText");
+      const meterFill = document.getElementById("meterFill");
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayText = document.getElementById("overlayText");
+      const pauseButton = document.getElementById("pauseButton");
+      const resetButton = document.getElementById("resetButton");
+      const resumeButton = document.getElementById("resumeButton");
+      const spawn = [
+        { x: 220, y: 360 }, { x: 360, y: 280 }, { x: 500, y: 360 }, { x: 650, y: 230 }, { x: 790, y: 350 }
+      ];
+      const audit = [];
+      const actionTimes = [];
+      const state = {
+        scene: "collect_run",
+        running: true,
+        paused: false,
+        completed: false,
+        stopped: false,
+        stopReason: "",
+        player: { x: 120, y: 370 },
+        cores: spawn.map((item, index) => ({ ...item, id: index + 1, collected: false })),
+        uncertain: false,
+        lastStopLatencyMs: null,
+      };
+      const colors = { ground: "#263238", grid: "#314047", mint: "#62d6a7", gold: "#f2be5c", cyan: "#60b9dc", shadow: "#0b0e10", text: "#eef4f2" };
+
+      function log(type, detail = {}) {
+        audit.push({ type, detail, at: performance.now() });
+        if (audit.length > 200) audit.shift();
+      }
+
+      function syncUi() {
+        const count = state.cores.filter(core => core.collected).length;
+        scoreText.textContent = `${count} / ${state.cores.length}`;
+        meterFill.style.width = `${count / state.cores.length * 100}%`;
+        stateText.textContent = state.completed ? "任务完成" : state.stopped ? `已停止：${state.stopReason}` : state.paused ? "已暂停" : "运行中";
+        overlay.classList.toggle("visible", state.paused || state.completed || state.stopped);
+        overlayTitle.textContent = state.completed ? "任务完成" : state.stopped ? "自动化已停止" : "已暂停";
+        overlayText.textContent = state.completed ? "所有能量核心已安全回收。" : state.stopped ? state.stopReason : "恢复焦点后可继续。";
+        resumeButton.style.display = state.paused && !state.stopped ? "inline-block" : "none";
+        pauseButton.textContent = state.paused ? "继续" : "暂停";
+      }
+
+      function draw() {
+        ctx.fillStyle = "#12191d";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = colors.ground;
+        ctx.fillRect(0, 410, canvas.width, 130);
+        ctx.strokeStyle = colors.grid;
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= canvas.width; x += 60) {
+          ctx.beginPath(); ctx.moveTo(x, 410); ctx.lineTo(x + 80, 540); ctx.stroke();
+        }
+        for (let y = 430; y <= 540; y += 28) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+        for (const core of state.cores) {
+          if (core.collected) continue;
+          ctx.fillStyle = colors.shadow;
+          ctx.beginPath(); ctx.ellipse(core.x, core.y + 24, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = colors.gold;
+          ctx.lineWidth = 5;
+          ctx.beginPath(); ctx.arc(core.x, core.y, 16, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = colors.cyan;
+          ctx.beginPath(); ctx.arc(core.x, core.y, 7, 0, Math.PI * 2); ctx.fill();
+        }
+        drawPlayer(state.player.x, state.player.y);
+        requestAnimationFrame(draw);
+      }
+
+      function drawPlayer(x, y) {
+        ctx.fillStyle = colors.shadow;
+        ctx.beginPath(); ctx.ellipse(x, y + 30, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#dce7e4";
+        ctx.fillRect(x - 24, y - 26, 48, 42);
+        ctx.fillStyle = "#2d3b42";
+        ctx.fillRect(x - 18, y - 18, 36, 18);
+        ctx.fillStyle = colors.mint;
+        ctx.fillRect(x - 11, y - 13, 7, 7);
+        ctx.fillRect(x + 4, y - 13, 7, 7);
+        ctx.fillStyle = colors.gold;
+        ctx.fillRect(x - 17, y + 18, 12, 14);
+        ctx.fillRect(x + 5, y + 18, 12, 14);
+      }
+
+      function setPaused(paused, reason = "user_pause") {
+        if (state.completed || state.stopped) return;
+        state.paused = paused;
+        state.running = !paused;
+        state.scene = paused ? "paused" : "collect_run";
+        log(paused ? "paused" : "resumed", { reason });
+        syncUi();
+      }
+
+      function stop(reason = "user_stop") {
+        const started = performance.now();
+        state.running = false;
+        state.paused = false;
+        state.stopped = true;
+        state.stopReason = String(reason || "user_stop");
+        state.scene = "stopped";
+        state.lastStopLatencyMs = performance.now() - started;
+        log("stopped", { reason: state.stopReason, latency_ms: state.lastStopLatencyMs });
+        syncUi();
+        return status();
+      }
+
+      function reset() {
+        Object.assign(state, {
+          scene: "collect_run", running: true, paused: false, completed: false, stopped: false,
+          stopReason: "", player: { x: 120, y: 370 }, uncertain: false, lastStopLatencyMs: null,
+        });
+        state.cores = spawn.map((item, index) => ({ ...item, id: index + 1, collected: false }));
+        actionTimes.length = 0;
+        log("reset");
+        syncUi();
+      }
+
+      function status() {
+        return JSON.parse(JSON.stringify({
+          scene: state.scene,
+          running: state.running,
+          paused: state.paused,
+          completed: state.completed,
+          stopped: state.stopped,
+          stopReason: state.stopReason,
+          player: state.player,
+          collected: state.cores.filter(core => core.collected).length,
+          total: state.cores.length,
+          uncertain: state.uncertain,
+          lastStopLatencyMs: state.lastStopLatencyMs,
+        }));
+      }
+
+      function perform(action, params = {}) {
+        if (!document.hasFocus()) return { ok: false, reason: "focus_lost", state: status() };
+        if (!state.running || state.paused || state.completed || state.stopped) return { ok: false, reason: "not_running", state: status() };
+        const now = performance.now();
+        while (actionTimes.length && now - actionTimes[0] >= 1000) actionTimes.shift();
+        if (actionTimes.length >= 5) {
+          stop("rate_limit");
+          return { ok: false, reason: "rate_limit", state: status() };
+        }
+        actionTimes.push(now);
+        const amount = Math.max(8, Math.min(40, Number(params.amount || 28)));
+        const actions = {
+          move_left: () => { state.player.x -= amount; },
+          move_right: () => { state.player.x += amount; },
+          move_up: () => { state.player.y -= amount; },
+          move_down: () => { state.player.y += amount; },
+          collect: () => {
+            const target = state.cores.find(core => !core.collected && Math.hypot(core.x - state.player.x, core.y - state.player.y) <= 48);
+            if (target) target.collected = true;
+          },
+        };
+        if (!actions[action]) return { ok: false, reason: "action_not_allowlisted", state: status() };
+        actions[action]();
+        state.player.x = Math.max(40, Math.min(920, state.player.x));
+        state.player.y = Math.max(90, Math.min(390, state.player.y));
+        const collected = state.cores.filter(core => core.collected).length;
+        if (collected === state.cores.length) {
+          state.completed = true;
+          state.running = false;
+          state.scene = "goal_complete";
+          log("goal_complete");
+        }
+        log("action", { action, params });
+        syncUi();
+        return { ok: true, action, state: status() };
+      }
+
+      pauseButton.addEventListener("click", () => setPaused(!state.paused));
+      resetButton.addEventListener("click", reset);
+      resumeButton.addEventListener("click", () => setPaused(false, "resume_button"));
+      window.addEventListener("blur", () => {
+        if (state.running) stop("focus_lost");
+      });
+      window.addEventListener("keydown", event => {
+        if (event.shiftKey && event.key === "Escape") { event.preventDefault(); stop("global_hotkey"); return; }
+        if (event.key === "ArrowLeft") perform("move_left");
+        if (event.key === "ArrowRight") perform("move_right");
+        if (event.key === "ArrowUp") perform("move_up");
+        if (event.key === "ArrowDown") perform("move_down");
+        if (event.code === "Space") { event.preventDefault(); perform("collect"); }
+      });
+
+      window.spiritkinGame = Object.freeze({
+        status,
+        perform,
+        stop,
+        reset,
+        pause: reason => setPaused(true, reason),
+        resume: reason => setPaused(false, reason),
+        audit: () => JSON.parse(JSON.stringify(audit)),
+        debug: Object.freeze({
+          setUncertain: value => { state.uncertain = Boolean(value); },
+          setScene: value => { state.scene = String(value || "unknown"); },
+        }),
+      });
+      syncUi();
+      draw();
+    })();
+  </script>
+</body>
+</html>

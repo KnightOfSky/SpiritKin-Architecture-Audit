@@ -1,0 +1,39 @@
+<UserControl x:Class="SpiritKinDesktop.Controls.IntegratedTerminalPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Background="{DynamicResource FantasySurfaceBrush}"
+            BorderBrush="{DynamicResource LineBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="34" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0">
+                <Button x:Name="CloseTerminalButtonElement"
+                        Content="×"
+                        Width="28"
+                        Height="26"
+                        MinHeight="26"
+                        Padding="0"
+                        Style="{StaticResource TinyButton}"
+                        DockPanel.Dock="Right"
+                        AutomationProperties.Name="关闭终端"
+                        ToolTip="关闭终端" />
+                <TextBlock x:Name="TerminalTitleTextElement"
+                           Text="终端 · 工作区"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource FantasyPrimaryBrush}"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+            <TextBox x:Name="TerminalOutputBoxElement"
+                     Grid.Row="1"
+                     AcceptsReturn="True"
+                     TextWrapping="NoWrap"
+                     HorizontalScrollBarVisibility="Auto"
+                     VerticalScrollBarVisibility="Auto"
+                     Style="{StaticResource TerminalTextBox}" />
+        </Grid>
+    </Border>
+</UserControl>

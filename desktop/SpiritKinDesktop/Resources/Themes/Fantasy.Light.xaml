@@ -1,0 +1,149 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Generated from design/tokens.json v4. Keep Fantasy* keys stable for compatibility. -->
+    <SolidColorBrush x:Key="FantasyPrimaryBrush" Color="#126DB6" />
+    <SolidColorBrush x:Key="FantasySecondaryBrush" Color="#B44A00" />
+    <SolidColorBrush x:Key="FantasyCopperBrush" Color="#B44A00" />
+    <SolidColorBrush x:Key="FantasyCopperLineBrush" Color="#B87840" />
+    <SolidColorBrush x:Key="FantasySuccessBrush" Color="#187A43" />
+    <SolidColorBrush x:Key="FantasyWarningBrush" Color="#875900" />
+    <SolidColorBrush x:Key="FantasyDangerBrush" Color="#B52A2E" />
+    <SolidColorBrush x:Key="FantasyInfoBrush" Color="#126DB6" />
+    <SolidColorBrush x:Key="FantasyTextBrush" Color="#273A4C" />
+    <SolidColorBrush x:Key="FantasyMutedBrush" Color="#4D667B" />
+    <SolidColorBrush x:Key="FantasySurfaceBrush" Color="#F5FBFF" />
+    <SolidColorBrush x:Key="FantasyCanvasBrush" Color="#EEF5FA" />
+    <SolidColorBrush x:Key="AtelierFiberBrush" Color="#E9F1F8" />
+    <SolidColorBrush x:Key="AtelierChatBackgroundBrush" Color="#EFF5FA" />
+    <SolidColorBrush x:Key="AtelierFaintTextBrush" Color="#758C9F" />
+    <DropShadowEffect x:Key="AtelierReplyGlowEffect" Color="#B44A00" BlurRadius="10" ShadowDepth="0" Opacity="0.16" RenderingBias="Quality" />
+    <LinearGradientBrush x:Key="AtelierGlassDriftBrush" StartPoint="0,0" EndPoint="1,0.24">
+        <GradientStop Color="#00FFFFFF" Offset="0" />
+        <GradientStop Color="#00FFFFFF" Offset="0.065" />
+        <GradientStop Color="#1FFFFFFF" Offset="0.082" />
+        <GradientStop Color="#12FFFFFF" Offset="0.088" />
+        <GradientStop Color="#00FFFFFF" Offset="0.105" />
+        <GradientStop Color="#00FFFFFF" Offset="0.215" />
+        <GradientStop Color="#12FFFFFF" Offset="0.232" />
+        <GradientStop Color="#00FFFFFF" Offset="0.248" />
+        <GradientStop Color="#00FFFFFF" Offset="0.63" />
+        <GradientStop Color="#331E97D0" Offset="0.646" />
+        <GradientStop Color="#00FFFFFF" Offset="0.665" />
+        <GradientStop Color="#00FFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AtelierLightFlowPrimaryBrush" StartPoint="0.047,0.289" EndPoint="0.953,0.711">
+        <GradientStop Color="#001E97D0" Offset="0" />
+        <GradientStop Color="#001E97D0" Offset="0.37" />
+        <GradientStop Color="#281E97D0" Offset="0.42" />
+        <GradientStop Color="#001E97D0" Offset="0.49" />
+        <GradientStop Color="#001E97D0" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AtelierLightFlowWarningBrush" StartPoint="0.015,0.621" EndPoint="0.985,0.379">
+        <GradientStop Color="#00EFBC4B" Offset="0" />
+        <GradientStop Color="#00EFBC4B" Offset="0.56" />
+        <GradientStop Color="#18EFBC4B" Offset="0.60" />
+        <GradientStop Color="#00EFBC4B" Offset="0.66" />
+        <GradientStop Color="#00EFBC4B" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AtelierLightFlowSecondaryBrush" StartPoint="0.265,0.941" EndPoint="0.735,0.059">
+        <GradientStop Color="#001E97D0" Offset="0" />
+        <GradientStop Color="#001E97D0" Offset="0.73" />
+        <GradientStop Color="#201E97D0" Offset="0.75" />
+        <GradientStop Color="#001E97D0" Offset="0.80" />
+        <GradientStop Color="#001E97D0" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AtelierReadingColumnBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#1670869A" Offset="0" />
+        <GradientStop Color="#00EEF5FA" Offset="0.085" />
+        <GradientStop Color="#00EEF5FA" Offset="0.915" />
+        <GradientStop Color="#1670869A" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="AtelierReadingEdgeBrush" Color="#0D1577C8" />
+    <SolidColorBrush x:Key="AtelierComposerLineBrush" Color="#66C4D4DF" />
+    <SolidColorBrush x:Key="AtelierComposerPaperBrush" Color="#F7FBFD" />
+    <SolidColorBrush x:Key="AtelierComposerButtonInkBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="FantasyInputBrush" Color="#F5FBFF" />
+    <SolidColorBrush x:Key="FantasyLineBrush" Color="#C4D4DF" />
+    <SolidColorBrush x:Key="FantasyListBrush" Color="#F5FBFF" />
+    <SolidColorBrush x:Key="FantasyListAltBrush" Color="#E9F2F7" />
+    <SolidColorBrush x:Key="FantasyHoverBrush" Color="#DEEAF1" />
+    <SolidColorBrush x:Key="FantasySelectedBrush" Color="#DEEAF1" />
+    <SolidColorBrush x:Key="FantasyGoldWashBrush" Color="#FFF3D6" />
+    <SolidColorBrush x:Key="FantasyScrimBrush" Color="#7FFFFFFF" />
+    <SolidColorBrush x:Key="FantasyBorderBrush" Color="#70869A" />
+    <SolidColorBrush x:Key="FantasyCardBorderBrush" Color="#E4ECF7" />
+    <SolidColorBrush x:Key="FantasyCardHoverBorderBrush" Color="#B9CEF2" />
+    <SolidColorBrush x:Key="FantasyFieldLabelBrush" Color="#4D667B" />
+    <SolidColorBrush x:Key="FantasyDangerTextBrush" Color="#B52A2E" />
+    <SolidColorBrush x:Key="FantasyDangerBorderBrush" Color="#B52A2E" />
+    <SolidColorBrush x:Key="FantasyDangerHoverBrush" Color="#FCEBEC" />
+    <SolidColorBrush x:Key="FantasyProgressTrackBrush" Color="#E5EBF3" />
+    <SolidColorBrush x:Key="FantasySuccessWashBrush" Color="#E7F5EC" />
+    <SolidColorBrush x:Key="FantasyInfoWashBrush" Color="#E8F2FB" />
+    <SolidColorBrush x:Key="FantasyScrollHoverBrush" Color="#64748B" />
+    <SolidColorBrush x:Key="FantasyFocusRingBrush" Color="#126DB6" />
+    <SolidColorBrush x:Key="FantasyFaintTextBrush" Color="#5F7689" />
+    <SolidColorBrush x:Key="FantasyOverlayScrimBrush" Color="#660B1220" />
+    <SolidColorBrush x:Key="FantasyHintTextBrush" Color="#5F7689" />
+    <SolidColorBrush x:Key="FantasyDisabledTextBrush" Color="#5F7689" />
+    <SolidColorBrush x:Key="FantasyStatCardBorderBrush" Color="#DBE6F8" />
+    <SolidColorBrush x:Key="FantasyStatCardBrush" Color="#F3F8FF" />
+    <SolidColorBrush x:Key="FantasyLineSoftBrush" Color="#E0E8F4" />
+    <SolidColorBrush x:Key="FantasyWarningWashBrush" Color="#FFF3D6" />
+    <SolidColorBrush x:Key="FantasyWarningTextBrush" Color="#875900" />
+    <SolidColorBrush x:Key="FantasySuccessSoftWashBrush" Color="#E7F5EC" />
+    <SolidColorBrush x:Key="FantasySuccessTextBrush" Color="#187A43" />
+    <SolidColorBrush x:Key="FantasyHoverSoftBrush" Color="#EAF1FE" />
+    <SolidColorBrush x:Key="FantasyPrimaryStrongBrush" Color="#126DB6" />
+    <SolidColorBrush x:Key="FantasyMutedSoftBrush" Color="#4D667B" />
+    <SolidColorBrush x:Key="FantasyMutedBlueBrush" Color="#8DA0B5" />
+    <SolidColorBrush x:Key="FantasyPrimaryScrimBrush" Color="#2B1557E0" />
+    <SolidColorBrush x:Key="FantasyMutedNeutralBrush" Color="#9AA4B2" />
+    <SolidColorBrush x:Key="FantasyMutedBlueSoftBrush" Color="#B7C4D8" />
+    <SolidColorBrush x:Key="FantasyNeutralWashBrush" Color="#EFF3FA" />
+    <SolidColorBrush x:Key="FantasyMediaCanvasBrush" Color="#0C141E" />
+    <SolidColorBrush x:Key="FantasyMediaIconBrush" Color="#9DB1C7" />
+    <SolidColorBrush x:Key="FantasyMediaScrimBrush" Color="#B20B1119" />
+    <SolidColorBrush x:Key="FantasyMediaTextBrush" Color="#EAF2FA" />
+    <SolidColorBrush x:Key="FantasyFocusRingSoftBrush" Color="#A6BEE8" />
+    <SolidColorBrush x:Key="FantasyPressedBrush" Color="#D3E3FF" />
+    <SolidColorBrush x:Key="FantasyDangerWashBrush" Color="#FEF1F0" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#EFF5FA" />
+    <SolidColorBrush x:Key="PanelAltBrush" Color="#E9F2F7" />
+    <SolidColorBrush x:Key="LineBrush" Color="#DBE4F1" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#4D667B" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#126DB6" />
+    <SolidColorBrush x:Key="InputBrush" Color="#F5FBFF" />
+    <!-- G2 服务健康横幅(原 MainWindow.xaml 裸 hex 收编) -->
+    <SolidColorBrush x:Key="FantasyBannerWarnBgBrush" Color="#FFF3D6" />
+    <SolidColorBrush x:Key="FantasyBannerWarnBorderBrush" Color="#875900" />
+    <SolidColorBrush x:Key="FantasyBannerWarnTextBrush" Color="#875900" />
+    <!-- 品牌标识色(WindowBrandMark 裸 hex 收编);品牌色双主题同值,保持识别一致 -->
+    <SolidColorBrush x:Key="FantasyBrandPrimaryBrush" Color="#B44A00" />
+    <SolidColorBrush x:Key="FantasyBrandGoldBrush" Color="#B44A00" />
+    <SolidColorBrush x:Key="FantasyBrandAccentBrush" Color="#126DB6" />
+    <SolidColorBrush x:Key="FantasyBrandTextBrush" Color="#B44A00" />
+    <!-- Compatibility gradients derived from v4 semantic roles. -->
+    <LinearGradientBrush x:Key="FantasyPrimaryGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1577C8" Offset="0" />
+        <GradientStop Color="#1E97D0" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="FantasyPrimaryHoverGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#2F88D4" Offset="0" />
+        <GradientStop Color="#1577C8" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="FantasyPrimaryPressedGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1166AA" Offset="0" />
+        <GradientStop Color="#1577C8" Offset="1" />
+    </LinearGradientBrush>
+    <!-- 顶栏/画布轻渐变：极淡冷调，制造纵深而非平涂 -->
+    <LinearGradientBrush x:Key="FantasyCanvasGradientBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F5FBFF" Offset="0" />
+        <GradientStop Color="#EEF5FA" Offset="1" />
+    </LinearGradientBrush>
+    <!-- 卡片玻璃感表面：近白微冷向白过渡 -->
+    <LinearGradientBrush x:Key="FantasySurfaceGlassBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F5FBFF" Offset="0" />
+        <GradientStop Color="#E9F2F7" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

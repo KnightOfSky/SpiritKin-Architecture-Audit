@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\SpiritKinDesktop.ico</ApplicationIcon>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin-*\**;obj-*\**;state\build\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Historical verification folders live beside the project. They are generated output, not source. -->
+    <Compile Remove="bin-*\**;obj-*\**;state\build\**" />
+    <EmbeddedResource Remove="bin-*\**;obj-*\**;state\build\**" />
+    <Page Remove="bin-*\**;obj-*\**;state\build\**" />
+    <None Remove="bin-*\**;obj-*\**;state\build\**" />
+    <Resource Include="Assets\SpiritKinDesktop.ico" />
+    <Resource Include="Assets\Fonts\Inter-Variable.ttf" />
+    <Resource Include="Assets\Fonts\NotoSansSC-Variable.ttf" />
+    <Resource Include="Assets\Fonts\Orbitron-Variable.ttf" />
+    <Resource Include="Assets\Fonts\JetBrainsMono-Variable.ttf" />
+    <None Update="Assets\Fonts\OFL-Inter.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Fonts\OFL-NotoSansSC.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Fonts\OFL-Orbitron.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Fonts\OFL-JetBrainsMono.txt" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3351.48" />
+    <PackageReference Include="NAudio" Version="2.3.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

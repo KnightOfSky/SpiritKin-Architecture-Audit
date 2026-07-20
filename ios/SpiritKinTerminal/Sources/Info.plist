@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>SpiritKin</string>
+  <key>CFBundleShortVersionString</key>
+  <string>0.1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.spiritkin.terminal</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>spiritkin-terminal</string>
+                <string>spiritkin</string>
+            </array>
+    </dict>
+  </array>
+  <key>UILaunchScreen</key>
+  <dict/>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Upload selected photos as SpiritKin mobile artifacts.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Use ARKit to build structured spatial observations for your SpiritKin workspace.</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Add coarse location context to spatial observations while the scanner is open.</string>
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <false/>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+  </dict>
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>fetch</string>
+  </array>
+  <key>BGTaskSchedulerPermittedIdentifiers</key>
+  <array>
+    <string>com.spiritkin.terminal.refresh</string>
+  </array>
+</dict>
+</plist>

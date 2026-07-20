@@ -1,0 +1,33 @@
+{
+  "defaultRole": "spirit",
+  "roles": {
+    "spirit": {
+      "enabled": false,
+      "ready": false,
+      "model": "",
+      "sprite_fallback": "spirit_avatar.html",
+      "scale": 0.22,
+      "expressions": {
+        "happy": "Happy",
+        "thinking": "Thinking",
+        "confused": "Confused",
+        "neutral": "Neutral",
+        "error": "Angry",
+        "waiting": "Neutral",
+        "listening": "Listen",
+        "speaking": "Happy",
+        "idle": "Neutral"
+      },
+      "motions": {
+        "idle": "Idle",
+        "listen": "TapBody",
+        "voice_ack": "TapBody",
+        "await_confirmation": "TapBody",
+        "execute_task": "TapBody",
+        "thinking": "Idle",
+        "speaking": "TapBody",
+        "error": "TapBody"
+      }
+    }
+  }
+}

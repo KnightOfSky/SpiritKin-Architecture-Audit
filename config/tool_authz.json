@@ -1,0 +1,1022 @@
+{
+  "schema_version": "spiritkin.tool_authz.v1",
+  "entries": [
+    {
+      "tool_id": "android.app.close",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784293218.1987882
+    },
+    {
+      "tool_id": "android.app.launch",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "android.battery.status",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "android.device.info",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "android.notification.push",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "android.software.list",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "app.close",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "app.launch",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "arm.home",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3613708
+    },
+    {
+      "tool_id": "arm.move_to",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3613708
+    },
+    {
+      "tool_id": "arm.status",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3613708
+    },
+    {
+      "tool_id": "browser.open_url",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "browser.search",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "browser.tab.activate",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "browser.tab.close",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "browser.tab.list",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "browser.worker_health",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3623705
+    },
+    {
+      "tool_id": "browser.worker_open_url",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3623705
+    },
+    {
+      "tool_id": "browser.worker_search",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3623705
+    },
+    {
+      "tool_id": "camera.capture",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "clipboard.read",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "clipboard.write",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "danger.do",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "once",
+      "source": "registry",
+      "updated_at": 1784222275.734419
+    },
+    {
+      "tool_id": "demo.fail",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784242374.4268262
+    },
+    {
+      "tool_id": "demo.flaky",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784242374.3988235
+    },
+    {
+      "tool_id": "demo.ok",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784305144.784206
+    },
+    {
+      "tool_id": "demo.persisted_running",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784486791.7946358
+    },
+    {
+      "tool_id": "demo.status",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784221444.425916
+    },
+    {
+      "tool_id": "demo.write",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784221444.421916
+    },
+    {
+      "tool_id": "ecommerce.task_queue.attach_probe",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3683724
+    },
+    {
+      "tool_id": "ecommerce.task_queue.attach_productdata",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784268913.8964443
+    },
+    {
+      "tool_id": "ecommerce.task_queue.cleanup_temp",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3683724
+    },
+    {
+      "tool_id": "ecommerce.task_queue.enqueue_image",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3683724
+    },
+    {
+      "tool_id": "ecommerce.task_queue.ingest_mobile_links",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3683724
+    },
+    {
+      "tool_id": "ecommerce.task_queue.run_adapter",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3683724
+    },
+    {
+      "tool_id": "ecommerce.task_queue.status",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3683724
+    },
+    {
+      "tool_id": "email.send",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784257417.9657528
+    },
+    {
+      "tool_id": "embedding.create",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3673728
+    },
+    {
+      "tool_id": "feishu.message.send",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3603709
+    },
+    {
+      "tool_id": "ffmpeg.probe",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3673728
+    },
+    {
+      "tool_id": "ffmpeg.transcode",
+      "enabled": true,
+      "risk": "shell",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3673728
+    },
+    {
+      "tool_id": "file.delete",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784221444.4489174
+    },
+    {
+      "tool_id": "file.open",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "file.read",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "file.save_as",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "file.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "file.write",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "game.automation.run",
+      "enabled": true,
+      "risk": "shell",
+      "confirmation_policy": "always",
+      "source": "registry",
+      "updated_at": 1784241944.960937
+    },
+    {
+      "tool_id": "game.automation.stop",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784241944.960937
+    },
+    {
+      "tool_id": "git.commit",
+      "enabled": true,
+      "risk": "shell",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.365372
+    },
+    {
+      "tool_id": "git.diff",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.365372
+    },
+    {
+      "tool_id": "git.status",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.365372
+    },
+    {
+      "tool_id": "gripper.close",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3613708
+    },
+    {
+      "tool_id": "gripper.open",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3613708
+    },
+    {
+      "tool_id": "hardware.list_devices",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "ios.battery.status",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "ios.notification.push",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "ios.shortcut.query",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "kb.archive",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3633707
+    },
+    {
+      "tool_id": "kb.link_suggest",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3633707
+    },
+    {
+      "tool_id": "kb.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.4033723
+    },
+    {
+      "tool_id": "kb.tag_suggest",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3633707
+    },
+    {
+      "tool_id": "kb.upsert_draft",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3633707
+    },
+    {
+      "tool_id": "keyboard.press",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "knowledge.retrieve",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3673728
+    },
+    {
+      "tool_id": "mcp.candidate.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224337.4444354
+    },
+    {
+      "tool_id": "mcp.candidate.summarize",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224337.686158
+    },
+    {
+      "tool_id": "mcp.guarded.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224346.5511062
+    },
+    {
+      "tool_id": "mcp.legacy.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224340.7197738
+    },
+    {
+      "tool_id": "mcp.legacy_sse.summarize",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224340.720774
+    },
+    {
+      "tool_id": "mcp.slow.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224351.8542814
+    },
+    {
+      "tool_id": "mcp.streamable.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224351.1676927
+    },
+    {
+      "tool_id": "mcp.streamable_http.summarize",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784224351.1686928
+    },
+    {
+      "tool_id": "music.loop",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.next",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.pause",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.play",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.play_url",
+      "enabled": true,
+      "risk": "network",
+      "confirmation_policy": "once",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.previous",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.queue",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.resume",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.seek",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.stop",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "music.volume",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784240797.2494907
+    },
+    {
+      "tool_id": "notification.send",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "pointer.click",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "pointer.move",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "python.install_package",
+      "enabled": true,
+      "risk": "shell",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784290830.4165957
+    },
+    {
+      "tool_id": "python.run_script",
+      "enabled": true,
+      "risk": "shell",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.364371
+    },
+    {
+      "tool_id": "rag.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3673728
+    },
+    {
+      "tool_id": "safe.do",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784231976.5291498
+    },
+    {
+      "tool_id": "screen.ask",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "screen.capture",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "screen.read_text",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "software.list_installed",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "t1",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784242256.6614892
+    },
+    {
+      "tool_id": "t2",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784242256.6634881
+    },
+    {
+      "tool_id": "text.input",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "tool.a",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784242256.657488
+    },
+    {
+      "tool_id": "tool.b",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "registry",
+      "updated_at": 1784242256.668489
+    },
+    {
+      "tool_id": "web.search",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.4013727
+    },
+    {
+      "tool_id": "window.activate",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "window.close",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "window.list",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "window.move",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "window.resize",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3583708
+    },
+    {
+      "tool_id": "workflow.graph.approve_review",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.assign_agent",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.auto_advance_runs",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.claim_agent_task",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.complete_agent_task",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.compose_definition",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.delete_definition",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.list_definitions",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.list_node_catalog",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.list_runs",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.reset_run",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.retry_node",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.rollback_definition",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.run_next",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.run_node",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.save_builtin_definition",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.save_ecommerce_definition",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.schema",
+      "enabled": true,
+      "risk": "safe",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.signal_node",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.start_run",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    },
+    {
+      "tool_id": "workflow.graph.upsert_definition",
+      "enabled": true,
+      "risk": "fs-write",
+      "confirmation_policy": "never",
+      "source": "legacy_import",
+      "updated_at": 1784222120.3693717
+    }
+  ],
+  "updated_at": 1784486791.7946358
+}

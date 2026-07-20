@@ -1,0 +1,81 @@
+{
+  "source": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\reference\\bangboo_pmx_display.glb",
+  "output": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\reference\\bangboo_pmx_glb_screen.glb",
+  "original_eye_bounds": {
+    "min": [
+      -1.08701,
+      -1.47877,
+      4.14469
+    ],
+    "max": [
+      1.08701,
+      0.36287,
+      4.87977
+    ],
+    "center": [
+      -0.0,
+      -0.55795,
+      4.51223
+    ],
+    "size": [
+      2.17401,
+      1.84164,
+      0.73509
+    ],
+    "polygons": 612
+  },
+  "removed_eye_faces": {
+    "完成_mesh": 612
+  },
+  "screen_mode": "front_dark_body_face_surface",
+  "sampled_eye_points": 1836,
+  "screen_object": "完成_mesh",
+  "screen_material": "Bangboo_GLBScreen_Display",
+  "screen_parameters": {
+    "source_geometry": "Bangboo_Body_Display",
+    "surface": "front_dark_body_face_surface",
+    "selection_rule": "largest_connected_dark_component_with_forehead_cap",
+    "uv_projection": "world_xz_bounds",
+    "preserves_original_face_outline": true,
+    "dark_threshold": 0.24,
+    "candidate_face_count": 216,
+    "dark_candidate_face_count": 64,
+    "selected_face_count": 60,
+    "selected_objects": {
+      "完成_mesh": 60
+    },
+    "width": 2.6184,
+    "height": 1.55659,
+    "x_min": -1.3092,
+    "x_max": 1.3092,
+    "z_min": 3.91345,
+    "z_max": 5.47004
+  },
+  "screen_bounds": {
+    "min": [
+      -1.3092,
+      -1.53784,
+      3.91345
+    ],
+    "max": [
+      1.3092,
+      -0.96119,
+      5.47004
+    ],
+    "center": [
+      -0.0,
+      -1.24951,
+      4.69174
+    ],
+    "size": [
+      2.6184,
+      0.57665,
+      1.55659
+    ],
+    "polygons": 60
+  },
+  "screen_vertex_count": 41,
+  "screen_face_count": 60,
+  "mesh_count": 2,
+  "armature_count": 1
+}

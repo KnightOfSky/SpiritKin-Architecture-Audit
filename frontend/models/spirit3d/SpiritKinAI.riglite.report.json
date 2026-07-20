@@ -1,0 +1,226 @@
+{
+  "source": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\SpiritKinAI.fbx",
+  "output": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\SpiritKinAI.riglite.glb",
+  "blend_output": "D:\\SpiritKinAI\\frontend\\models\\spirit3d\\SpiritKinAI.riglite.blend",
+  "body_split": {
+    "source": "part_1",
+    "leg_cut": -0.59125,
+    "center_gap": 0.04847,
+    "objects": {
+      "part_body_core": 244,
+      "part_left_leg": 152,
+      "part_right_leg": 152
+    }
+  },
+  "shoulder_sockets": [
+    "part_left_shoulder_socket",
+    "part_right_shoulder_socket"
+  ],
+  "controls": {
+    "ctrl_head_assembly": {
+      "meshes": [
+        "part_0",
+        "part_4",
+        "part_5",
+        "part_6",
+        "part_7",
+        "part_8",
+        "part_9",
+        "part_10",
+        "part_11",
+        "part_12",
+        "part_13",
+        "part_14"
+      ],
+      "pivot": [
+        0.00422,
+        0.00382,
+        -0.19264
+      ],
+      "bounds": {
+        "min": [
+          -0.91989,
+          -0.58734,
+          -0.29654
+        ],
+        "max": [
+          0.92833,
+          0.59499,
+          1.00222
+        ],
+        "center": [
+          0.00422,
+          0.00382,
+          0.35284
+        ],
+        "size": [
+          1.84823,
+          1.18233,
+          1.29876
+        ]
+      }
+    },
+    "ctrl_body": {
+      "meshes": [
+        "part_body_core",
+        "part_left_shoulder_socket",
+        "part_right_shoulder_socket"
+      ],
+      "pivot": [
+        0.00094,
+        -0.04153,
+        -0.39746
+      ],
+      "bounds": {
+        "min": [
+          -0.4297,
+          -0.4271,
+          -0.87087
+        ],
+        "max": [
+          0.43159,
+          0.34405,
+          -0.05465
+        ],
+        "center": [
+          0.00094,
+          -0.04153,
+          -0.46276
+        ],
+        "size": [
+          0.86128,
+          0.77115,
+          0.81622
+        ]
+      }
+    },
+    "ctrl_left_arm": {
+      "meshes": [
+        "part_2"
+      ],
+      "pivot": [
+        -0.24076,
+        -0.04073,
+        -0.26418
+      ],
+      "bounds": {
+        "min": [
+          -0.64784,
+          -0.17643,
+          -0.64829
+        ],
+        "max": [
+          -0.24076,
+          0.09496,
+          -0.23078
+        ],
+        "center": [
+          -0.4443,
+          -0.04073,
+          -0.43953
+        ],
+        "size": [
+          0.40708,
+          0.27138,
+          0.41752
+        ]
+      }
+    },
+    "ctrl_right_arm": {
+      "meshes": [
+        "part_3"
+      ],
+      "pivot": [
+        0.2446,
+        -0.04073,
+        -0.26418
+      ],
+      "bounds": {
+        "min": [
+          0.2446,
+          -0.17643,
+          -0.64829
+        ],
+        "max": [
+          0.64646,
+          0.09496,
+          -0.23078
+        ],
+        "center": [
+          0.44553,
+          -0.04073,
+          -0.43953
+        ],
+        "size": [
+          0.40186,
+          0.27138,
+          0.41751
+        ]
+      }
+    },
+    "ctrl_left_leg": {
+      "meshes": [
+        "part_left_leg"
+      ],
+      "pivot": [
+        -0.21938,
+        -0.04153,
+        -0.57743
+      ],
+      "bounds": {
+        "min": [
+          -0.43971,
+          -0.4271,
+          -0.99606
+        ],
+        "max": [
+          0.00094,
+          0.34405,
+          -0.5554
+        ],
+        "center": [
+          -0.21938,
+          -0.04153,
+          -0.77573
+        ],
+        "size": [
+          0.44066,
+          0.77115,
+          0.44066
+        ]
+      }
+    },
+    "ctrl_right_leg": {
+      "meshes": [
+        "part_right_leg"
+      ],
+      "pivot": [
+        0.22127,
+        -0.04153,
+        -0.57743
+      ],
+      "bounds": {
+        "min": [
+          0.00094,
+          -0.4271,
+          -0.99606
+        ],
+        "max": [
+          0.4416,
+          0.34405,
+          -0.5554
+        ],
+        "center": [
+          0.22127,
+          -0.04153,
+          -0.77573
+        ],
+        "size": [
+          0.44066,
+          0.77115,
+          0.44066
+        ]
+      }
+    }
+  }
+}

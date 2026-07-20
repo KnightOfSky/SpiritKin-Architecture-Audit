@@ -1,0 +1,17 @@
+﻿<Application x:Class="SpiritKinDesktop.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SpiritKinDesktop">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 主题字典置顶:ThemeManager 运行时热替换第 0 项在日/夜之间切换;
+                     样式/模板在其后合并,靠 DynamicResource 解析颜色键。 -->
+                <ResourceDictionary Source="Resources/Themes/Fantasy.Dark.xaml" />
+                <ResourceDictionary Source="Resources/MainWindowResources.xaml" />
+                <ResourceDictionary Source="Resources/MainWindowDataTemplates.xaml" />
+                <local:MainWindowInteractionTemplates />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,53 @@
+<UserControl x:Class="SpiritKinDesktop.Controls.WindowTitleBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:SpiritKinDesktop.Controls"
+             Height="34">
+    <Border Background="{DynamicResource PanelBrush}"
+            BorderBrush="{DynamicResource LineBrush}"
+            BorderThickness="0,0,0,1"
+            MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0" Panel.ZIndex="1">
+                <controls:WindowBrandMark />
+                <controls:WindowAppMenu x:Name="AppMenuControl" />
+            </StackPanel>
+            <TextBlock Grid.ColumnSpan="3"
+                       Text="SpiritKin Desktop"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       IsHitTestVisible="False"
+                       Foreground="{DynamicResource FantasyTextBrush}"
+                       FontSize="11.5"
+                       FontWeight="SemiBold" />
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Panel.ZIndex="1">
+                <Button x:Name="ThemeToggleButtonElement"
+                        Content="夜间"
+                        Width="64"
+                        Height="22"
+                        MinHeight="22"
+                        Padding="8,0"
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource UiFontFamily}"
+                        FontSize="12"
+                        FontWeight="Bold"
+                        Foreground="{DynamicResource FantasyWarningBrush}"
+                        BorderBrush="{DynamicResource FantasyWarningBrush}"
+                        Style="{StaticResource TinyButton}"
+                        Click="ThemeToggleButton_Click"
+                        AutomationProperties.Name="切换日夜主题"
+                        ToolTip="切换日夜主题" />
+                <controls:WindowCaptionButtons x:Name="CaptionButtonsControl" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,107 @@
+services:
+  runtime-host:
+    profiles: ["runtime-host"]
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime-host
+    image: spiritkin-runtime-host:local
+    restart: unless-stopped
+    environment:
+      SPIRITKIN_RUNTIME_HOST_TYPE: ${SPIRITKIN_RUNTIME_HOST_TYPE:-cloud}
+      SPIRITKIN_RUNTIME_HOST_ID: ${SPIRITKIN_RUNTIME_HOST_ID:-cloud:compose}
+      SPIRITKIN_RUNTIME_WORKSPACE_ID: ${SPIRITKIN_RUNTIME_WORKSPACE_ID:-local-ecommerce}
+      SPIRITKIN_RUNTIME_SHARED_ROOT: /runtime-state
+      SPIRITKIN_RUNTIME_HOST_PRIORITY: ${SPIRITKIN_RUNTIME_HOST_PRIORITY:-40}
+      SPIRITKIN_RUNTIME_HEARTBEAT_INTERVAL: ${SPIRITKIN_RUNTIME_HEARTBEAT_INTERVAL:-10}
+      SPIRITKIN_RUNTIME_HEARTBEAT_TTL: ${SPIRITKIN_RUNTIME_HEARTBEAT_TTL:-45}
+      SPIRITKIN_RUNTIME_EXECUTION_INTERVAL: ${SPIRITKIN_RUNTIME_EXECUTION_INTERVAL:-2}
+    volumes:
+      - control-runtime:/runtime-state
+
+  control-plane:
+    build:
+      context: .
+    image: spiritkin-control-plane:local
+    restart: unless-stopped
+    env_file:
+      - path: .env.cloud
+        required: false
+    environment:
+      SPIRITKIN_CONTROL_STATE_DIR: /data/control_plane
+      SPIRITKIN_STATE_DIR: /data/control_plane
+      SPIRITKIN_PRODUCTION_MODE: ${SPIRITKIN_PRODUCTION_MODE:-1}
+      SPIRITKIN_MANAGEMENT_TOKEN: ${SPIRITKIN_MANAGEMENT_TOKEN:?set SPIRITKIN_MANAGEMENT_TOKEN in .env.cloud}
+      SPIRITKIN_WORKER_MANIFEST_SIGNING_SECRET: ${SPIRITKIN_WORKER_MANIFEST_SIGNING_SECRET:-}
+      SPIRITKIN_ARTIFACT_BACKEND: ${SPIRITKIN_ARTIFACT_BACKEND:-s3}
+      SPIRITKIN_ARTIFACT_S3_ENDPOINT_URL: ${SPIRITKIN_ARTIFACT_S3_ENDPOINT_URL:-http://minio:9000}
+      SPIRITKIN_ARTIFACT_S3_BUCKET: ${SPIRITKIN_ARTIFACT_S3_BUCKET:-spiritkin-artifacts}
+      SPIRITKIN_ARTIFACT_S3_REGION: ${SPIRITKIN_ARTIFACT_S3_REGION:-us-east-1}
+      SPIRITKIN_ARTIFACT_S3_PREFIX: ${SPIRITKIN_ARTIFACT_S3_PREFIX:-prod}
+      SPIRITKIN_ARTIFACT_S3_PUBLIC_BASE_URL: ${SPIRITKIN_ARTIFACT_S3_PUBLIC_BASE_URL:-}
+      SPIRITKIN_ARTIFACT_S3_PATH_STYLE: ${SPIRITKIN_ARTIFACT_S3_PATH_STYLE:-1}
+      SPIRITKIN_ARTIFACT_S3_ACCESS_KEY_ENV: AWS_ACCESS_KEY_ID
+      SPIRITKIN_ARTIFACT_S3_SECRET_KEY_ENV: AWS_SECRET_ACCESS_KEY
+      SPIRITKIN_ARTIFACT_S3_SESSION_TOKEN_ENV: AWS_SESSION_TOKEN
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?set AWS_ACCESS_KEY_ID in .env.cloud}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?set AWS_SECRET_ACCESS_KEY in .env.cloud}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    volumes:
+      - control-state:/data/control_plane
+      - control-runtime:/app/state
+    ports:
+      - "${CONTROL_PLANE_DIRECT_BIND:-127.0.0.1:8791}:8791"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - control-plane
+    environment:
+      CADDY_HOST: ${CADDY_HOST:-localhost}
+    ports:
+      - "${HTTP_BIND:-80}:80"
+      - "${HTTPS_BIND:-443}:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:?set AWS_ACCESS_KEY_ID in .env.cloud}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:?set AWS_SECRET_ACCESS_KEY in .env.cloud}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "${MINIO_CONSOLE_BIND:-127.0.0.1:9001}:9001"
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      - minio
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?set AWS_ACCESS_KEY_ID in .env.cloud}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?set AWS_SECRET_ACCESS_KEY in .env.cloud}
+      SPIRITKIN_ARTIFACT_S3_BUCKET: ${SPIRITKIN_ARTIFACT_S3_BUCKET:-spiritkin-artifacts}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}"; do
+          sleep 2
+        done
+        mc mb --ignore-existing "local/${SPIRITKIN_ARTIFACT_S3_BUCKET:-spiritkin-artifacts}"
+
+volumes:
+  control-state:
+  control-runtime:
+  minio-data:
+  caddy-data:
+  caddy-config:

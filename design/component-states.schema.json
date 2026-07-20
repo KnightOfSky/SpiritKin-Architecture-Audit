@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spiritkin.local/schemas/component-states-v1.json",
+  "title": "SpiritKin component state contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "token_authority", "components", "platform_acceptance"],
+  "properties": {
+    "$schema": {"const": "./component-states.schema.json"},
+    "version": {"const": 1},
+    "updated": {"type": "string", "format": "date"},
+    "token_authority": {"const": "design/tokens.json v4"},
+    "components": {"type": "object", "additionalProperties": false, "required": ["button", "input", "nav-list", "card-panel", "status", "dialog-sheet"]},
+    "platform_acceptance": {"type": "object", "additionalProperties": false, "required": ["wpf", "web", "ios", "android"]}
+  }
+}

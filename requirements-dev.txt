@@ -1,0 +1,5 @@
+# 开发与测试依赖（运行时依赖见 requirements.txt）
+# 安装：pip install -r requirements-dev.txt
+pytest>=8
+pytest-timeout>=2.3
+ruff>=0.6

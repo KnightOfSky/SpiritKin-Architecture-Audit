@@ -1,0 +1,18 @@
+<UserControl x:Class="SpiritKinDesktop.Controls.WindowBrandMark"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <Border Width="12" Height="12" CornerRadius="4" Background="{DynamicResource FantasyPrimaryGradientBrush}" Margin="0,0,6,0">
+            <Border.LayoutTransform>
+                <RotateTransform Angle="45" />
+            </Border.LayoutTransform>
+        </Border>
+        <TextBlock Text="SpiritKin Desktop"
+                   FontFamily="{StaticResource UiFontFamily}"
+                   FontSize="13"
+                   FontWeight="ExtraBold"
+                   Foreground="{DynamicResource FantasyTextBrush}"
+                   VerticalAlignment="Center"
+                   Margin="0,0,2,0" />
+    </StackPanel>
+</UserControl>

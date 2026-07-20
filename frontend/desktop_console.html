@@ -1,0 +1,1590 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SpiritKin Desktop Console</title>
+<link rel="icon" href="data:,">
+<script src="js/theme-bootstrap.js"></script>
+<link rel="stylesheet" href="styles/fantasy-tokens.css">
+<link rel="stylesheet" href="styles/console.css">
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="导航与连接">
+    <div class="top"><div><div class="brand">SpiritKin</div><div class="muted">Desktop Console</div></div><span id="syncDot" class="sync-dot" role="status" aria-label="状态同步指示"></span></div>
+    <div class="section">
+      <div class="nav-list" role="tablist" aria-label="工作区切换">
+        <button class="nav-button active" data-workspace-page="chat" role="tab" aria-selected="true">Quick chat</button>
+        <button class="nav-button" data-workspace-page="management" role="tab" aria-selected="false">管理</button>
+      </div>
+      <div class="row" style="margin-top:12px"><button id="reloadBtn">刷新</button><button id="newSessionBtn">新会话</button></div>
+      <input id="apiUrl" class="grow" placeholder="http://127.0.0.1:8788" aria-label="命令网关 API 地址" style="margin-top:8px;width:100%">
+      <input id="wsUrl" class="grow" placeholder="ws://127.0.0.1:8765" aria-label="事件桥 WebSocket 地址" style="margin-top:8px;width:100%">
+      <input id="authToken" class="grow" type="password" placeholder="访问 token（可选）" aria-label="访问 token" style="margin-top:8px;width:100%">
+      <div id="connStatus" class="muted" role="status" aria-live="polite" style="margin-top:8px">未连接</div>
+    </div>
+    <div class="section">
+      <h2>会话</h2>
+      <div id="sessionList" class="list sessions" role="list" aria-label="会话列表"></div>
+    </div>
+    <div class="section">
+      <h2>项目</h2>
+      <div class="row"><input id="projectTitle" class="grow" placeholder="新项目名称" aria-label="新项目名称"><button id="addProjectBtn">添加</button></div>
+      <div id="projectList" class="list projects" role="list" aria-label="项目列表" style="margin-top:8px"></div>
+    </div>
+    <div class="section">
+      <h2>本地任务</h2>
+      <div id="taskMiniList" class="list tasks-mini" role="list" aria-label="本地任务列表"></div>
+    </div>
+  </aside>
+  <main class="main" aria-label="会话主区">
+    <div class="top">
+      <div><div id="activeTitle" class="brand">主会话</div><div id="activeMeta" class="muted">版本 0</div></div>
+      <div class="toolbar">
+        <span id="wsStatus" class="pill" role="status" aria-live="polite">ws: --</span>
+        <span id="pendingPill" class="pill" role="status" aria-live="polite">确认门: --</span>
+        <button id="openAvatarBtn">桌宠浮窗</button>
+      </div>
+    </div>
+    <div id="confirmBar" class="confirm-bar" role="alertdialog" aria-live="assertive" aria-label="等待执行确认">
+      <div class="grow"><b>等待确认</b><div id="confirmText" class="muted">--</div></div>
+      <button id="confirmBtn" class="warn">确认执行</button>
+      <button id="cancelBtn">取消执行</button>
+    </div>
+    <div id="messages" class="messages" role="log" aria-live="polite" aria-label="对话记录"></div>
+    <div class="composer">
+      <textarea id="prompt" placeholder="输入给主 Agent 的消息，例如：帮我打开浏览器 / 总结当前项目 / 确认执行" aria-label="发送给主 Agent 的消息"></textarea>
+      <div class="row">
+        <button id="sendBtn" class="primary">发送</button>
+        <button id="saveNoteBtn">存为本地记录</button>
+        <select id="quickSelect" class="grow" aria-label="快速指令">
+          <option value="">快速指令</option>
+          <option>扫描本机软件</option>
+          <option>打开浏览器</option>
+          <option>确认执行</option>
+          <option>取消执行</option>
+        </select>
+        <span id="sendStatus" class="muted" role="status" aria-live="polite" style="display:none"></span>
+      </div>
+    </div>
+  </main>
+  <aside class="side" aria-label="桌面工作台">
+    <div class="workbench-toolbar">
+      <span class="muted">Desktop status</span>
+      <button id="compactAvatarBtn" title="隐藏侧栏" aria-label="隐藏侧栏"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg></button>
+    </div>
+    <div class="workbench-panel">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px"><b>Workspace</b><span class="muted">默认工作区</span></div>
+        <div class="muted" id="workspaceHint">--</div>
+        <div class="split" style="margin-top:10px">
+          <div class="task"><div class="muted">Command</div><div class="ok">127.0.0.1:8788</div></div>
+          <div class="task"><div class="muted">Events</div><div style="color:var(--blue)">127.0.0.1:8765</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Environment</h3>
+        <div id="environmentStatus" class="muted">GitHub CLI --</div>
+        <div class="nav-list" style="margin-top:8px">
+          <button class="nav-button" data-tab-open="trace">Changes</button>
+          <button class="nav-button" data-tab-open="sync">Sync</button>
+          <button class="nav-button" id="openTerminalHint">Terminal</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Sources</h3>
+        <div id="sourcesHint" class="muted">No sources yet</div>
+      </div>
+    </div>
+    <div class="splitter"></div>
+    <div class="avatar-wrap">
+      <div class="avatar-header">
+        <div><b>3D 模型</b><div class="muted">桌面嵌入视图</div></div>
+        <div class="avatar-tools"><button id="reloadAvatarBtn">刷新 3D</button><button id="openAvatarPanelBtn">浮窗</button></div>
+      </div>
+      <div class="avatar-frame"><iframe id="avatarFrame" title="SpiritKin 3D Avatar"></iframe></div>
+    </div>
+    <div class="management-shell">
+      <div class="management-nav" role="tablist" aria-label="管理模块" aria-orientation="vertical">
+        <div class="muted" style="margin:0 0 8px">管理模块</div>
+        <button data-tab="tasks" class="active" role="tab" aria-selected="true">任务</button>
+        <button data-tab="workflows" role="tab" aria-selected="false">工作流</button>
+        <button data-tab="modules" role="tab" aria-selected="false">模块</button>
+        <button data-tab="services" role="tab" aria-selected="false">服务</button>
+        <button data-tab="ports" role="tab" aria-selected="false">端口</button>
+        <button data-tab="diagnostics" role="tab" aria-selected="false">诊断</button>
+        <button data-tab="logs" role="tab" aria-selected="false">日志</button>
+        <button data-tab="context" role="tab" aria-selected="false">上下文</button>
+        <button data-tab="project" role="tab" aria-selected="false">项目概览</button>
+        <button data-tab="trace" role="tab" aria-selected="false">过程</button>
+        <button data-tab="search" role="tab" aria-selected="false">搜索/RAG</button>
+        <button data-tab="models" role="tab" aria-selected="false">模型</button>
+        <button data-tab="agents" role="tab" aria-selected="false">Agent</button>
+        <button data-tab="skills" role="tab" aria-selected="false">Skills</button>
+        <button data-tab="knowledge" role="tab" aria-selected="false">知识库</button>
+        <button data-tab="mcp" role="tab" aria-selected="false">MCP</button>
+        <button data-tab="mobile" role="tab" aria-selected="false">移动端</button>
+        <button data-tab="safety" role="tab" aria-selected="false">安全</button>
+        <button data-tab="evolution" role="tab" aria-selected="false">进化</button>
+        <button data-tab="governance" role="tab" aria-selected="false">治理</button>
+        <button data-tab="sync" role="tab" aria-selected="false">同步</button>
+      </div>
+      <div></div>
+      <div class="management-content">
+        <div id="tabTasks" class="panel active" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><input id="taskTitle" class="grow" placeholder="新任务"><button id="addTaskBtn">添加</button></div>
+        <div id="taskList"></div>
+        </div>
+        <div id="tabWorkflows" class="panel" role="tabpanel">
+        <div class="row workflow-toolbar"><div><b>工作流</b><div id="workflowActionText" class="muted workflow-action-text">--</div></div><div class="toolbar"><button id="refreshWorkflowsBtn">刷新</button><button id="saveWorkflowDefinitionBtn">保存定义</button><button id="startWorkflowBtn" class="primary">启动运行</button></div></div>
+        <div id="workflowMetrics" class="metric-grid workflow-metrics"></div>
+        <div class="workflow-desktop-grid">
+          <div class="workflow-pane">
+            <div class="workflow-pane-block">
+              <h3>定义目录</h3>
+              <select id="workflowSelect"></select>
+              <div id="workflowCatalog" class="workflow-catalog"></div>
+            </div>
+            <div class="workflow-pane-block">
+              <h3 id="workflowDefinitionTitle">--</h3>
+              <div id="workflowDefinitionSummary" class="muted">--</div>
+            </div>
+            <div class="workflow-pane-block">
+              <h3>执行身份</h3>
+              <select id="workflowAgentSelect"></select>
+              <input id="workflowAgentId" class="grow" value="ecommerce" placeholder="Agent / 审核人 ID（可选）" style="margin-top:8px;width:100%">
+            </div>
+          </div>
+          <div class="workflow-pane">
+            <div class="workflow-main-grid">
+              <div class="workflow-pane-block">
+                <div class="row workflow-toolbar"><div><h3 style="margin:0">节点蓝图</h3><div id="workflowRunSummary" class="muted">选择或启动一个运行实例后操作节点</div></div><div class="toolbar"><button id="workflowRunNextDryBtn">Dry 下一节点</button><button id="workflowRunNextBtn" class="warn">执行下一节点</button></div></div>
+                <div id="workflowDefinitionBox" class="workflow-graph"></div>
+              </div>
+            </div>
+            <div class="workflow-lower-grid">
+              <div class="workflow-pane-block">
+                <h3>运行实例</h3>
+                <div id="workflowRunList"></div>
+                <div class="row" style="margin-top:8px"><button id="archiveWorkflowRunBtn">归档当前运行</button><button id="cleanupWorkflowRunsBtn">清理旧运行</button></div>
+              </div>
+              <div class="workflow-pane-block">
+                <h3>节点管理</h3>
+                <div id="workflowNodeList"></div>
+              </div>
+              <div class="workflow-pane-block">
+                <h3>当前节点详情</h3>
+                <div id="workflowNodeDetail" class="workflow-node-detail"></div>
+              </div>
+            </div>
+          </div>
+          <div class="workflow-pane">
+            <div class="workflow-pane-block">
+              <h3>启动输入</h3>
+              <div id="workflowParamForm" class="workflow-params"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div id="tabTrace" class="panel" role="tabpanel">
+        <div class="card"><h3>当前执行</h3><div id="executionBox" class="kv"></div></div>
+        <div class="card"><h3>Agent 路由</h3><div id="routeBox" class="kv"></div></div>
+        <div class="card"><h3>最近事件</h3><div id="eventList" class="muted"></div></div>
+        </div>
+        <div id="tabModules" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshModulesBtn">刷新模块</button><button id="scanModulesBtn">扫描治理</button></div>
+        <div class="card">
+          <h3>统一模块</h3>
+          <div id="moduleMetrics" class="metric-grid"></div>
+        </div>
+        <div class="card">
+          <h3>模块状态</h3>
+          <div id="moduleList" class="module-list"></div>
+        </div>
+        <div class="card">
+          <h3>待处理事项</h3>
+          <div id="moduleActionList"></div>
+        </div>
+        </div>
+        <div id="tabServices" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshServicesBtn">刷新服务</button><button id="restartCoreServicesBtn" class="warn">重启核心服务</button></div>
+        <div class="card">
+          <h3>服务状态</h3>
+          <div id="serviceMetrics" class="metric-grid"></div>
+        </div>
+        <div class="card">
+          <h3>托管服务</h3>
+          <div id="serviceList"></div>
+        </div>
+        <div class="card">
+          <h3>最近动作</h3>
+          <div id="serviceActionList" class="muted"></div>
+        </div>
+        </div>
+        <div id="tabPorts" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshPortsBtn">刷新端口</button><button id="repairPortsBtn" class="warn">自动修复冲突</button><button id="resetPortsBtn">清除覆盖</button></div>
+        <div class="card">
+          <h3>端口注册表</h3>
+          <div id="portMetrics" class="metric-grid"></div>
+          <div id="portStatusBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>服务端口</h3>
+          <div id="portList"></div>
+        </div>
+        <div class="card">
+          <h3>端口问题</h3>
+          <div id="portIssueList"></div>
+        </div>
+        </div>
+        <div id="tabDiagnostics" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshDiagnosticsBtn">刷新诊断</button><button id="repairDiagnosticsBtn" class="warn">修复高优先级</button></div>
+        <div class="card">
+          <h3>诊断摘要</h3>
+          <div id="diagnosticMetrics" class="metric-grid"></div>
+        </div>
+        <div class="card">
+          <h3>检查项</h3>
+          <div id="diagnosticCheckList"></div>
+        </div>
+        <div class="card">
+          <h3>问题 / 修复建议</h3>
+          <div id="diagnosticIssueList"></div>
+        </div>
+        </div>
+        <div id="tabLogs" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshLogsBtn">刷新日志</button></div>
+        <div class="card">
+          <h3>统一动作日志</h3>
+          <div id="actionLogSummary" class="muted" style="margin-bottom:8px">--</div>
+          <div id="actionLogList"></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3>日志文件</h3>
+            <div id="logList"></div>
+          </div>
+          <div class="card">
+            <h3>Tail</h3>
+            <div id="logDetail" class="log-tail">--</div>
+          </div>
+        </div>
+        </div>
+        <div id="tabContext" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshContextBtn">刷新上下文</button><button id="saveContextBtn" class="primary">保存策略</button></div>
+        <div class="card">
+          <h3>上下文策略</h3>
+          <div class="config-grid">
+            <select id="contextMode"><option>balanced</option><option>minimal</option><option>deep</option></select>
+            <input id="contextMaxRecent" type="number" min="2" placeholder="recent messages">
+            <input id="contextSummarizeAfter" type="number" min="4" placeholder="summarize after">
+            <select id="contextProjectDocs"><option value="true">包含项目文档</option><option value="false">不包含项目文档</option></select>
+            <select id="contextRecentEvents"><option value="true">包含最近事件</option><option value="false">不包含最近事件</option></select>
+            <select id="contextLearningRecords"><option value="true">包含学习记录</option><option value="false">不包含学习记录</option></select>
+          </div>
+          <textarea id="contextPinned" placeholder="Pinned context，每行一项"></textarea>
+        </div>
+        <div class="card">
+          <h3>当前上下文</h3>
+          <div id="contextMetrics" class="metric-grid"></div>
+          <div id="contextSummaryBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>优化建议</h3>
+          <div id="contextSuggestionList"></div>
+        </div>
+        </div>
+        <div id="tabProject" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshProjectOverviewBtn">刷新概览</button><button id="regenerateProjectOverviewBtn">重新生成提案</button><button id="saveProjectOverviewBtn" class="primary">保存为提案</button></div>
+        <div class="card">
+          <h3>项目运行策略</h3>
+          <div id="projectRuntimeMetrics" class="metric-grid"></div>
+          <div id="projectRuntimeList" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>项目概览</h3>
+          <div id="projectOverviewMetrics" class="metric-grid"></div>
+          <textarea id="projectOverviewMarkdown" class="markdown-editor" spellcheck="false"></textarea>
+        </div>
+        <div class="card">
+          <h3>待审核变更</h3>
+          <div id="projectOverviewChangeList"></div>
+        </div>
+        </div>
+        <div id="tabSearch" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshSearchBtn">刷新 Search/RAG</button><button id="saveSearchBtn" class="primary">保存运行时配置</button></div>
+        <div class="card">
+          <h3>当前状态</h3>
+          <div id="searchMetrics" class="metric-grid"></div>
+          <div id="searchStatusBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>运行时配置</h3>
+          <div class="config-grid">
+            <select id="searchWebProvider"><option>brave,duckduckgo</option><option>duckduckgo</option><option>brave</option></select>
+            <select id="searchKnowledgeBackend"><option>embedding</option><option>keyword</option></select>
+            <select id="searchEmbeddingProvider"><option>llamacpp</option><option>lmstudio</option><option>openai_compatible</option><option>hashing</option></select>
+            <input id="searchEmbeddingModel" placeholder="Embedding model">
+            <input id="searchEmbeddingBaseUrl" placeholder="Embedding base URL">
+            <input id="searchEmbeddingApiKey" type="password" placeholder="Embedding API key">
+            <select id="searchRerankerProvider"><option>llamacpp</option><option>lmstudio</option><option>openai_compatible</option><option>token_overlap</option></select>
+            <input id="searchRerankerModel" placeholder="Reranker/chat model">
+            <input id="searchRerankerBaseUrl" placeholder="Reranker base URL">
+          </div>
+          <div class="muted">保存只写入当前 command gateway 进程环境；重启后持久化需要同步写入启动环境。</div>
+        </div>
+        <div class="card">
+          <h3>缺口与建议</h3>
+          <div id="searchGapList"></div>
+        </div>
+        <div class="card">
+          <h3>主流模型能力快照</h3>
+          <div id="searchCapabilityList"></div>
+        </div>
+        </div>
+        <div id="tabModels" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshModelsBtn">刷新模型</button><button id="runSchedulerBenchmarkBtn">运行 Benchmark</button><button id="saveAssistModelBtn" class="primary">保存辅助模型</button><button id="deleteAssistModelBtn">删除辅助模型</button></div>
+        <div class="card">
+          <h3>模型治理</h3>
+          <div id="modelMetrics" class="metric-grid"></div>
+          <div id="modelStatusBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="grid2">
+        <div class="card">
+          <h3>本地角色 / Scheduler Benchmark</h3>
+          <div id="localModelPolicyBox" class="compact-list"></div>
+        </div>
+        <div class="card">
+          <h3>Brain Adapter / 替换 Gate</h3>
+          <div id="brainReplacementBox" class="compact-list"></div>
+        </div>
+        </div>
+        <div class="card">
+          <h3>辅助模型</h3>
+          <div class="config-grid">
+            <input id="assistModelId" placeholder="model_id">
+            <input id="assistModelLabel" placeholder="显示名称">
+            <select id="assistModelProvider"><option>llamacpp</option><option>lmstudio</option><option>openai_compatible</option><option>ollama</option></select>
+            <input id="assistModelName" placeholder="模型名称">
+            <input id="assistModelBaseUrl" placeholder="Base URL">
+            <input id="assistModelApiKey" type="password" placeholder="API key（可选）">
+            <select id="assistModelRole"><option>review</option><option>planner</option><option>coder</option><option>vision</option></select>
+            <select id="assistModelEnabled"><option value="true">启用</option><option value="false">关闭</option></select>
+          </div>
+          <textarea id="assistModelNotes" placeholder="用途、边界、成本备注"></textarea>
+          <div id="assistModelList" style="margin-top:10px"></div>
+        </div>
+        <div class="card">
+          <h3>Provider / 评审团</h3>
+          <div id="modelProviderList"></div>
+          <div id="reviewCommitteeBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        </div>
+        <div id="tabAgents" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshAgentsBtn">刷新 Agent</button><button id="saveAgentsBtn" class="primary">保存 Agent 配置快照</button></div>
+        <div class="card">
+          <h3>Agent 管理</h3>
+          <div id="agentMetrics" class="metric-grid"></div>
+          <div id="agentStatusBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>启用 Agent</h3>
+          <div id="agentList"></div>
+        </div>
+        <div class="card">
+          <h3>路由 / 远端 Worker</h3>
+          <div id="agentRouteList"></div>
+          <div id="remoteWorkerList" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>Capability / 缺口</h3>
+          <div id="agentCapabilityList"></div>
+          <div id="agentGapList" style="margin-top:8px"></div>
+        </div>
+        </div>
+        <div id="tabSkills" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshSkillsBtn">刷新 Skills</button><button id="newSkillBtn">新建</button><button id="saveSkillBtn" class="primary">保存</button><button id="dryRunSkillBtn">Dry Run</button><button id="promoteSkillBtn">Promote</button><button id="deleteSkillBtn">删除</button></div>
+        <div class="card">
+          <h3>Skill Registry</h3>
+          <div id="skillMetrics" class="metric-grid"></div>
+          <div id="skillStatusBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3>列表</h3>
+            <div id="skillList"></div>
+          </div>
+          <div class="card">
+            <h3>编辑器</h3>
+            <div class="config-grid">
+              <input id="skillName" placeholder="name">
+              <input id="skillVersion" placeholder="0.1.0">
+              <select id="skillStatus"><option>candidate</option><option>draft</option><option>active</option><option>rejected</option></select>
+              <select id="skillRisk"><option>low</option><option>medium</option><option>high</option></select>
+              <input id="skillOwner" placeholder="owner_agent_id">
+              <input id="skillWorkspacePath" placeholder="workspace_path">
+            </div>
+            <textarea id="skillDescription" placeholder="description"></textarea>
+            <textarea id="skillTriggers" placeholder="trigger_intents，每行一项"></textarea>
+            <textarea id="skillTools" placeholder="tool_allowlist，每行一项"></textarea>
+            <textarea id="skillSteps" placeholder='steps JSON，如 [{"tool":"..."}]'></textarea>
+            <textarea id="skillRunInputs" placeholder='运行输入 JSON，如 {"actor":"desktop_console"}'></textarea>
+            <div id="skillRunResult" class="muted" style="margin-top:8px">--</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>来源 / 隔离区</h3>
+          <div id="skillSourceList"></div>
+        </div>
+        </div>
+        <div id="tabKnowledge" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshKnowledgeBtn">刷新知识库</button><button id="indexAllKnowledgeBtn" class="primary">全部索引</button><button id="indexUnindexedKnowledgeBtn">索引未处理</button><button id="saveKnowledgeSourceBtn">保存来源</button></div>
+        <div class="card">
+          <h3>知识库</h3>
+          <div id="knowledgeMetrics" class="metric-grid"></div>
+        </div>
+        <div class="card">
+          <h3>库列表</h3>
+          <div id="knowledgeBaseList"></div>
+        </div>
+        <div class="card">
+          <h3>外部来源</h3>
+          <div class="config-grid">
+            <input id="knowledgeSourceId" placeholder="source_id">
+            <input id="knowledgeSourceLabel" placeholder="label">
+            <select id="knowledgeSourceKind"><option>folder</option><option>obsidian</option></select>
+            <select id="knowledgeSourceKb"><option value="">knowledge_base_id</option></select>
+            <input id="knowledgeSourcePath" placeholder="路径">
+            <select id="knowledgeSourceEnabled"><option value="true">启用</option><option value="false">关闭</option></select>
+          </div>
+          <textarea id="knowledgeSourceNotes" placeholder="备注"></textarea>
+          <div id="knowledgeSourceList" style="margin-top:10px"></div>
+        </div>
+        <div class="card">
+          <h3>索引任务</h3>
+          <div id="knowledgeJobList"></div>
+        </div>
+        </div>
+        <div id="tabMcp" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshMcpBtn">刷新 MCP</button><button id="newMcpBtn">新建</button><button id="saveMcpBtn" class="primary">保存 Server</button><button id="approveMcpBtn">审核通过</button><button id="enableMcpBtn">启用</button><button id="disableMcpBtn">关闭</button><button id="deleteMcpBtn">删除</button></div>
+        <div class="card">
+          <h3>MCP Registry</h3>
+          <div id="mcpMetrics" class="metric-grid"></div>
+          <div id="mcpPolicyBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3>Servers</h3>
+            <div id="mcpServerList"></div>
+          </div>
+          <div class="card">
+            <h3>Server 编辑</h3>
+            <div class="config-grid">
+              <input id="mcpServerId" placeholder="server_id">
+              <input id="mcpServerLabel" placeholder="label">
+              <select id="mcpTransport"><option>stdio</option><option>sse</option><option>http</option></select>
+              <input id="mcpCommand" placeholder="command">
+              <input id="mcpUrl" placeholder="url">
+              <select id="mcpEnabled"><option value="false">关闭</option><option value="true">启用</option></select>
+              <select id="mcpReviewState"><option>candidate</option><option>approved</option><option>active</option><option>rejected</option></select>
+              <select id="mcpTrustLevel"><option>untrusted</option><option>semi_trusted</option><option>trusted</option></select>
+            </div>
+            <textarea id="mcpArgs" placeholder="args，每行一项"></textarea>
+            <textarea id="mcpOwners" placeholder="owner_agent_ids，每行一项"></textarea>
+            <textarea id="mcpFilesystemScopes" placeholder="filesystem_scopes，每行一项"></textarea>
+            <textarea id="mcpNetworkScopes" placeholder="network_scopes，每行一项"></textarea>
+            <textarea id="mcpTools" placeholder='tools JSON，如 [{"mcp_tool_name":"search","risk_level":"low"}]'></textarea>
+            <textarea id="mcpNotes" placeholder="notes"></textarea>
+          </div>
+        </div>
+        <div class="card">
+          <h3>工具映射 / 审计</h3>
+          <div id="mcpMappingList"></div>
+          <div id="mcpAuditList" class="muted" style="margin-top:8px"></div>
+        </div>
+        </div>
+        <div id="tabMobile" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshMobileBtn">刷新移动端</button><button id="startAndroidEndpointBtn">启动 Android</button><button id="restartAndroidEndpointBtn" class="primary">重启 Android</button><button id="approveAndroidApkBtn">批准 APK</button><button id="startAndroidLifecycleWorkflowBtn">启动验收工作流</button><button id="reconnectAndroidAdbBtn">重连 ADB</button><button id="installAndroidBridgeBtn" class="primary">安装 APK</button><button id="startIosEndpointBtn">启动 iOS</button><button id="restartIosEndpointBtn">重启 iOS</button></div>
+        <div class="card">
+          <h3>移动端 Bridge</h3>
+          <div id="mobileMetrics" class="metric-grid"></div>
+          <div id="mobileStatusBox" class="muted" style="margin-top:8px"></div>
+          <div id="mobileSecurityBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3>Android Control Bridge</h3>
+            <div id="mobileAndroidBox" class="muted"></div>
+            <div id="mobileBindingBox" class="muted" style="margin-top:8px"></div>
+            <div id="mobileAndroidWorkerBox" class="muted" style="margin-top:10px"></div>
+            <div class="config-grid" style="margin-top:8px">
+              <input id="mobileWorkspaceId" placeholder="workspace_id">
+              <button id="createAndroidPairingBtn" class="primary">生成 Android 配对</button>
+            </div>
+            <input id="mobileAndroidPairingUrl" readonly placeholder="Android pairing page" style="margin-top:8px;width:100%">
+            <input id="mobileAndroidReceiverUrl" readonly placeholder="Android receiver URL" style="margin-top:8px;width:100%">
+            <div class="config-grid" style="margin-top:8px">
+              <input id="mobileAdbDeviceIp" placeholder="Android device IP">
+              <input id="mobileAdbKnownPort" placeholder="ADB port">
+            </div>
+          </div>
+          <div class="card">
+            <h3>iOS Shortcuts / PWA</h3>
+            <div id="mobileIosBox" class="muted"></div>
+            <input id="mobileIosPwaUrl" readonly placeholder="iOS PWA URL" style="margin-top:8px;width:100%">
+            <input id="mobileIosBaseUrl" readonly placeholder="iOS base URL" style="margin-top:8px;width:100%">
+            <div id="mobileShortcutList" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>路径与最近动作</h3>
+          <div id="mobilePathBox" class="muted"></div>
+          <div id="mobileActionBox" class="muted" style="margin-top:8px">--</div>
+        </div>
+        <div class="card">
+          <h3>状态维护</h3>
+          <div class="row" style="margin-bottom:8px"><button id="refreshStateMaintenanceBtn">刷新维护</button><button id="cleanupStateMaintenanceBtn" class="primary">清理增长状态</button></div>
+          <div id="stateMaintenanceBox" class="muted">--</div>
+        </div>
+        <div class="card">
+          <h3>Android 被控端队列</h3>
+          <div id="mobileCompanionBox" class="muted"></div>
+          <div class="config-grid" style="margin-top:8px">
+            <input id="mobileCommandDeviceId" placeholder="device_id，默认 android_device">
+            <select id="mobileCommandOperation">
+              <option value="device.status">设备状态</option>
+              <option value="list_installed_apps">应用列表</option>
+              <option value="app.launch">启动应用</option>
+              <option value="app.close">关闭应用</option>
+              <option value="clipboard.write">写入剪贴板</option>
+              <option value="android.open_bridge">打开 Bridge</option>
+              <option value="android.open_accessibility_settings">打开无障碍设置</option>
+              <option value="android.ui_snapshot">页面快照</option>
+              <option value="android.screenshot.request_permission">请求截图授权</option>
+              <option value="android.screenshot.capture">截图</option>
+              <option value="accessibility.tap">点击坐标</option>
+              <option value="pdd.launch">打开拼多多</option>
+              <option value="pdd.share_image">分享图片到拼多多</option>
+              <option value="pdd.create_listing">创建拼多多商品</option>
+              <option value="url.open">打开 URL</option>
+            </select>
+            <input id="mobileCommandValue" placeholder="应用名 / URL / 剪贴板文本 / 截图目的 / 坐标">
+          </div>
+          <div class="row" style="margin-top:8px"><button id="queueAndroidCommandBtn" class="primary">投递 Android 命令</button><button id="clearAndroidCommandsBtn">清空队列</button></div>
+        </div>
+        </div>
+        <div id="tabSafety" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshSafetyBtn">刷新安全状态</button><button id="softStopBtn" class="warn">Soft Stop</button><button id="hardStopBtn" class="warn">Hard Stop</button><button id="resumeSafetyBtn" class="primary">Resume</button></div>
+        <div class="card">
+          <h3>安全停止</h3>
+          <div id="safetyMetrics" class="metric-grid"></div>
+          <div id="safetyStatusBox" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>原因</h3>
+          <textarea id="safetyReason" placeholder="停止 / 恢复原因"></textarea>
+          <input id="safetyConfirmation" placeholder="硬停止恢复请输入 RESUME_HARD_STOP" style="margin-top:8px;width:100%">
+        </div>
+        <div class="card">
+          <h3>历史</h3>
+          <div id="safetyHistoryList"></div>
+        </div>
+        </div>
+        <div id="tabEvolution" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshEvolutionBtn">刷新进化</button><button id="exportEvolutionDatasetBtn">导出训练集</button><button id="buildEvolutionPackageBtn">云训练包</button><button id="enforceSkillOwnershipBtn">补齐 Skill 归属</button><button id="seedDomainSkillsBtn">生成领域模板</button></div>
+        <div class="card">
+          <h3>闭环状态</h3>
+          <div id="evolutionMetrics" class="metric-grid"></div>
+        </div>
+        <div class="card">
+          <h3>论文 / 视频转 Skill</h3>
+          <div class="grid2">
+            <input id="paperTitle" placeholder="论文 / 方法标题">
+            <input id="paperOwner" placeholder="论文归属 Agent，如 programming">
+          </div>
+          <input id="paperSource" placeholder="论文 URL / 文件路径">
+          <textarea id="paperSummary" placeholder="方法摘要、可复现实验步骤或要沉淀的技能"></textarea>
+          <div class="row" style="margin:8px 0 12px"><button id="ingestPaperBtn">生成论文 Skill 候选</button></div>
+          <div class="grid2">
+            <input id="videoTitle" placeholder="视频 / 操作标题">
+            <input id="videoOwner" placeholder="视频归属 Agent，如 video_animation">
+          </div>
+          <input id="videoSource" placeholder="视频 URL / 文件路径">
+          <input id="videoFrames" placeholder="截图/帧 URL 或路径，多项用逗号分隔；可接 llama.cpp 多模态模型">
+          <textarea id="videoActions" placeholder="每行一步：点击、输入、按键或观察到的 UI 操作"></textarea>
+          <div class="row" style="margin-top:8px"><button id="ingestVideoBtn">生成视频 Skill 候选</button></div>
+        </div>
+        <div class="card">
+          <h3>闭环阶段</h3>
+          <div id="evolutionLoopList"></div>
+        </div>
+        <div class="card">
+          <h3>待处理事项</h3>
+          <div id="evolutionActionList"></div>
+        </div>
+        <div class="card">
+          <h3>Agent / Skill 隔离</h3>
+          <div id="evolutionAgentSkillList"></div>
+        </div>
+        <div class="card">
+          <h3>训练调度</h3>
+          <div id="evolutionTrainingBox" class="muted"></div>
+        </div>
+        <div class="card">
+          <h3>学习 Artifact / 模板</h3>
+          <div id="evolutionArtifactList"></div>
+          <div id="evolutionTemplateList"></div>
+        </div>
+        </div>
+        <div id="tabGovernance" class="panel" role="tabpanel">
+        <div class="row" style="margin-bottom:8px"><button id="refreshGovernanceBtn">刷新治理</button><button id="scanGovernanceBtn">重新扫描</button></div>
+        <div class="card">
+          <h3>生态治理</h3>
+          <div id="governanceMetrics" class="metric-grid"></div>
+        </div>
+        <div class="card">
+          <h3>模块风险</h3>
+          <div id="moduleRiskList" class="risk-list"></div>
+        </div>
+        <div class="card">
+          <h3>待审核 Proposal</h3>
+          <div id="proposalQueue"></div>
+        </div>
+        </div>
+        <div id="tabSync" class="panel" role="tabpanel">
+        <div class="card"><h3>多端同步</h3><div id="syncBox" class="kv"></div></div>
+        <div class="card"><h3>打开地址</h3><div id="linksBox" class="muted"></div></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+<script src="js/realtime_contract.js"></script>
+<script src="js/realtime_bridge.js"></script>
+<script src="js/api.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const queryParams=new URLSearchParams(location.search);
+const host=window.SPIRITKIN_BRIDGE.defaultHost();
+const pagePort=Number(location.port||0);
+const contractPorts=window.SPIRITKIN_CONTRACT.defaultPorts;
+const state={revision:0,active_session_id:"session_default",sessions:[],projects:[],tasks:[],settings:{},events:[],pending:null,lastExecution:null,lastRoute:null};
+let syncTimer=null,pendingSave=false,ecosystemReview=null,governanceLoading=false,moduleManagement=null,moduleManagementLoading=false,servicesState=null,servicesLoading=false,portsState=null,portsLoading=false,diagnosticsState=null,diagnosticsLoading=false,logsState=null,actionLogState=null,logsLoading=false,contextState=null,contextLoading=false,projectOverviewState=null,projectOverviewLoading=false,projectRuntimeState=null,projectRuntimeLoading=false,evolution=null,evolutionLoading=false,searchManagement=null,searchManagementLoading=false,workflows=null,workflowsLoading=false,learning=null,modelCatalogState=null,learningLoading=false,agentManagement=null,agentManagementLoading=false,skillsManagement=null,skillsLoading=false,knowledgeBase=null,knowledgeLoading=false,mcpManagement=null,mcpLoading=false,mobileManagement=null,mobileLoading=false,safetyState=null,safetyLoading=false,activeWorkflowRunId="",activeWorkflowName="ecommerce.auto_listing.v1",activeWorkflowNodeId="",activeSkillName="",activeMcpServerId="",activeKnowledgeSourceId="",activeAssistModelId="",activeLogId="";
+const workflowParamValues={};
+function now(){return Date.now()/1000}
+function id(prefix){return `${prefix}_${Math.random().toString(36).slice(2,9)}${Date.now().toString(36).slice(-4)}`}
+const escapeHtml=window.SPIRITKIN_BRIDGE.escapeHtml;
+function inferredApiBase(){return `http://${host}:${pagePort?pagePort+1:contractPorts.command_gateway}`}
+function inferredWsUrl(){return `ws://${host}:${pagePort?Math.max(pagePort-2,1):contractPorts.event_bridge}`}
+function endpointPort(value){try{return Number(new URL(value).port||0)}catch{return 0}}
+function isDefaultLoopbackEndpoint(value,port){try{const u=new URL(value);return ["127.0.0.1","localhost",host].includes(u.hostname)&&Number(u.port||0)===port}catch{return false}}
+function initialEndpoint(queryKey,storageKey,inferred,defaultPort){const queryValue=queryParams.get(queryKey);if(queryValue)return queryValue;const stored=(localStorage.getItem(storageKey)||"").trim();if(!stored)return inferred;if(pagePort&&pagePort!==contractPorts.frontend&&isDefaultLoopbackEndpoint(stored,defaultPort))return inferred;return stored}
+function initialApiBase(){return initialEndpoint("cmd","spiritkin_console_api",inferredApiBase(),contractPorts.command_gateway)}
+function initialWsUrl(){return initialEndpoint("ws","spiritkin_console_ws",inferredWsUrl(),contractPorts.event_bridge)}
+function apiBase(){return ($("apiUrl").value.trim()||inferredApiBase()).replace(/\/command\/?$/,"").replace(/\/$/,"")}
+function wsUrl(){return $("wsUrl").value.trim()||inferredWsUrl()}
+function authToken(){return $("authToken").value.trim()}
+function authHeaders(extra={}){const headers={...extra};const token=authToken();if(token){headers["X-SpiritKin-Token"]=token;headers.Authorization=`Bearer ${token}`}return headers}
+function persistConnectionSettings(){localStorage.setItem("spiritkin_console_api",$("apiUrl").value);localStorage.setItem("spiritkin_console_ws",$("wsUrl").value);localStorage.setItem("spiritkin_console_token",authToken())}
+function activeSession(){return state.sessions.find(s=>s.id===state.active_session_id)||state.sessions[0]}
+function touch(item){item.updated_at=now();return item}
+function ensureState(){if(!state.sessions.length){const t=now();state.sessions=[{id:"session_default",title:"主会话",status:"active",created_at:t,updated_at:t,messages:[]}];state.active_session_id="session_default"}}
+function setStatus(text,kind=""){const el=$("sendStatus");el.className=kind?`muted ${kind}`:"muted";el.textContent=text;el.style.display=text?"inline":"none"}
+function fmtTime(ts){if(!ts)return"--";return new Date(ts*1000).toLocaleString()}
+function isSuccessfulExecution(value){return value===true||value===1||["true","1","ok","success","succeeded"].includes(String(value||"").trim().toLowerCase())}
+function pendingMatchesLastExecution(pending,lastExecution){
+ if(!pending||!lastExecution||!isSuccessfulExecution(lastExecution.success))return false;
+ const pendingTarget=String(pending.target||pending.pending_target||"").trim();
+ const pendingOperation=String(pending.operation||pending.pending_operation||"").trim();
+ const executedTarget=String(lastExecution.target||"").trim();
+ const executedOperation=String(lastExecution.operation||"").trim();
+ return !!pendingTarget&&!!pendingOperation&&pendingTarget===executedTarget&&pendingOperation===executedOperation
+}
+function render(){
+ ensureState();
+ const session=activeSession();
+ const pending=pendingMatchesLastExecution(state.pending,state.lastExecution)?null:state.pending;
+ $("activeTitle").textContent=session?.title||"主会话";
+ $("activeMeta").textContent=`版本 ${state.revision||0} · 更新 ${fmtTime(state.updated_at)}`;
+ $("sessionList").innerHTML=state.sessions.map(s=>`<div class="item ${s.id===state.active_session_id?"active":""}" data-session="${s.id}"><div class="title">${escapeHtml(s.title)}</div><div class="meta">${(s.messages||[]).length} 条 · ${escapeHtml(uiStatusLabel(s.status||"active"))}</div></div>`).join("");
+ $("projectList").innerHTML=state.projects.length?state.projects.map(p=>`<div class="item"><div class="title">${escapeHtml(p.title)}</div><div class="meta">${escapeHtml(uiStatusLabel(p.status||"active"))} · ${fmtTime(p.updated_at)}</div></div>`).join(""):`<div class="empty">暂无项目</div>`;
+ $("workspaceHint").textContent=state.projects.find(p=>p.workspace_path)?.workspace_path||"--";
+ const taskHtml=state.tasks.length?state.tasks.slice().reverse().map(t=>`<div class="task"><div class="task-head"><b>${escapeHtml(t.title)}</b><span class="status">${escapeHtml(uiStatusLabel(t.status||"pending"))}</span></div><div class="muted">${escapeHtml(t.detail||"")}</div><div class="row" style="margin-top:8px"><button data-task="${t.id}" data-status="running">开始</button><button data-task="${t.id}" data-status="complete">完成</button><button data-task="${t.id}" data-status="blocked">阻塞</button></div></div>`).join(""):`<div class="empty">暂无本地任务</div>`;
+ $("taskList").innerHTML=taskHtml;
+ $("taskMiniList").innerHTML=state.tasks.length?state.tasks.slice(-8).reverse().map(t=>`<div class="item"><div class="title">${escapeHtml(t.title)}</div><div class="meta">${escapeHtml(uiStatusLabel(t.status||"pending"))}</div></div>`).join(""):`<div class="empty">暂无任务</div>`;
+ $("messages").innerHTML=(session?.messages||[]).length?(session.messages||[]).map(m=>`<div class="msg ${escapeHtml(m.role)}">${escapeHtml(m.text)}<div class="muted">${fmtTime(m.created_at)}</div></div>`).join(""):`<div class="empty">开始一个会话，或等待其他设备同步过来。</div>`;
+ scrollMessagesToEnd();
+ $("pendingPill").textContent=pending?`确认门: ${uiActionLabel(pending.target)}.${uiActionLabel(pending.operation)}`:"确认门: 空";
+ $("confirmBar").classList.toggle("show",!!pending);
+ $("confirmText").textContent=pending?`${uiActionLabel(pending.target)}.${uiActionLabel(pending.operation)} · ${uiRiskLabel(pending.risk_level||"risk")}`:"--";
+ $("executionBox").innerHTML=kv({"目标":uiActionLabel(state.lastExecution?.target),"操作":uiActionLabel(state.lastExecution?.operation),"状态":state.lastExecution?.success===false?"失败":state.lastExecution?"完成":"--","错误":state.lastExecution?.error});
+ $("routeBox").innerHTML=kv({"Agent":uiActorLabel(state.lastRoute?.agent_name),"路由":uiActionLabel(state.lastRoute?.route),"领域":uiDomainLabel(state.lastRoute?.domain),"原因":state.lastRoute?.reason});
+ $("eventList").innerHTML=state.events.slice(-18).reverse().map(e=>`${escapeHtml(e.time)} · ${escapeHtml(uiEventLabel(e.type))}`).join("<br>")||"--";
+ $("syncBox").innerHTML=kv({"版本":state.revision,"更新方":state.updated_by,"更新时间":fmtTime(state.updated_at),"状态接口":desktopStateUrl(),"事件通道":wsUrl()});
+  $("linksBox").innerHTML=`<div>本机：<a href="${location.href}">${escapeHtml(location.href)}</a></div><div>局域网：把 localhost 换成本机 IP，并确保 ${escapeHtml(location.port||"--")}/${escapeHtml(endpointPort(apiBase())||"--")}/${escapeHtml(endpointPort(wsUrl())||"--")} 允许访问。</div><div>3D：<a href="${avatarUrl()}" target="_blank">${escapeHtml(avatarUrl())}</a></div>`;
+  renderModuleManagement();
+  renderServices();
+  renderServicePorts();
+  renderDiagnostics();
+  renderLogs();
+  renderContext();
+  renderProjectRuntime();
+  renderProjectOverview();
+  renderSearchManagement();
+ renderWorkflows();
+ renderModels();
+ renderAgents();
+ renderSkillsManagement();
+ renderKnowledgeBase();
+ renderMcpManagement();
+ renderMobileManagement();
+ renderSafety();
+ renderEvolution();
+ renderGovernance();
+ bindDynamicClicks();
+}
+function renderWorkflows(){
+ const metrics=$("workflowMetrics"),definitionBox=$("workflowDefinitionBox"),runList=$("workflowRunList"),nodeList=$("workflowNodeList"),detailBox=$("workflowNodeDetail"),catalog=$("workflowCatalog"),select=$("workflowSelect"),paramForm=$("workflowParamForm"),actionText=$("workflowActionText"),definitionTitle=$("workflowDefinitionTitle"),definitionSummary=$("workflowDefinitionSummary"),runSummary=$("workflowRunSummary");
+ if(!metrics||!definitionBox||!runList||!nodeList)return;
+ if(workflowsLoading&&!workflows){metrics.innerHTML='<div class="empty">工作流快照加载中...</div>';definitionBox.innerHTML='';runList.innerHTML='';nodeList.innerHTML='';if(detailBox)detailBox.innerHTML='';if(catalog)catalog.innerHTML='';if(paramForm)paramForm.innerHTML='';if(actionText)actionText.textContent='工作流快照加载中...';return}
+ if(!workflows){metrics.innerHTML='<div class="empty">暂无工作流快照</div>';definitionBox.innerHTML='<div class="empty">点击刷新工作流</div>';runList.innerHTML='<div class="empty">暂无运行实例</div>';nodeList.innerHTML='<div class="empty">选择一个运行实例查看节点</div>';if(detailBox)detailBox.innerHTML='<div class="empty">点击工作流节点查看完整状态</div>';if(catalog)catalog.innerHTML='<div class="empty">暂无工作流目录</div>';if(paramForm)paramForm.innerHTML='<div class="empty">暂无参数定义</div>';if(actionText)actionText.textContent='--';return}
+ const overview=workflows.overview||{},allRuns=workflows.runs||[],defs=workflowDefinitions();
+ if(!defs.some(d=>d.name===activeWorkflowName))activeWorkflowName=workflows.selected_workflow_name||overview.default_workflow_name||defs[0]?.name||"ecommerce.auto_listing.v1";
+ const definition=workflowDefinitionByName(activeWorkflowName)||workflows.default_definition||defs[0]||{};
+ const runs=allRuns.filter(r=>r.workflow_name===activeWorkflowName);
+ if(activeWorkflowRunId&&!runs.some(r=>r.run_id===activeWorkflowRunId))activeWorkflowRunId="";
+ if(!activeWorkflowRunId&&runs.length)activeWorkflowRunId=runs[0].run_id;
+ const activeRun=runs.find(r=>r.run_id===activeWorkflowRunId)||runs[0]||null;
+ if(activeRun&&!activeWorkflowNodeId)activeWorkflowNodeId=(activeRun.runnable_node_ids||[])[0]||(definition.nodes||[])[0]?.node_id||"";
+ const counts=overview.status_counts||{};
+  metrics.innerHTML=[
+   metric("已保存定义",overview.definition_count??0,`可用 ${overview.available_definition_count??defs.length}`),
+   metric("内置定义",overview.builtin_definition_count??defs.length,workflowDisplayName(definition)),
+   metric("运行实例",overview.run_count??allRuns.length,workflowDisplayName(definition)),
+   metric("运行中",overview.active_run_count??0,`当前 ${runs.length}`),
+   metric("待审核",counts.waiting_review??0,`运行中 ${counts.running??0}`),
+   metric("阻塞/失败",(counts.blocked??0)+(counts.failed??0),`已完成 ${counts.succeeded??0}`)
+  ].join("");
+  if(actionText)actionText.textContent=workflows.error?`工作流读取失败：${workflows.error}`:`${workflowDisplayName(definition)} · 运行 ${runs.length} · 节点 ${(definition.nodes||[]).length}`;
+  if(definitionTitle)definitionTitle.textContent=workflowDisplayName(definition);
+  if(definitionSummary)definitionSummary.textContent=`${workflowTechnicalLine(definition.name)} · ${workflowCategory(definition)} · 节点 ${(definition.nodes||[]).length} · ${workflowSaved(definition)?"已保存":"内置"}\n${definition.description||""}`;
+ renderWorkflowAgentSelect(definition);
+ renderWorkflowCatalog(defs,definition,select,catalog);
+ renderWorkflowParams(definition,paramForm);
+ const nodes=definition.nodes||[];
+ definitionBox.innerHTML=renderWorkflowCanvas(definition,activeRun);
+  runList.innerHTML=runs.length?runs.map(r=>`<div class="workflow-run ${r.run_id===(activeRun&&activeRun.run_id)?"active":""}" data-workflow-run="${escapeHtml(r.run_id)}"><div class="title">${escapeHtml(workflowDisplayName(workflowDefinitionByName(r.workflow_name)||definition))}</div><div class="muted">运行 ${escapeHtml(workflowShortId(r.run_id))} · ${escapeHtml(workflowStatusLabel(r.status))} · ${escapeHtml(r.updated_at||r.created_at||"--")}</div><div class="muted">${escapeHtml(workflowTechnicalLine(r.workflow_name))} · 可执行 ${escapeHtml((r.runnable_node_ids||[]).map(id=>workflowShortId(id)).join(", ")||"--")}</div></div>`).join(""):'<div class="empty">暂无运行实例</div>';
+ bindWorkflowCatalogClicks();
+ bindWorkflowParamInputs();
+ bindWorkflowGraphNodeClicks();
+ if(!activeRun){nodeList.innerHTML='<div class="empty">选择一个运行实例查看节点</div>';if(detailBox)detailBox.innerHTML='<div class="empty">启动运行后可查看节点定义、状态、输入输出和事件。</div>';if(runSummary)runSummary.textContent='暂无运行实例；点击“启动运行”。';bindWorkflowRunClicks();return}
+ const runNodes=activeRun.nodes||{},defNodes=(activeRun.definition?.nodes)||nodes;
+  if(runSummary)runSummary.textContent=`${workflowStatusLabel(activeRun.status)} · 运行 ${workflowShortId(activeRun.run_id)} · 可执行 ${(activeRun.runnable_node_ids||[]).length}`;
+  nodeList.innerHTML=defNodes.map(n=>{const s=runNodes[n.node_id]||{};const status=s.status||"pending";const actor=s.assigned_agent||workflowNodeActor(n);const canAgent=n.node_type==="agent_task";const canReview=n.node_type==="review_gate"&&status==="waiting_review";return `<div class="workflow-node ${escapeHtml(status)} ${n.node_id===activeWorkflowNodeId?"selected":""}" data-workflow-node-select="${escapeHtml(n.node_id)}"><div class="task-head"><div><div class="title">${escapeHtml(n.label||workflowHumanizeIdentifier(n.node_id,"节点"))}</div><div class="muted">${escapeHtml(workflowTechnicalLine(n.node_id))} · ${escapeHtml(workflowNodeTypeLabel(n.node_type))} · ${escapeHtml(workflowStatusLabel(status))} · 尝试 ${escapeHtml(s.attempts??0)}</div></div><span class="status">${escapeHtml(workflowActorLabel(actor))}</span></div><div class="muted">${escapeHtml(s.error||"")}</div><div class="workflow-actions"><button data-workflow-node="${escapeHtml(n.node_id)}" data-workflow-action="assign">设置处理 Agent</button><button data-workflow-node="${escapeHtml(n.node_id)}" data-workflow-action="dry">Dry</button><button data-workflow-node="${escapeHtml(n.node_id)}" data-workflow-action="run">执行</button>${canAgent?`<button data-workflow-node="${escapeHtml(n.node_id)}" data-workflow-action="claim">认领</button><button data-workflow-node="${escapeHtml(n.node_id)}" data-workflow-action="complete">完成</button>`:""}${canReview?`<button data-workflow-node="${escapeHtml(n.node_id)}" data-workflow-action="approve">审核通过</button>`:""}</div></div>`}).join("");
+ if(detailBox)detailBox.innerHTML=renderWorkflowNodeDetail(activeRun,defNodes,runNodes);
+ bindWorkflowRunClicks();
+ bindWorkflowGraphNodeClicks();
+ bindWorkflowNodeClicks();
+}
+function workflowDefinitions(){const byName={};[...(workflows?.builtin_definitions||[]),...(workflows?.definitions||[])].forEach(d=>{if(d?.name)byName[d.name]=d});return Object.values(byName)}
+function workflowDefinitionByName(name){return workflowDefinitions().find(d=>d.name===name)||null}
+function workflowDisplayName(definitionOrName,displayName=""){
+ const definition=typeof definitionOrName==="object"?definitionOrName:null;
+ const name=String(definition?.name??definitionOrName??"").trim();
+ const label=String(definition?.metadata?.display_name??displayName??"").trim();
+ if(label&&!workflowLooksTechnical(label,name))return label;
+ const lower=name.toLowerCase();
+ if(lower==="ecommerce.auto_listing.v1")return"电商自动上架";
+ if(lower==="content.video_generation.v1")return"视频生成";
+ if(lower.startsWith("custom.workflow."))return"自定义工作流";
+ if(lower.includes("ecommerce"))return"电商自动化工作流";
+ if(lower.includes("video"))return"视频工作流";
+ return workflowHumanizeIdentifier(name,"工作流")
+}
+function workflowTechnicalLine(id){const text=String(id??"").trim();return text?`ID ${text}`:"ID --"}
+function workflowShortId(id,max=24){const text=String(id??"").trim();if(!text)return"--";return text.length<=max?text:`${text.slice(0,Math.max(8,max-3))}...`}
+function workflowCategory(definition){return workflowCategoryLabel(definition?.metadata?.category,definition?.metadata?.domain)}
+function workflowCategoryLabel(category,domain=""){
+ const value=String(category||domain||"").trim().toLowerCase();
+ return {ecommerce:"电商",video:"视频",content:"内容",custom:"自定义",workflow:"流程"}[value]||workflowHumanizeIdentifier(value,"流程")
+}
+function workflowNodeTypeLabel(nodeType){
+ const value=String(nodeType||"").trim().toLowerCase();
+ return {agent_task:"Agent 任务",tool_call:"工具调用",skill_call:"Skill 调用",review_gate:"审核门",branch:"条件分支",subgraph:"子工作流",waiter:"等待信号",external_callback:"外部回调"}[value]||workflowHumanizeIdentifier(value,"节点")
+}
+function workflowStatusLabel(status){
+ const value=String(status||"").trim().toLowerCase();
+ return {pending:"待执行",runnable:"可执行",running:"运行中",waiting:"等待中",waiting_review:"待审核",succeeded:"已完成",failed:"失败",blocked:"阻塞",ready:"就绪",needs_attention:"注意",candidate:"候选",agent_task:"Agent 任务",tool_call:"工具调用",skill_call:"Skill 调用",review_gate:"审核门",branch:"条件分支",subgraph:"子工作流",waiter:"等待信号",external_callback:"外部回调"}[value]||workflowHumanizeIdentifier(value,"--")
+}
+function workflowActorLabel(actor){
+ const value=String(actor||"").trim();
+ const lower=value.toLowerCase();
+ return {"":"--","--":"--",ecommerce:"电商 Agent",vision_model:"视觉 Agent",video_animation:"视频 Agent",programming:"编程 Agent",main_text:"主 Agent",skill_runner:"Skill Runner",external_reviewer:"外部评审",core_review:"核心审核",human_review:"人工审核","ecommerce.task_queue.ingest_mobile_links":"手机链接入队","ecommerce.browser_extension_productdata.workflow":"接收扩展 productData"}[lower]||workflowHumanizeIdentifier(value,value||"--")
+}
+function workflowNodeActor(node){return node?.assigned_agent||node?.tool_name||node?.skill_name||node?.review_gate||"--"}
+function workflowHumanizeIdentifier(value,fallback){
+ const text=String(value||"").trim();
+ if(!text)return fallback;
+ const words={ecommerce:"电商",auto:"自动",listing:"上架",content:"内容",video:"视频",generation:"生成",workflow:"工作流",custom:"自定义",productdata:"ProductData",miniapp:"小程序",task:"任务",queue:"队列",review:"审核",gate:"门禁",agent:"Agent",skill:"Skill",tool:"工具",call:"调用",v1:""};
+ const tokens=text.split(/[._\-\s]+/).map(t=>words[t.toLowerCase()]||titleCase(t)).filter(Boolean);
+ return tokens.length?tokens.join(" "):text
+}
+function titleCase(value){const text=String(value||"");return text?`${text[0].toUpperCase()}${text.slice(1).toLowerCase()}`:""}
+function workflowLooksTechnical(label,workflowName){return label.toLowerCase()===String(workflowName||"").toLowerCase()||(/^[a-zA-Z0-9_.-]+$/.test(label)&&label.includes("."))}
+function uiStatusLabel(status){
+ const value=String(status||"").trim().toLowerCase();
+ return {active:"活动",archived:"归档",pending:"待处理",running:"运行中",complete:"已完成",completed:"已完成",succeeded:"已完成",failed:"失败",blocked:"阻塞",ready:"就绪",needs_attention:"注意",candidate:"候选",draft:"草稿",rejected:"已拒绝",error:"错误",ok:"正常",success:"成功",configured:"已配置",fallback:"降级",missing:"缺失",skipped:"跳过",enabled:"启用",disabled:"关闭",unknown:"未知"}[value]||workflowHumanizeIdentifier(value,"--")
+}
+function uiRiskLabel(risk){
+ const value=String(risk||"").trim().toLowerCase();
+ return {high:"高风险",medium:"中风险",low:"低风险",critical:"关键",risk:"风险"}[value]||workflowHumanizeIdentifier(value,"--")
+}
+function uiPriorityLabel(priority){
+ const value=String(priority||"").trim().toLowerCase();
+ return {high:"高优先级",medium:"中优先级",low:"低优先级",critical:"关键事项",suggestion:"建议"}[value]||workflowHumanizeIdentifier(value,"建议")
+}
+function uiDomainLabel(domain){return workflowCategoryLabel(domain,"")}
+function uiActorLabel(actor){return workflowActorLabel(actor)}
+function uiActionLabel(value){return workflowHumanizeIdentifier(value,"--")}
+function uiModuleLabel(value){return workflowHumanizeIdentifier(value,"模块")}
+function uiModelProviderLabel(value){const key=String(value||"").trim().toLowerCase();return {"llamacpp":"llama.cpp","llama_cpp":"llama.cpp","llama.cpp":"llama.cpp","llama-cpp":"llama.cpp","lmstudio":"LM Studio","lm-studio":"LM Studio","ollama":"Ollama","openai_compatible":"OpenAI 兼容","cloud_openai_compatible":"自定义云模型","yundun":"云顿兼容接口","hashing":"本地占位 Embedding","token_overlap":"词元重叠重排"}[key]||workflowHumanizeIdentifier(value,"模型服务")}
+function uiPathShort(value,max=54){const text=String(value||"").trim();if(!text)return"--";return text.length<=max?text:`...${text.slice(-(max-3))}`}
+function uiEventLabel(type){
+ const value=String(type||"").trim().toLowerCase();
+ return {"assistant.message":"Agent 回复","assistant.confirmation_requested":"请求确认","assistant.execution_updated":"执行更新","assistant.task_updated":"任务更新","assistant.project_updated":"项目更新","desktop.state_updated":"桌面状态同步","runtime.snapshot":"运行快照","avatar.state":"虚拟人状态","speech.started":"开始说话","speech.ended":"说话结束","speech.interrupted":"语音打断","speech.phoneme":"口型事件","speech.viseme":"口型事件"}[value]||workflowHumanizeIdentifier(value,"事件")
+}
+function workflowSaved(definition){return (workflows?.saved_definition_names||[]).includes(definition?.name)}
+function workflowAgents(){return workflows?.available_agents||[]}
+function renderWorkflowAgentSelect(definition){
+ const select=$("workflowAgentSelect"),input=$("workflowAgentId");
+ if(!select||!input)return;
+ const agents=workflowAgents();
+ const preferred=input.value||definition?.nodes?.find(n=>n.assigned_agent)?.assigned_agent||"ecommerce";
+ select.innerHTML=agents.length?agents.map(a=>`<option value="${escapeHtml(a.agent_id)}" ${a.agent_id===preferred?"selected":""}>${escapeHtml(a.label||a.agent_id)} · ${escapeHtml(a.domain||"--")}</option>`).join(""):'<option value="">无 Agent 配置快照</option>';
+ if(agents.length&&!agents.some(a=>a.agent_id===input.value)){
+  input.value=preferred;
+  select.value=preferred;
+ }
+ select.onchange=()=>{input.value=select.value||input.value};
+ input.oninput=()=>{if(agents.some(a=>a.agent_id===input.value))select.value=input.value};
+}
+function renderWorkflowNodeDetail(activeRun,defNodes,runNodes){
+ const nodeId=activeWorkflowNodeId||defNodes[0]?.node_id||"";
+ const def=defNodes.find(n=>n.node_id===nodeId)||{};
+ const state=runNodes[nodeId]||{};
+ const details=activeRun?.selected_node_details?.[nodeId]||{};
+ const deps=(details.dependencies||[]).map(d=>`${workflowShortId(d.node_id)}:${workflowStatusLabel(d.status)}`).join(", ")||"--";
+ const events=details.events||[];
+ const effective=details.effective_agent||state.assigned_agent||def.assigned_agent||"--";
+ const current=workflowNodeCurrentQueueLine(details)||"--";
+ const next=workflowNodeNextQueueLines(details,4).join(" | ")||"--";
+ const signalable=["waiter","external_callback","subgraph"].includes(String(def.node_type||"").toLowerCase())||String(def.node_type||"").startsWith("custom.")||String(def.node_type||"").startsWith("external.")||String(def.node_type||"").startsWith("integration.")||String(def.node_type||"").startsWith("automation.");
+ return [
+  `<div class="kv">${kv({"节点 ID":workflowTechnicalLine(nodeId),"显示名称":def.label||workflowHumanizeIdentifier(nodeId,"节点"),"节点类型":workflowNodeTypeLabel(def.node_type),"状态":workflowStatusLabel(state.status||"pending"),"处理方":workflowActorLabel(effective),"输入 / 输出":workflowContractLine(details,def),"当前处理项":current,"后续队列":next,"队列摘要":workflowQueueSummaryLine(details),"尝试次数":state.attempts??0,"依赖节点":deps,"开始时间":state.started_at||"--","完成时间":state.finished_at||"--","错误":state.error||"--"})}</div>`,
+  `<div class="workflow-actions"><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="assign">设置处理 Agent</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="dry">Dry 当前节点</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="run">执行当前节点</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="claim">认领</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="${signalable?"signal":"complete"}">${signalable?"信号完成":"完成"}</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="retry">重试节点</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="reset">重置运行</button><button data-workflow-node="${escapeHtml(nodeId)}" data-workflow-action="approve">审核通过</button></div>`,
+  `<details><summary class="muted">高级诊断：节点定义</summary><pre>${escapeHtml(JSON.stringify(def,null,2))}</pre></details>`,
+  `<details><summary class="muted">高级诊断：运行状态 / 输出</summary><pre>${escapeHtml(JSON.stringify(state,null,2))}</pre></details>`,
+  `<details><summary class="muted">高级诊断：最近事件</summary><pre>${escapeHtml(events.length?JSON.stringify(events,null,2):"--")}</pre></details>`,
+ ].join("")
+}
+function workflowPortKind(node,direction){
+ const policy=node?.metadata?.connection_policy||{};
+ const ports=node?.metadata?.ports||[];
+ const fromPolicy=direction==="input"?policy.input_accepts:policy.output_emits;
+ const fromPort=(ports.find(p=>p.direction===direction)||{}).kind;
+ return fromPolicy||fromPort||"execution";
+}
+function workflowPortLabel(kind){return String(kind||"execution").split(/[|,;\s]+/).filter(Boolean).map(k=>({execution:"执行",artifact:"产物",knowledge:"知识",signal:"信号",review:"审核",automation:"自动化",control:"控制","*":"任意"}[k]||k)).join("/")||"执行"}
+function workflowContractLine(details,def){
+ const contract=details?.interface_contract||{};
+ const inputs=(contract.inputs||[]).slice(0,3).map(workflowContractItemLine);
+ const outputs=(contract.outputs||[]).slice(0,3).map(workflowContractItemLine);
+ const left=inputs.length?inputs.join(", "):workflowPortLabel(workflowPortKind(def,"input"));
+ const right=outputs.length?outputs.join(", "):workflowPortLabel(workflowPortKind(def,"output"));
+ return `${left} -> ${right}${contract.summary?` · ${contract.summary}`:""}`;
+}
+function workflowContractItemLine(item){const name=item?.name||item?.kind||"item",kind=item?.kind?`:${item.kind}`:"",required=item?.required?"*":"";return `${name}${required}${kind}`}
+function workflowQueueItemLine(item){if(!item)return"";const label=item.label||item.title||item.task_id||item.product_id||item.id||item.link||item.url||"item";return `${label}:${workflowStatusLabel(item.status||"pending")}`}
+function workflowNodeCurrentQueueLine(details){return workflowQueueItemLine(details?.node_queue_summary?.current_item)}
+function workflowNodeNextQueueLines(details,limit=4){return (details?.node_queue_summary?.next_items||[]).slice(0,limit).map(workflowQueueItemLine).filter(Boolean)}
+function workflowQueueSummaryLine(details){const s=details?.node_queue_summary;if(!s)return"--";const current=workflowNodeCurrentQueueLine(details);return current?`当前 ${current} · 后续 ${Math.max(0,s.remaining||0)} / 共 ${s.total||0}`:`待处理 ${s.remaining||0} / 共 ${s.total||0}`}
+function renderWorkflowCatalog(defs,definition,select,catalog){
+ if(select){select.innerHTML=defs.map(d=>`<option value="${escapeHtml(d.name)}" ${d.name===definition.name?"selected":""}>${escapeHtml(workflowDisplayName(d))}</option>`).join("");select.onchange=e=>selectWorkflow(e.target.value)}
+  if(catalog)catalog.innerHTML=defs.length?defs.map(d=>`<div class="workflow-catalog-item ${d.name===definition.name?"active":""}" data-workflow-name="${escapeHtml(d.name)}"><div class="head"><div class="title">${escapeHtml(workflowDisplayName(d))}</div><span class="category">${escapeHtml(workflowCategory(d))}</span></div><div class="muted">${escapeHtml(workflowTechnicalLine(d.name))} · ${workflowSaved(d)?"已保存":"内置"}</div><div class="muted">${escapeHtml(d.description||"")}</div></div>`).join(""):'<div class="empty">暂无工作流定义</div>'
+}
+function selectWorkflow(name){if(!name||name===activeWorkflowName)return;rememberWorkflowParamValues();activeWorkflowName=name;activeWorkflowRunId="";activeWorkflowNodeId="";const def=workflowDefinitionByName(name);const agent=def?.metadata?.domain==="video"?"video_animation":def?.metadata?.domain==="ecommerce"?"ecommerce":"";if(agent&&$("workflowAgentId"))$("workflowAgentId").value=agent;loadWorkflows("snapshot",{workflow_name:name})}
+function renderWorkflowParams(definition,paramForm){
+ if(!paramForm)return;
+ const params=definition?.metadata?.parameters||[];
+ if(!params.length){paramForm.innerHTML='<div class="empty">这个工作流没有额外启动参数</div>';return}
+ const saved=workflowParamValues[definition.name]||{};
+ paramForm.innerHTML=params.map(p=>{const id=`workflowParam_${p.name}`,value=saved[p.name]??p.default??"",required=p.required?" required":"";if(p.type==="boolean")return `<div class="workflow-param"><label class="check"><input id="${escapeHtml(id)}" data-workflow-param="${escapeHtml(p.name)}" type="checkbox" ${value?"checked":""}>${escapeHtml(p.label||p.name)}</label></div>`;if(p.type==="textarea")return `<div class="workflow-param"><label for="${escapeHtml(id)}">${escapeHtml(p.label||p.name)}</label><textarea id="${escapeHtml(id)}" data-workflow-param="${escapeHtml(p.name)}" placeholder="${escapeHtml(p.placeholder||"")}"${required}>${escapeHtml(value)}</textarea></div>`;if(p.type==="select")return `<div class="workflow-param"><label for="${escapeHtml(id)}">${escapeHtml(p.label||p.name)}</label><select id="${escapeHtml(id)}" data-workflow-param="${escapeHtml(p.name)}">${(p.options||[]).map(o=>`<option value="${escapeHtml(o)}" ${String(o)===String(value)?"selected":""}>${escapeHtml(o)}</option>`).join("")}</select></div>`;return `<div class="workflow-param"><label for="${escapeHtml(id)}">${escapeHtml(p.label||p.name)}</label><input id="${escapeHtml(id)}" data-workflow-param="${escapeHtml(p.name)}" type="${p.type==="number"?"number":"text"}" value="${escapeHtml(value)}" placeholder="${escapeHtml(p.placeholder||"")}"${p.min!==undefined?` min="${escapeHtml(p.min)}"`:""}${p.max!==undefined?` max="${escapeHtml(p.max)}"`:""}${required}></div>`}).join("")
+}
+function rememberWorkflowParamValues(){const def=workflowDefinitionByName(activeWorkflowName);if(!def)return;const values=workflowParamValues[def.name]||{};document.querySelectorAll("[data-workflow-param]").forEach(el=>{values[el.dataset.workflowParam]=el.type==="checkbox"?el.checked:el.value});workflowParamValues[def.name]=values}
+function bindWorkflowCatalogClicks(){document.querySelectorAll("[data-workflow-name]").forEach(el=>el.onclick=()=>selectWorkflow(el.dataset.workflowName))}
+function bindWorkflowParamInputs(){document.querySelectorAll("[data-workflow-param]").forEach(el=>{el.oninput=rememberWorkflowParamValues;el.onchange=rememberWorkflowParamValues})}
+function workflowNodePosition(node,index){const pos=node?.metadata?.position||{};return {x:Number.isFinite(Number(pos.x))?Number(pos.x):24+(index%4)*236,y:Number.isFinite(Number(pos.y))?Number(pos.y):44+Math.floor(index/4)*172}}
+function workflowNodeStatus(activeRun,node){return activeRun?.nodes?.[node.node_id]?.status||"pending"}
+function workflowEdgeActive(activeRun,fromId,toId){const a=activeRun?.nodes?.[fromId]?.status,b=activeRun?.nodes?.[toId]?.status;return ["succeeded","running"].includes(a)||["running","runnable"].includes(b)||toId===activeWorkflowNodeId}
+function renderWorkflowCanvas(definition,activeRun){
+ const nodes=definition?.nodes||[];
+ if(!nodes.length)return '<div class="empty">定义不可用</div>';
+ const positions=Object.fromEntries(nodes.map((n,i)=>[n.node_id,workflowNodePosition(n,i)]));
+ const width=Math.max(720,...Object.values(positions).map(p=>p.x+224))+24,height=Math.max(340,...Object.values(positions).map(p=>p.y+156))+24;
+ const edges=[];
+ nodes.forEach(n=>(n.depends_on||[]).forEach(dep=>{const a=positions[dep],b=positions[n.node_id];if(a&&b){const x1=a.x+210,y1=a.y+66,x2=b.x,y2=b.y+66,mid=(x1+x2)/2,active=workflowEdgeActive(activeRun,dep,n.node_id)?" active":"";edges.push(`<path class="workflow-edge-path${active}" d="M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}"/>`)}}));
+ const runnable=new Set(activeRun?.runnable_node_ids||[]);
+ const details=activeRun?.selected_node_details||{};
+ const nodeHtml=nodes.map((n,i)=>{const p=positions[n.node_id],rawStatus=workflowNodeStatus(activeRun,n),status=runnable.has(n.node_id)&&rawStatus==="pending"?"runnable":rawStatus,kind=workflowNodeActor(n),selected=n.node_id===activeWorkflowNodeId?"selected":"",detail=details[n.node_id]||{},current=workflowNodeCurrentQueueLine(detail);return `<div class="workflow-graph-node ${escapeHtml(n.node_type||"")} ${escapeHtml(status)} ${selected}" data-workflow-node-select="${escapeHtml(n.node_id)}" style="left:${p.x}px;top:${p.y}px"><span class="pin in" title="accepts ${escapeHtml(workflowPortKind(n,"input"))}"></span><span class="pin out" title="emits ${escapeHtml(workflowPortKind(n,"output"))}"></span><div class="title">${escapeHtml(n.label||workflowHumanizeIdentifier(n.node_id,"节点"))}</div><div class="meta">${escapeHtml(workflowNodeTypeLabel(n.node_type))} · ${escapeHtml(workflowStatusLabel(status))}</div><div class="meta">${escapeHtml(workflowTechnicalLine(n.node_id))} · ${escapeHtml(workflowActorLabel(kind))}</div><div class="contract">${escapeHtml(workflowContractLine(detail,n))}</div>${current?`<div class="queue">当前项：${escapeHtml(current)}</div>`:""}</div>`}).join("");
+ return `<div class="workflow-canvas-wrap"><div class="workflow-canvas" style="width:${width}px;height:${height}px"><svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${edges.join("")}</svg>${nodeHtml}</div></div>`
+}
+function renderModuleManagement(){
+ const metrics=$("moduleMetrics"),modules=$("moduleList"),actions=$("moduleActionList");
+ if(!metrics||!modules||!actions)return;
+ if(moduleManagementLoading&&!moduleManagement){metrics.innerHTML='<div class="empty">模块快照加载中...</div>';modules.innerHTML='';actions.innerHTML='';return}
+ if(!moduleManagement){metrics.innerHTML='<div class="empty">暂无模块快照</div>';modules.innerHTML='<div class="empty">点击刷新模块获取统一管理状态</div>';actions.innerHTML='<div class="empty">暂无待处理事项</div>';return}
+ const overview=moduleManagement.overview||{};
+  metrics.innerHTML=[
+   metric("模块",overview.module_count??"--",uiStatusLabel(overview.status||"--")),
+   metric("注意",overview.attention_count??0,`阻塞 ${overview.blocked_count??0}`),
+   metric("事项",overview.action_count??0,`就绪 ${overview.ready_count??0}`)
+  ].join("");
+  const list=moduleManagement.modules||[];
+  modules.innerHTML=list.length?list.map(m=>`<div class="module-item ${escapeHtml(m.status||"")}"><div class="title">${escapeHtml(m.label||uiModuleLabel(m.module_id||"module"))}</div><div class="muted">${escapeHtml(uiStatusLabel(m.status||"--"))} · ${escapeHtml(m.summary||"--")}</div><div class="muted">${escapeHtml(m.description||"")}</div><div class="management-action-row"><button data-module-open="${escapeHtml(m.desktop_page||m.module_id||"modules")}">打开管理页</button><button title="${escapeHtml(m.endpoint||"")}" data-module-endpoint="${escapeHtml(m.endpoint||"")}">刷新端点</button></div></div>`).join(""):'<div class="empty">没有模块记录</div>';
+  const items=moduleManagement.action_items||[];
+  actions.innerHTML=items.length?items.slice(0,10).map(a=>`<div class="proposal"><div class="title">${escapeHtml(uiPriorityLabel(a.priority||"medium"))} · ${escapeHtml(a.title||"事项")}</div><div class="muted">${escapeHtml(uiModuleLabel(a.module_id||"--"))} · ${escapeHtml(uiPathShort(a.endpoint||"--"))}</div><div class="muted">${escapeHtml(a.detail||"")}</div><div class="management-action-row"><button data-module-open="${escapeHtml(moduleTabForAction(a))}">处理事项</button><button title="${escapeHtml(a.endpoint||"")}" data-module-endpoint="${escapeHtml(a.endpoint||"")}">刷新端点</button></div></div>`).join(""):'<div class="empty">当前没有待处理事项</div>';
+ bindModuleManagementClicks();
+}
+function moduleTabForAction(item){
+  const id=String(item?.module_id||"");
+  if(id.includes("workflow"))return"workflows";
+  if(id.includes("service_port")||id.includes("port"))return"ports";
+  if(id.includes("service"))return"services";
+  if(id.includes("diagnostic"))return"diagnostics";
+  if(id.includes("log"))return"logs";
+  if(id.includes("context"))return"context";
+  if(id.includes("project_overview"))return"project";
+  if(id.includes("search"))return"search";
+  if(id==="skills"||id.includes("skill"))return"skills";
+ if(id==="agents"||id.includes("agent"))return"agents";
+ if(id==="models"||id.includes("model")||id.includes("learning"))return"models";
+ if(id==="code_jury"||id.includes("jury"))return"models";
+ if(id==="knowledge_base"||id.includes("knowledge"))return"knowledge";
+ if(id.includes("mcp"))return"mcp";
+ if(id.includes("mobile")||id.includes("android")||id.includes("ios"))return"mobile";
+ if(id.includes("safety"))return"safety";
+ if(id.includes("evolution"))return"evolution";
+ if(id.includes("governance")||id.includes("ecosystem"))return"governance";
+ return"modules";
+}
+function webManagementTab(value){
+  const raw=String(value||"modules").split(":")[0];
+  if(["tasks","workflows","modules","services","ports","diagnostics","logs","context","project","trace","search","models","agents","skills","knowledge","mcp","mobile","safety","evolution","governance","sync"].includes(raw))return raw;
+  if(["service_ports"].includes(raw))return "ports";
+  if(["project_overview"].includes(raw))return "project";
+  if(["knowledge_base"].includes(raw))return "knowledge";
+  if(["mcp_management"].includes(raw))return "mcp";
+ if(["mobile_management"].includes(raw))return "mobile";
+ if(["model_catalog","learning"].includes(raw))return "models";
+ if(["overview"].includes(raw))return "governance";
+ return "modules";
+}
+function bindModuleManagementClicks(){
+  document.querySelectorAll("[data-module-open]").forEach(btn=>btn.onclick=()=>openManagementTab(webManagementTab(btn.dataset.moduleOpen)));
+  document.querySelectorAll("[data-module-endpoint]").forEach(btn=>btn.onclick=async()=>{const endpoint=btn.dataset.moduleEndpoint;if(!endpoint)return;btn.textContent="刷新中";try{const r=await fetch(`${apiBase()}${endpoint}`,{cache:"no-store",headers:authHeaders()});btn.textContent=r.ok?"已刷新":"刷新失败"}catch(_){btn.textContent="刷新失败"}});
+}
+function renderServices(){
+ const metrics=$("serviceMetrics"),list=$("serviceList"),actions=$("serviceActionList");
+ if(!metrics||!list||!actions)return;
+ if(servicesLoading&&!servicesState){metrics.innerHTML='<div class="empty">服务快照加载中...</div>';list.innerHTML='';actions.innerHTML='';return}
+ if(!servicesState){metrics.innerHTML='<div class="empty">暂无服务快照</div>';list.innerHTML='<div class="empty">点击刷新服务读取 /desktop/services</div>';actions.innerHTML='--';return}
+ const snap=servicesState.services||{},rows=snap.services||[],actionRows=snap.actions||[],running=rows.filter(s=>s.status==="running").length,enabled=rows.filter(s=>s.enabled!==false).length;
+ metrics.innerHTML=[
+  metric("托管服务",rows.length,`启用 ${enabled}`),
+  metric("运行中",running,`停止 ${Math.max(0,rows.length-running)}`),
+  metric("端口监听",(servicesState.service_ports?.services||[]).filter(p=>p.listening).length,`问题 ${(servicesState.service_ports?.issues||[]).length}`)
+ ].join("");
+ list.innerHTML=rows.length?rows.map(s=>`<div class="module-item ${s.status==="running"?"ready":"needs_attention"}"><div class="task-head"><div><div class="title">${escapeHtml(s.label||s.service_id)} · ${escapeHtml(uiStatusLabel(s.status||"unknown"))}</div><div class="muted">${escapeHtml(s.service_id)} · ${s.port?`${escapeHtml(s.host||"127.0.0.1")}:${escapeHtml(s.port)}`:"无端口"} · pid ${escapeHtml(s.pid||"--")}</div></div><span class="status">${s.enabled===false?"关闭":"启用"}</span></div><div class="muted">${escapeHtml(s.description||uiPathShort((s.command||[]).join(" "),120))}</div><div class="management-action-row"><button data-service-action="start" data-service-id="${escapeHtml(s.service_id)}">启动</button><button data-service-action="restart" data-service-id="${escapeHtml(s.service_id)}">重启</button><button data-service-action="stop" data-service-id="${escapeHtml(s.service_id)}">停止</button>${s.health_url?`<button data-service-health="${escapeHtml(s.health_url)}">Health</button>`:""}</div></div>`).join(""):'<div class="empty">暂无托管服务</div>';
+ actions.innerHTML=actionRows.length?actionRows.slice(-20).reverse().map(a=>`${escapeHtml(fmtTime(a.at)||a.at||"--")} · ${escapeHtml(a.action||"--")} · ${escapeHtml(a.service_id||"--")} · ${escapeHtml(a.status||a.message||"")}`).join("<br>"):"--";
+ bindServiceClicks();
+}
+function renderServicePorts(){
+ const metrics=$("portMetrics"),status=$("portStatusBox"),list=$("portList"),issues=$("portIssueList");
+ if(!metrics||!status||!list||!issues)return;
+ if(portsLoading&&!portsState){metrics.innerHTML='<div class="empty">端口快照加载中...</div>';status.textContent='';list.innerHTML='';issues.innerHTML='';return}
+ if(!portsState){metrics.innerHTML='<div class="empty">暂无端口快照</div>';status.textContent='点击刷新端口读取 /desktop/service-ports';list.innerHTML='<div class="empty">暂无端口</div>';issues.innerHTML='<div class="empty">暂无问题</div>';return}
+ const rows=portsState.services||[],issueRows=portsState.issues||[],dups=Object.keys(portsState.duplicate_ports||{}).length,overrides=Object.keys(portsState.config?.overrides||{}).length;
+ metrics.innerHTML=[
+  metric("端口",rows.length,`覆盖 ${overrides}`),
+  metric("监听中",rows.filter(p=>p.listening).length,`重复 ${dups}`),
+  metric("问题",issueRows.length,`配置 ${uiPathShort(portsState.config_path||"--",24)}`)
+ ].join("");
+ status.innerHTML=`Host：${escapeHtml(portsState.host||"--")}<br>配置：${escapeHtml(uiPathShort(portsState.config_path||"--",110))}`;
+ list.innerHTML=rows.length?rows.map(p=>`<div class="module-item ${p.listening?"ready":(p.required?"needs_attention":"")}"><div class="task-head"><div><div class="title">${escapeHtml(p.label||p.service_id)} · ${escapeHtml(p.protocol||"http")} ${escapeHtml(p.port||"--")}</div><div class="muted">${escapeHtml(p.service_id)} · ${escapeHtml(p.env_var||"--")} · ${escapeHtml(p.source||"--")} · ${p.editable?"可编辑":"环境变量锁定"}</div></div><span class="status">${p.listening?"监听中":"未监听"}</span></div><div class="muted">${escapeHtml(p.description||p.url||"")}</div><div class="management-action-row"><input class="inline-input" id="portInput_${escapeHtml(p.service_id)}" value="${escapeHtml(p.port||"")}" ${p.editable?"":"disabled"}><button data-port-save="${escapeHtml(p.service_id)}" ${p.editable?"":"disabled"}>保存端口</button><button data-port-reset="${escapeHtml(p.service_id)}" ${p.editable?"":"disabled"}>重置</button>${p.url?`<button data-open-url="${escapeHtml(p.url)}">打开</button>`:""}</div></div>`).join(""):'<div class="empty">暂无服务端口</div>';
+ issues.innerHTML=issueRows.length?issueRows.map(i=>`<div class="risk-item ${escapeHtml(i.severity||"medium")}"><div class="title">${escapeHtml(uiPriorityLabel(i.severity||"medium"))} · ${escapeHtml(i.title||i.issue_id||"端口问题")}</div><div class="muted">${escapeHtml(i.detail||"")}</div></div>`).join(""):'<div class="empty">暂无端口冲突或配置问题</div>';
+ bindPortClicks();
+}
+function renderDiagnostics(){
+ const metrics=$("diagnosticMetrics"),checks=$("diagnosticCheckList"),issues=$("diagnosticIssueList");
+ if(!metrics||!checks||!issues)return;
+ if(diagnosticsLoading&&!diagnosticsState){metrics.innerHTML='<div class="empty">诊断加载中...</div>';checks.innerHTML='';issues.innerHTML='';return}
+ if(!diagnosticsState){metrics.innerHTML='<div class="empty">暂无诊断报告</div>';checks.innerHTML='<div class="empty">点击刷新诊断</div>';issues.innerHTML='<div class="empty">暂无问题</div>';return}
+ const rows=diagnosticsState.checks||[],issueRows=diagnosticsState.issues||[],ok=rows.filter(c=>c.ok).length;
+ metrics.innerHTML=[
+  metric("检查项",rows.length,`通过 ${ok}`),
+  metric("问题",issueRows.length,`高优先级 ${issueRows.filter(i=>["critical","high"].includes(i.severity)).length}`),
+  metric("生成时间",fmtTime(diagnosticsState.generated_at),`状态 rev ${diagnosticsState.desktop_state?.revision??"--"}`)
+ ].join("");
+ checks.innerHTML=rows.length?rows.map(c=>`<div class="module-item ${c.ok?"ready":"blocked"}"><div class="title">${escapeHtml(c.name)} · ${c.ok?"通过":"失败"}</div><div class="muted">${escapeHtml(c.category||"--")} · ${escapeHtml(uiPriorityLabel(c.severity||"info"))}</div><div class="muted">${escapeHtml(c.detail||"")}</div></div>`).join(""):'<div class="empty">暂无检查项</div>';
+ issues.innerHTML=issueRows.length?issueRows.map(i=>`<div class="risk-item ${escapeHtml(i.severity||"medium")}"><div class="title">${escapeHtml(uiPriorityLabel(i.severity||"medium"))} · ${escapeHtml(i.title||i.issue_id||"诊断问题")}</div><div class="muted">${escapeHtml(i.detail||"")}</div><div class="management-action-row"><button data-diagnostic-repair="${escapeHtml(i.issue_id||"")}">修复此项</button></div><div class="muted">${escapeHtml((i.repair_steps||[]).map(s=>`${s.label||s.step_id}${s.command?`: ${s.command}`:""}`).join(" | "))}</div></div>`).join(""):'<div class="empty">暂无诊断问题</div>';
+ bindDiagnosticClicks();
+}
+function renderLogs(){
+ const list=$("logList"),detail=$("logDetail");
+ const actionList=$("actionLogList"),actionSummary=$("actionLogSummary");
+ if(!list||!detail||!actionList||!actionSummary)return;
+ if(logsLoading&&!logsState&&!actionLogState){list.innerHTML='<div class="empty">日志加载中...</div>';detail.textContent='--';actionList.innerHTML='<div class="empty">动作日志加载中...</div>';actionSummary.textContent='--';return}
+ if(!logsState&& !actionLogState){list.innerHTML='<div class="empty">点击刷新日志读取 /desktop/logs</div>';detail.textContent='--';actionList.innerHTML='<div class="empty">点击刷新读取统一动作日志</div>';actionSummary.textContent='--';return}
+ const rows=logsState?.logs||[],selected=logsState?.selected||rows.find(l=>l.log_id===activeLogId)||rows[0];
+ if(selected)activeLogId=selected.log_id;
+ list.innerHTML=rows.length?rows.map(l=>`<div class="module-item ${l.log_id===activeLogId?"ready":""}" data-log-id="${escapeHtml(l.log_id)}"><div class="title">${escapeHtml(uiPathShort(l.path||l.log_id,72))}</div><div class="muted">${escapeHtml(l.log_id)} · ${escapeHtml(Math.round((l.size_bytes||0)/1024))} KB · ${escapeHtml(fmtTime(l.updated_at))}</div><div class="muted">error ${escapeHtml(l.error_count||0)} · warn ${escapeHtml(l.warning_count||0)}</div></div>`).join(""):'<div class="empty">未发现 state/logs 或 tmp 下的 .log 文件</div>';
+ detail.textContent=selected?(selected.tail||[]).join("\n"):"--";
+ const actionRows=actionLogState?.events||[];
+ const sourceCounts=actionLogState?.source_counts||{};
+ actionSummary.textContent=`显示 ${actionLogState?.event_count??0} / ${actionLogState?.available_event_count??0} · 来源 ${Object.entries(sourceCounts).map(([k,v])=>`${k}:${v}`).join(" / ")||"--"}`;
+ actionList.innerHTML=actionRows.length?actionRows.map(item=>`<div class="module-item"><div class="title">${escapeHtml(item.source_label||item.source||"Action")} · ${escapeHtml(item.status||"recorded")}</div><div class="muted">${escapeHtml(fmtTime(item.timestamp||0))} · ${escapeHtml(item.action||"--")} · ${escapeHtml(item.target||"--")}</div><div class="muted">${escapeHtml(item.actor||"--")} · ${escapeHtml(item.message||"")}</div></div>`).join(""):'<div class="empty">暂无统一动作日志</div>';
+ bindLogClicks();
+}
+function renderContext(){
+ const metrics=$("contextMetrics"),summary=$("contextSummaryBox"),suggestions=$("contextSuggestionList");
+ if(!metrics||!summary||!suggestions)return;
+ if(contextLoading&&!contextState){metrics.innerHTML='<div class="empty">上下文快照加载中...</div>';summary.textContent='';suggestions.innerHTML='';return}
+ if(!contextState){metrics.innerHTML='<div class="empty">暂无上下文快照</div>';summary.textContent='点击刷新上下文读取 /desktop/context';suggestions.innerHTML='<div class="empty">暂无建议</div>';return}
+ const p=contextState.policy||{},session=contextState.active_session||{},project=contextState.project_summary||{},rows=contextState.suggestions||[];
+ setValue("contextMode",p.mode||"balanced");setValue("contextMaxRecent",p.max_recent_messages??12);setValue("contextSummarizeAfter",p.summarize_after_messages??20);setValue("contextProjectDocs",p.include_project_docs===false?"false":"true");setValue("contextRecentEvents",p.include_recent_events===false?"false":"true");setValue("contextLearningRecords",p.include_learning_records===false?"false":"true");setValue("contextPinned",(p.pinned_context||[]).join("\n"));
+ metrics.innerHTML=[metric("模式",p.mode||"--",`最近 ${p.max_recent_messages??"--"}`),metric("会话",session.title||session.id||"--",`消息 ${session.message_count??0}`),metric("项目",project.desktop_projects??0,`任务 ${project.desktop_tasks??0}`)].join("");
+ summary.innerHTML=`Root：${escapeHtml(uiPathShort(project.root||"--",120))}<br>策略：${escapeHtml(project.strategy||"--")}`;
+ suggestions.innerHTML=rows.length?rows.map(s=>`<div class="proposal"><div class="title">${escapeHtml(uiPriorityLabel(s.priority||"medium"))} · ${escapeHtml(s.title||s.suggestion_id)}</div><div class="muted">${escapeHtml(s.detail||"")}</div>${s.command?`<div class="muted">${escapeHtml(s.command)}</div>`:""}</div>`).join(""):'<div class="empty">暂无上下文优化建议</div>';
+}
+function renderProjectRuntime(){
+ const metrics=$("projectRuntimeMetrics"),list=$("projectRuntimeList");
+ if(!metrics||!list)return;
+ if(projectRuntimeLoading&&!projectRuntimeState){metrics.innerHTML='<div class="empty">项目运行策略加载中...</div>';list.innerHTML='';return}
+ if(!projectRuntimeState){metrics.innerHTML='<div class="empty">暂无项目运行策略</div>';list.innerHTML='<div class="empty">点击刷新概览读取 /desktop/project-runtime</div>';return}
+ const rows=projectRuntimeState.profiles||[],blocked=projectRuntimeState.blocked_count??rows.filter(p=>!(p.execution_policy||{}).allowed).length,review=projectRuntimeState.review_required_count??rows.filter(p=>(p.execution_policy||{}).review_required).length;
+ metrics.innerHTML=[metric("项目",projectRuntimeState.project_count??rows.length,`阻断 ${blocked}`),metric("需确认",review,`最近 ${((projectRuntimeState.recent_events||[]).length)}`),metric("审计",uiPathShort((projectRuntimeState.policy||{}).audit_log||"--",28),`命令长度 ${(projectRuntimeState.policy||{}).max_command_length||"--"}`)].join("");
+ list.innerHTML=rows.length?rows.map(p=>{const policy=p.execution_policy||{},blockers=policy.blockers||[],warnings=policy.warnings||[],status=policy.allowed?(policy.review_required?"needs_attention":"ready"):"blocked";return `<div class="module-item ${status}"><div class="task-head"><div><div class="title">${escapeHtml(p.title||p.project_id||"项目")} · ${escapeHtml(uiStatusLabel(policy.allowed?(policy.review_required?"review_required":"allowed"):"blocked"))}</div><div class="muted">${escapeHtml(uiPathShort(policy.workspace_path||p.workspace_path||"--",96))}</div></div><span class="status">${escapeHtml(uiRiskLabel(policy.risk_level||"--"))}</span></div><div class="muted">${escapeHtml(uiPathShort(p.start_command||"--",110))}</div>${blockers.length?`<div class="bad">${escapeHtml(blockers.map(i=>i.detail||i.issue_id).join(" | "))}</div>`:""}${warnings.length?`<div class="warnText">${escapeHtml(warnings.map(i=>i.detail||i.issue_id).join(" | "))}</div>`:""}</div>`}).join(""):'<div class="empty">暂无项目运行 Profile。先在项目里设置 workspace/start_command。</div>';
+}
+function renderProjectOverview(){
+ const metrics=$("projectOverviewMetrics"),editor=$("projectOverviewMarkdown"),changes=$("projectOverviewChangeList");
+ if(!metrics||!editor||!changes)return;
+ if(projectOverviewLoading&&!projectOverviewState){metrics.innerHTML='<div class="empty">项目概览加载中...</div>';changes.innerHTML='';return}
+ if(!projectOverviewState){metrics.innerHTML='<div class="empty">暂无项目概览</div>';if(document.activeElement!==editor)editor.value='';changes.innerHTML='<div class="empty">点击刷新项目概览</div>';return}
+ const overview=projectOverviewState.overview||{},summary=overview.summary||{},rows=projectOverviewState.changes||[];
+ if(document.activeElement!==editor)editor.value=overview.markdown||"";
+ metrics.innerHTML=[metric("待审核",projectOverviewState.pending_count??rows.filter(c=>c.status==="pending").length,uiPathShort(overview.path||"--",32)),metric("会话/项目",`${summary.sessions??0}/${summary.projects??0}`,`任务 ${summary.tasks??0}`),metric("云模型",summary.cloud_model_configured?"已配置":"未配置",summary.cloud_model||"--")].join("");
+ changes.innerHTML=rows.length?rows.slice(-20).reverse().map(c=>`<div class="proposal"><div class="title">${escapeHtml(uiStatusLabel(c.status||"pending"))} · ${escapeHtml(c.change_id||"--")}</div><div class="muted">${escapeHtml(c.note||"")} · ${escapeHtml(c.author||"--")} · ${escapeHtml(fmtTime(c.created_at))}</div><details><summary class="muted">Diff</summary><pre>${escapeHtml(c.diff||"--")}</pre></details>${c.status==="pending"?`<div class="management-action-row"><button data-project-change="${escapeHtml(c.change_id)}" data-project-action="approve">审核通过</button><button data-project-change="${escapeHtml(c.change_id)}" data-project-action="reject">拒绝</button></div>`:""}</div>`).join(""):'<div class="empty">暂无概览变更提案</div>';
+ bindProjectOverviewClicks();
+}
+function renderSearchManagement(){
+ const metrics=$("searchMetrics"),status=$("searchStatusBox"),gaps=$("searchGapList"),caps=$("searchCapabilityList");
+ if(!metrics||!status||!gaps||!caps)return;
+ if(searchManagementLoading&&!searchManagement){metrics.innerHTML='<div class="empty">Search/RAG 快照加载中...</div>';status.textContent='';gaps.innerHTML='';caps.innerHTML='';return}
+ if(!searchManagement){metrics.innerHTML='<div class="empty">暂无 Search/RAG 快照</div>';status.textContent='点击刷新获取搜索和知识库检索状态';gaps.innerHTML='<div class="empty">暂无缺口数据</div>';caps.innerHTML='<div class="empty">暂无模型能力快照</div>';return}
+ const web=searchManagement.web_search||{},kb=searchManagement.knowledge_retrieval||{},gapList=searchManagement.missing_capabilities||[],matrix=searchManagement.model_capability_matrix||[],roles=searchManagement.catalog_roles||{};
+ setValue("searchWebProvider",web.preferred||"brave,duckduckgo");
+ setValue("searchKnowledgeBackend",kb.backend||"keyword");
+ setValue("searchEmbeddingProvider",kb.embedding_provider||"hashing");
+ setValue("searchEmbeddingModel",kb.embedding_model||"");
+ setValue("searchEmbeddingBaseUrl",kb.embedding_base_url||"");
+ setValue("searchRerankerProvider",kb.reranker||"token_overlap");
+ setValue("searchRerankerModel",kb.reranker_model||"");
+ setValue("searchRerankerBaseUrl",kb.reranker_base_url||"");
+  metrics.innerHTML=[
+   metric("状态",uiStatusLabel(searchManagement.status||"--"),`缺口 ${gapList.length}`),
+   metric("Web",uiModelProviderLabel(web.provider||"--"),web.preferred||"--"),
+   metric("知识库",workflowHumanizeIdentifier(kb.backend||"--","--"),`库 ${kb.knowledge_base_count??0}`),
+   metric("Embedding",uiModelProviderLabel(kb.embedding_provider||"--"),kb.embedding_configured?"已配置":"降级"),
+   metric("Reranker",uiModelProviderLabel(kb.reranker||"--"),kb.reranker_configured?"已配置":"降级"),
+   metric("模型快照",matrix.length,`角色 ${Object.keys(roles).length}`)
+  ].join("");
+  status.innerHTML=[
+  `Embedding：${escapeHtml(kb.embedding_model||"--")} · ${escapeHtml(uiPathShort(kb.embedding_base_url||"--"))}`,
+  `Reranker：${escapeHtml(kb.reranker_model||"--")} · ${escapeHtml(uiPathShort(kb.reranker_base_url||"--"))}`,
+  `目录角色：${escapeHtml(Object.entries(roles).map(([k,v])=>`${workflowHumanizeIdentifier(k,k)}:${v}`).join(" · ")||"--")}`
+  ].join("<br>");
+  const recs=(searchManagement.recommendations||[]).map(text=>({priority:"建议",title:text,detail:""}));
+  gaps.innerHTML=gapList.concat(recs).length?gapList.concat(recs).map(g=>`<div class="proposal"><div class="title">${escapeHtml(uiPriorityLabel(g.priority||"medium"))} · ${escapeHtml(g.title||"Search/RAG")}</div><div class="muted">${escapeHtml(g.detail||"")}</div></div>`).join(""):'<div class="empty">当前没有 Search/RAG 缺口</div>';
+  caps.innerHTML=matrix.length?matrix.map(m=>`<div class="proposal"><div class="title">${escapeHtml(m.model||"模型")} · ${escapeHtml(uiModelProviderLabel(m.provider||"--"))}</div><div class="muted">${escapeHtml(m.local?"本地/开源可用":"云端")} · ${escapeHtml((m.strengths||[]).join(", "))}</div><div class="muted">${escapeHtml(m.best_for||"")}</div></div>`).join(""):'<div class="empty">暂无模型能力快照</div>';
+}
+function renderGovernance(){
+ const metrics=$("governanceMetrics"),risks=$("moduleRiskList"),queue=$("proposalQueue");
+ if(!metrics||!risks||!queue)return;
+ if(governanceLoading&&!ecosystemReview){metrics.innerHTML='<div class="empty">治理快照加载中...</div>';risks.innerHTML='';queue.innerHTML='';return}
+ if(!ecosystemReview){metrics.innerHTML='<div class="empty">暂无治理快照</div>';risks.innerHTML='<div class="empty">点击刷新治理获取模块风险</div>';queue.innerHTML='<div class="empty">暂无 proposal 数据</div>';return}
+ const score=ecosystemReview.score||{},dims=score.dimensions||[],govDim=dims.find(d=>d.dimension_id==="module_governance")||{};
+ const systems=ecosystemReview.systems||{},governance=systems.module_governance||{},portfolio=governance.portfolio||{};
+  metrics.innerHTML=[
+   metric("总分",score.total??"--",uiStatusLabel(score.status||"--")),
+   metric("模块治理",govDim.score??portfolio.score??"--",uiStatusLabel(portfolio.status||govDim.status||"--")),
+   metric("待审核",ecosystemReview.pending_count??0,`已批准 ${ecosystemReview.approved_count??0}`)
+  ].join("");
+  const topRisks=portfolio.top_risks||[];
+  risks.innerHTML=topRisks.length?topRisks.slice(0,8).map(r=>`<div class="risk-item ${escapeHtml(r.risk_level||"")}"><div class="title">${escapeHtml(r.label||uiModuleLabel(r.module_id||"module"))}</div><div class="muted">${escapeHtml(uiRiskLabel(r.risk_level||"--"))} · 成熟度 ${escapeHtml(r.maturity_score??"--")} · ${escapeHtml(uiModuleLabel(r.module_id||"--"))}</div><div class="muted">${escapeHtml((r.gaps||[]).join(", ")||"未列出缺口")}</div></div>`).join(""):'<div class="empty">当前无高优先级模块风险</div>';
+  const proposals=(ecosystemReview.proposals||[]).filter(p=>p.status==="pending").slice(0,8);
+  queue.innerHTML=proposals.length?proposals.map(p=>`<div class="proposal"><div class="title">${escapeHtml(p.title||"治理建议")}</div><div class="muted">${escapeHtml(workflowHumanizeIdentifier(p.category||"--","--"))} · ${escapeHtml(uiRiskLabel(p.risk_level||"--"))} · ${escapeHtml(p.auto_apply_allowed?"可自动执行":"需人工处理")}</div></div>`).join(""):'<div class="empty">没有待处理 proposal</div>';
+}
+function renderEvolution(){
+ const metrics=$("evolutionMetrics"),loops=$("evolutionLoopList"),actions=$("evolutionActionList"),agents=$("evolutionAgentSkillList"),training=$("evolutionTrainingBox"),artifactBox=$("evolutionArtifactList"),templateBox=$("evolutionTemplateList");
+ if(!metrics||!loops||!actions||!agents||!training)return;
+ if(evolutionLoading&&!evolution){metrics.innerHTML='<div class="empty">进化快照加载中...</div>';loops.innerHTML='';actions.innerHTML='';agents.innerHTML='';training.innerHTML='';if(artifactBox)artifactBox.innerHTML='';if(templateBox)templateBox.innerHTML='';return}
+ if(!evolution){metrics.innerHTML='<div class="empty">暂无进化快照</div>';loops.innerHTML='<div class="empty">点击刷新进化获取闭环状态</div>';actions.innerHTML='<div class="empty">暂无待处理事项</div>';agents.innerHTML='<div class="empty">暂无 Agent / Skill 分布</div>';training.innerHTML='--';if(artifactBox)artifactBox.innerHTML='<div class="empty">暂无学习 Artifact</div>';if(templateBox)templateBox.innerHTML='<div class="empty">暂无领域模板状态</div>';return}
+ const summary=evolution.self_improvement_summary||{},counts=summary.counts||{},trajectory=evolution.trajectory||{},distribution=evolution.agent_skill_distribution||{},train=evolution.training||{},artifacts=evolution.learning_artifacts||{},templates=evolution.domain_skill_templates||{},jobs=evolution.jobs||{},audit=evolution.review_gate_audit||{};
+  metrics.innerHTML=[
+  metric("状态",uiStatusLabel(evolution.status||"--"),`轨迹 ${trajectory.total??0}`),
+  metric("Eval",counts.eval_cases??0,`改进 ${counts.improvement_actions??0}`),
+  metric("自训样本",counts.self_training_examples??0,`未归属 ${distribution.missing_owner_count??0}`),
+  metric("Artifact",artifacts.artifact_count??0,`模板 ${templates.existing_count??0}/${templates.count??0}`),
+  metric("任务",jobs.job_count??0,`失败 ${jobs.failed_count??0}`),
+  metric("审核",audit.record_count??0,`拒绝 ${audit.denied_count??0}`)
+ ].join("");
+ const steps=evolution.loop_steps||[];
+ loops.innerHTML=steps.length?steps.map(s=>`<div class="proposal"><div class="title">${escapeHtml(uiStatusLabel(s.status||"--"))} · ${escapeHtml(s.label||"阶段")}</div><div class="muted">${escapeHtml(s.detail||"")}</div></div>`).join(""):'<div class="empty">暂无闭环阶段数据</div>';
+ const items=evolution.action_items||[];
+ actions.innerHTML=items.length?items.slice(0,10).map(a=>`<div class="proposal"><div class="title">${escapeHtml(uiPriorityLabel(a.priority||"medium"))} · ${escapeHtml(a.title||"事项")}</div><div class="muted">${escapeHtml(workflowHumanizeIdentifier(a.category||"--","--"))} · ${escapeHtml(a.detail||"")}</div></div>`).join(""):'<div class="empty">当前没有待处理事项</div>';
+ const rows=distribution.agents||[];
+ agents.innerHTML=rows.length?rows.map(a=>`<div class="proposal"><div class="title">${escapeHtml(uiActorLabel(a.agent_id||"--"))} · Skills ${escapeHtml(a.skill_count??0)}</div><div class="muted">${escapeHtml(uiDomainLabel(a.domain||"--"))} · ${escapeHtml(uiPathShort(a.workspace_path||""))}</div></div>`).join(""):'<div class="empty">暂无 Agent / Skill 分布</div>';
+ training.innerHTML=`数据集：${escapeHtml(uiPathShort(evolution.dataset_path||"--"))}<br>样本：${escapeHtml(train.dataset_count??0)}<br>训练命令：<code title="${escapeHtml(train.training_command_text||"")}">${escapeHtml(uiPathShort(train.training_command_text||"--",72))}</code>`;
+ if(artifactBox){const recent=artifacts.recent||[];artifactBox.innerHTML=recent.length?recent.map(a=>{const ex=a.model_extraction||{},provider=ex.provider||{};return `<div class="proposal"><div class="title">${escapeHtml(workflowHumanizeIdentifier(a.artifact_type||"--","Artifact"))} · ${escapeHtml(a.title||"Artifact")}</div><div class="muted">${escapeHtml(uiActorLabel(a.owner_agent_id||"--"))} · ${escapeHtml((a.skill_candidate||{}).name||"")}</div><div class="muted">模型抽取 ${escapeHtml(uiStatusLabel(ex.status||"skipped"))} · ${escapeHtml(provider.model||"--")}</div><div class="muted">${escapeHtml(uiPathShort(a.source||""))}</div></div>`}).join(""):'<div class="empty">暂无学习 Artifact</div>'}
+ if(templateBox){const list=templates.templates||[];templateBox.innerHTML=list.length?list.map(t=>`<div class="proposal"><div class="title">${escapeHtml(t.exists?"就绪":"缺失")} · ${escapeHtml(t.label||uiModuleLabel(t.module_id||"template"))}</div><div class="muted">${escapeHtml(uiActorLabel(t.owner_agent_id||"--"))} · ${escapeHtml(t.skill_name||"")}</div></div>`).join(""):'<div class="empty">暂无领域模板状态</div>'}
+}
+function renderModels(){
+ const metrics=$("modelMetrics"),status=$("modelStatusBox"),list=$("assistModelList"),providers=$("modelProviderList"),committee=$("reviewCommitteeBox"),localPolicyBox=$("localModelPolicyBox"),brainBox=$("brainReplacementBox");
+ if(!metrics||!status||!list||!providers||!committee)return;
+ if(learningLoading&&!learning){
+  metrics.innerHTML='<div class="empty">模型快照加载中...</div>';status.textContent='';list.innerHTML='';providers.innerHTML='';committee.textContent='';
+  if(localPolicyBox)localPolicyBox.innerHTML='';
+  if(brainBox)brainBox.innerHTML='';
+  return
+ }
+ if(!learning){
+  metrics.innerHTML='<div class="empty">暂无模型快照</div>';status.textContent='点击刷新模型读取 /desktop/learning';list.innerHTML='<div class="empty">暂无辅助模型</div>';providers.innerHTML='<div class="empty">暂无 Provider 数据</div>';committee.textContent='--';
+  if(localPolicyBox)localPolicyBox.innerHTML='<div class="empty">暂无本地模型策略</div>';
+  if(brainBox)brainBox.innerHTML='<div class="empty">暂无 Brain Adapter 状态</div>';
+  return
+ }
+ const assist=learning.assist_models||[],providerRows=learning.model_providers||[],dataset=learning.dataset||{},policy=learning.review_committee_policy||{},summary=learning.review_committee_summary||{};
+ const catalog=modelCatalogState?.model_catalog||{},localPolicy=modelCatalogState?.local_model_policy||catalog.local_model_policy||{},brainReplacement=modelCatalogState?.brain_replacement||catalog.brain_replacement||{};
+ const roleAssignments=localPolicy.role_assignments||[],benchmark=localPolicy.scheduler_benchmark||{},hardware=localPolicy.hardware||{},adapterRegistry=brainReplacement.adapter_registry||{},adapters=adapterRegistry.adapters||[],gate=brainReplacement.replacement_gate||{};
+ if(!activeAssistModelId&&assist.length)activeAssistModelId=assist[0].model_id;
+ const selected=assist.find(m=>m.model_id===activeAssistModelId)||assist[0];
+ if(selected)fillAssistModelForm(selected);
+ metrics.innerHTML=[
+  metric("辅助模型",assist.length,`可用 ${assist.filter(m=>m.configured).length}`),
+  metric("Provider",providerRows.length,`已配置 ${providerRows.filter(p=>p.configured).length}`),
+  metric("本地角色",roleAssignments.length,hardware.hardware_class||"--"),
+  metric("Brain Adapter",adapterRegistry.adapter_count??adapters.length,gate.auto_replace_allowed?"自动替换":"手动 Gate"),
+  metric("评审团",policy.enabled?"启用":"关闭",`模型 ${summary.selected_count??(policy.model_ids||[]).length??0}`),
+  metric("Benchmark",benchmark.status||benchmark.case_count||"--",`case ${benchmark.case_count??"--"}`)
+ ].join("");
+ status.innerHTML=`默认 Provider：${escapeHtml((learning.model_provider_settings||{}).provider||"--")} · ${(learning.model_provider_settings||{}).enabled?"启用":"关闭"}<br>本地策略：${escapeHtml(hardware.hardware_class||"--")} · ${escapeHtml((localPolicy.policy||{}).large_model_concurrency||"--")}<br>数据集：${escapeHtml(uiPathShort(dataset.path||learning.dataset_path||"--",86))}`;
+ list.innerHTML=assist.length?assist.map(m=>`<div class="module-item ${m.model_id===activeAssistModelId?"ready":""}" data-assist-model="${escapeHtml(m.model_id)}"><div class="title">${escapeHtml(m.display_name||m.model_id)} · ${escapeHtml(uiStatusLabel(m.configured?"configured":"missing"))}</div><div class="muted">${escapeHtml(uiModelProviderLabel(m.provider||"--"))} · ${escapeHtml(m.model||"--")} · ${escapeHtml(m.role||"--")}</div><div class="muted">${escapeHtml(uiPathShort(m.endpoint||""))}</div></div>`).join(""):'<div class="empty">暂无辅助模型</div>';
+ providers.innerHTML=providerRows.length?providerRows.map(p=>`<div class="proposal"><div class="title">${escapeHtml(p.display_name||uiModelProviderLabel(p.provider||"--"))} · ${escapeHtml(uiStatusLabel(p.configured?"configured":"missing"))}</div><div class="muted">${escapeHtml(p.model||"--")} · ${escapeHtml(uiPathShort(p.endpoint||""))} · ${escapeHtml(p.source||"env")}</div></div>`).join(""):'<div class="empty">暂无 Provider 数据</div>';
+ committee.innerHTML=kv({"策略":policy.label||"--","人工终审":policy.require_human_final?"需要":"不需要","通过阈值":policy.pass_threshold??"--","适用动作":(policy.apply_to_actions||[]).join(", ")||"--"});
+ if(localPolicyBox){
+  const benchmarkLine=`Benchmark ${escapeHtml(benchmark.status||"not_run")} · case ${escapeHtml(benchmark.case_count??"--")} · gates ${escapeHtml(Object.keys(localPolicy.quality_gates||{}).length)}`;
+  const benchmarkHistory=(benchmark.history||[]).slice(0,3);
+  localPolicyBox.innerHTML=[
+   `<div class="proposal"><div class="title">${escapeHtml(hardware.hardware_class||"local hardware")} · ${escapeHtml((localPolicy.policy||{}).default_mode||"--")}</div><div class="muted">${benchmarkLine}</div><div class="muted">${escapeHtml((localPolicy.policy||{}).role_split||"")}</div></div>`,
+   ...benchmarkHistory.map(h=>`<div class="proposal ${h.passed?"ready":"needs_attention"}"><div class="title">Benchmark History · ${escapeHtml(h.passed?"passed":"failed")} · ${escapeHtml(h.score??"--")}</div><div class="muted">${escapeHtml(h.created_at||"--")} · cases ${escapeHtml((h.input_case_ids||[]).join(", ")||"--")}</div></div>`),
+   ...roleAssignments.slice(0,4).map(r=>`<div class="proposal ready"><div class="title">${escapeHtml(r.label||r.role_id)} · ${escapeHtml(r.model_id||"--")}</div><div class="muted">${escapeHtml(r.architecture||"--")} · ${escapeHtml(r.quantization_profile||"--")} · ${escapeHtml(r.vram_policy||"--")}</div><div class="chip-row">${(r.role_scope||[]).slice(0,6).map(x=>`<span class="chip">${escapeHtml(workflowHumanizeIdentifier(x,x))}</span>`).join("")}</div></div>`)
+  ].join("")||'<div class="empty">暂无本地模型策略</div>';
+ }
+ if(brainBox){
+  const gateStatus=gate.auto_replace_allowed?"自动替换允许":"自动替换关闭";
+  brainBox.innerHTML=[
+   `<div class="proposal ${gate.auto_replace_allowed?"ready":"needs_attention"}"><div class="title">替换 Gate · ${escapeHtml(gateStatus)}</div><div class="muted">均分阈值 ${escapeHtml(gate.minimum_average_score??"--")} · critical ${gate.critical_cases_must_pass?"必须通过":"可人工豁免"} · structured ${gate.requires_structured_benchmark_results?"需要":"不需要"}</div></div>`,
+   ...adapters.slice(0,4).map(a=>`<div class="proposal ${escapeHtml(a.review_state||a.status||"candidate")}"><div class="title">${escapeHtml(a.label||a.adapter_id)} · ${escapeHtml(a.adapter_type||"--")}</div><div class="muted">${escapeHtml(a.model_id||a.base_model_id||"--")} · ${escapeHtml(a.status||"--")} · ${escapeHtml(a.review_state||"--")}</div><div class="chip-row">${(a.capability_ids||[]).slice(0,6).map(x=>`<span class="chip">${escapeHtml(workflowHumanizeIdentifier(x,x))}</span>`).join("")}</div></div>`)
+  ].join("")||'<div class="empty">暂无 Brain Adapter 状态</div>';
+ }
+ bindModelClicks();
+}
+function renderAgents(){
+ const metrics=$("agentMetrics"),status=$("agentStatusBox"),list=$("agentList"),routes=$("agentRouteList"),remote=$("remoteWorkerList"),caps=$("agentCapabilityList"),gaps=$("agentGapList");
+ if(!metrics||!status||!list||!routes||!remote||!caps||!gaps)return;
+ if(agentManagementLoading&&!agentManagement){metrics.innerHTML='<div class="empty">Agent 快照加载中...</div>';status.textContent='';list.innerHTML='';routes.innerHTML='';remote.innerHTML='';caps.innerHTML='';gaps.innerHTML='';return}
+ if(!agentManagement){metrics.innerHTML='<div class="empty">暂无 Agent 快照</div>';status.textContent='点击刷新 Agent 读取 /desktop/agent-management';list.innerHTML='<div class="empty">暂无 Agent 数据</div>';routes.innerHTML='<div class="empty">暂无路由数据</div>';remote.innerHTML='<div class="empty">暂无远端 Worker</div>';caps.innerHTML='<div class="empty">暂无 Capability 覆盖</div>';gaps.innerHTML='<div class="empty">暂无缺口</div>';return}
+ const summary=agentManagement.distribution_summary||{},counts=summary.counts||{},activeRoute=summary.active_route||{},agents=summary.enabled_agents||agentManagement.agents||[],remotes=(summary.remote_distribution||{}).targets||agentManagement.remote_targets||[],capability=summary.capability_coverage||[],gapRows=summary.gaps||[];
+ metrics.innerHTML=[
+  metric("Agent",counts.agents_enabled??agents.filter(a=>a.enabled!==false).length,`总计 ${counts.agents_total??(agentManagement.agents||[]).length}`),
+  metric("路由成员",counts.active_route_members_enabled??(activeRoute.members||[]).length,activeRoute.label||"--"),
+  metric("Adapters",counts.agent_adapters_enabled??0,`总计 ${counts.agent_adapters_total??0}`),
+  metric("远端 Worker",counts.remote_targets_enabled??0,`总计 ${counts.remote_targets_enabled??remotes.length}`)
+ ].join("");
+ status.innerHTML=`状态：${escapeHtml(uiStatusLabel(summary.status||"--"))} · 活跃路由 ${escapeHtml(activeRoute.profile_id||agentManagement.active_route_profile_id||"--")} · 策略 ${escapeHtml(activeRoute.strategy||"--")}`;
+ list.innerHTML=agents.length?agents.map(a=>`<div class="module-item ${a.enabled===false?"blocked":"ready"}"><div class="title">${escapeHtml(a.label||a.agent_id)} · ${escapeHtml(uiActorLabel(a.agent_id||"--"))}</div><div class="muted">${escapeHtml(uiDomainLabel(a.domain||"--"))} · ${escapeHtml(a.role||"--")} · ${escapeHtml(uiModelProviderLabel(a.provider||"--"))} / ${escapeHtml(a.model||"--")}</div><div class="muted">${escapeHtml((a.capabilities||[]).slice(0,8).join(", ")||"--")}</div></div>`).join(""):'<div class="empty">暂无 Agent 数据</div>';
+ routes.innerHTML=(activeRoute.members||[]).length?activeRoute.members.map(m=>`<div class="proposal"><div class="title">${escapeHtml(m.member_id||m.role||"member")} · ${escapeHtml(m.role||"--")}</div><div class="muted">${escapeHtml(uiModelProviderLabel(m.provider||"--"))} · ${escapeHtml(m.model||"--")} · weight ${escapeHtml(m.weight??"--")}</div></div>`).join(""):'<div class="empty">暂无路由成员</div>';
+ remote.innerHTML=remotes.length?remotes.map(t=>`<div class="proposal"><div class="title">${escapeHtml(t.label||t.target_id)} · ${escapeHtml(t.enabled?"启用":"关闭")}</div><div class="muted">${escapeHtml(uiPathShort(t.base_url||""))} · ${escapeHtml((t.capabilities||[]).join(", ")||"--")}</div></div>`).join(""):'<div class="empty">暂无远端 Worker</div>';
+ caps.innerHTML=capability.length?capability.slice(0,16).map(c=>`<div class="proposal"><div class="title">${escapeHtml(workflowHumanizeIdentifier(c.capability||"--","Capability"))} · ${escapeHtml(c.count??0)}</div><div class="muted">${escapeHtml((c.agent_ids||[]).join(", ")||"--")}</div></div>`).join(""):'<div class="empty">暂无 Capability 覆盖</div>';
+ gaps.innerHTML=gapRows.length?gapRows.map(g=>`<div class="risk-item ${escapeHtml(g.priority||"medium")}"><div class="title">${escapeHtml(uiPriorityLabel(g.priority||"medium"))} · ${escapeHtml(g.title||g.id||"Agent 缺口")}</div><div class="muted">${escapeHtml(g.detail||g.message||"")}</div></div>`).join(""):'<div class="empty">当前无 Agent 缺口</div>';
+}
+function renderSkillsManagement(){
+ const metrics=$("skillMetrics"),status=$("skillStatusBox"),list=$("skillList"),sources=$("skillSourceList");
+ if(!metrics||!status||!list||!sources)return;
+ if(skillsLoading&&!skillsManagement){metrics.innerHTML='<div class="empty">Skill 快照加载中...</div>';status.textContent='';list.innerHTML='';sources.innerHTML='';return}
+ if(!skillsManagement){metrics.innerHTML='<div class="empty">暂无 Skill 快照</div>';status.textContent='点击刷新 Skills 读取 /desktop/skills';list.innerHTML='<div class="empty">暂无 Skill</div>';sources.innerHTML='<div class="empty">暂无来源</div>';return}
+ const skills=skillsManagement.skills||[],counts=skillsManagement.status_counts||{},sourceState=skillsManagement.skill_sources||{},sourceRows=sourceState.sources||[];
+ if(!activeSkillName&&skills.length)activeSkillName=skills[0].name;
+ const selected=skills.find(s=>s.name===activeSkillName)||skills[0];
+ if(selected)fillSkillForm(selected);
+ metrics.innerHTML=[
+  metric("Skills",skillsManagement.count??skills.length,`候选 ${counts.candidate??0}`),
+  metric("Active",counts.active??0,`Draft ${counts.draft??0}`),
+  metric("未归属",skillsManagement.missing_owner_count??0,`来源 ${sourceRows.length}`),
+  metric("Store",uiPathShort(skillsManagement.store_path||"--",28),"registry")
+ ].join("");
+ status.textContent=`候选审核 ${((skillsManagement.candidate_reviews||[]).length)} · 隔离区 ${sourceState.quarantine_dir||"--"}`;
+ list.innerHTML=skills.length?skills.map(s=>`<div class="module-item ${s.name===activeSkillName?"ready":""}" data-skill-name="${escapeHtml(s.name)}"><div class="title">${escapeHtml(s.name)} · ${escapeHtml(uiStatusLabel(s.status||"draft"))}</div><div class="muted">${escapeHtml(s.version||"--")} · ${escapeHtml(uiRiskLabel(s.risk_level||"low"))} · owner ${escapeHtml(s.owner_agent_id||"--")}</div><div class="muted">${escapeHtml(s.description||"")}</div></div>`).join(""):'<div class="empty">暂无 Skill</div>';
+ sources.innerHTML=sourceRows.length?sourceRows.map(s=>`<div class="proposal"><div class="title">${escapeHtml(s.label||s.source_id)} · ${escapeHtml(uiStatusLabel(s.status||"--"))}</div><div class="muted">${escapeHtml(s.source_type||"--")} · ${escapeHtml(s.trust_level||"--")} · 候选 ${escapeHtml(s.candidate_count??0)}</div><div class="muted">${escapeHtml(uiPathShort(s.url||s.quarantine_path||""))}</div></div>`).join(""):'<div class="empty">暂无 Skill 来源</div>';
+ bindSkillClicks();
+}
+function renderKnowledgeBase(){
+ const metrics=$("knowledgeMetrics"),bases=$("knowledgeBaseList"),sources=$("knowledgeSourceList"),jobs=$("knowledgeJobList"),kbSelect=$("knowledgeSourceKb");
+ if(!metrics||!bases||!sources||!jobs)return;
+ if(knowledgeLoading&&!knowledgeBase){metrics.innerHTML='<div class="empty">知识库快照加载中...</div>';bases.innerHTML='';sources.innerHTML='';jobs.innerHTML='';return}
+ if(!knowledgeBase){metrics.innerHTML='<div class="empty">暂无知识库快照</div>';bases.innerHTML='<div class="empty">点击刷新知识库</div>';sources.innerHTML='<div class="empty">暂无外部来源</div>';jobs.innerHTML='<div class="empty">暂无索引任务</div>';return}
+ const rows=knowledgeBase.knowledge_bases||[],sourceRows=knowledgeBase.external_sources||[],jobRows=(knowledgeBase.job_history||{}).jobs||[];
+ if(kbSelect){kbSelect.innerHTML='<option value="">knowledge_base_id</option>'+rows.map(k=>`<option value="${escapeHtml(k.knowledge_base_id)}">${escapeHtml(k.label||k.knowledge_base_id)}</option>`).join("")}
+ if(!activeKnowledgeSourceId&&sourceRows.length)activeKnowledgeSourceId=sourceRows[0].source_id;
+ const selected=sourceRows.find(s=>s.source_id===activeKnowledgeSourceId)||sourceRows[0];
+ if(selected)fillKnowledgeSourceForm(selected);
+ metrics.innerHTML=[
+  metric("知识库",knowledgeBase.count??rows.length,`来源 ${sourceRows.length}`),
+  metric("存在",rows.filter(k=>k.exists).length,`启用 ${rows.filter(k=>k.enabled!==false).length}`),
+  metric("文件",rows.reduce((sum,k)=>sum+Number(k.file_count||0),0),`扩展 ${((knowledgeBase.supported_extensions||[]).length)}`),
+  metric("任务",jobRows.length,`失败 ${jobRows.filter(j=>j.status==="failed").length}`)
+ ].join("");
+ bases.innerHTML=rows.length?rows.map(k=>{const index=k.last_index||{};return `<div class="module-item ${k.exists?"ready":"needs_attention"}"><div class="title">${escapeHtml(k.label||k.knowledge_base_id)} · ${escapeHtml(k.exists?"存在":"缺失")}</div><div class="muted">${escapeHtml(k.owner_agent_id||"--")} · ${escapeHtml(uiDomainLabel(k.domain||"--"))} · files ${escapeHtml(k.file_count??0)}</div><div class="muted">${escapeHtml(uiPathShort(k.resolved_path||k.path||"",86))}</div><div class="management-action-row"><button data-kb-index="${escapeHtml(k.knowledge_base_id)}">索引</button><span class="muted">chunks ${escapeHtml(index.chunk_count??"--")}</span></div></div>`}).join(""):'<div class="empty">暂无知识库配置</div>';
+ sources.innerHTML=sourceRows.length?sourceRows.map(s=>`<div class="module-item ${s.source_id===activeKnowledgeSourceId?"ready":""}" data-knowledge-source="${escapeHtml(s.source_id)}"><div class="title">${escapeHtml(s.label||s.source_id)} · ${escapeHtml(uiStatusLabel(s.status||"--"))}</div><div class="muted">${escapeHtml(s.kind||"--")} · ${escapeHtml(s.knowledge_base_id||"--")} · files ${escapeHtml(s.file_count??0)}</div><div class="muted">${escapeHtml(uiPathShort(s.resolved_path||s.path||"",86))}</div><div class="management-action-row"><button data-knowledge-sync="${escapeHtml(s.source_id)}">同步来源</button></div></div>`).join(""):'<div class="empty">暂无外部来源</div>';
+ jobs.innerHTML=jobRows.length?jobRows.slice(-20).reverse().map(j=>`<div class="proposal"><div class="title">${escapeHtml(uiStatusLabel(j.status||"--"))} · ${escapeHtml(j.job_type||"job")}</div><div class="muted">${escapeHtml(j.target_id||"--")} · ${escapeHtml(j.summary||"")}</div><div class="muted">${escapeHtml(j.error||"")}</div></div>`).join(""):'<div class="empty">暂无索引任务</div>';
+ bindKnowledgeClicks();
+}
+function renderMcpManagement(){
+ const metrics=$("mcpMetrics"),policy=$("mcpPolicyBox"),servers=$("mcpServerList"),mappings=$("mcpMappingList"),audit=$("mcpAuditList");
+ if(!metrics||!policy||!servers||!mappings||!audit)return;
+ if(mcpLoading&&!mcpManagement){metrics.innerHTML='<div class="empty">MCP 快照加载中...</div>';policy.textContent='';servers.innerHTML='';mappings.innerHTML='';audit.innerHTML='';return}
+ if(!mcpManagement){metrics.innerHTML='<div class="empty">暂无 MCP 快照</div>';policy.textContent='点击刷新 MCP 读取 /desktop/mcp-management';servers.innerHTML='<div class="empty">暂无 Server</div>';mappings.innerHTML='<div class="empty">暂无工具映射</div>';audit.innerHTML='--';return}
+ const serverRows=mcpManagement.servers||[],mappingRows=mcpManagement.tool_mappings||[],auditRows=mcpManagement.audit_log||[],p=mcpManagement.policy||{};
+ if(!activeMcpServerId&&serverRows.length)activeMcpServerId=serverRows[0].server_id;
+ const selected=serverRows.find(s=>s.server_id===activeMcpServerId)||serverRows[0];
+ if(selected)fillMcpForm(selected);
+ metrics.innerHTML=[
+  metric("Servers",mcpManagement.server_count??serverRows.length,`启用 ${mcpManagement.enabled_count??0}`),
+  metric("Ready",mcpManagement.ready_count??0,`Attention ${mcpManagement.attention_count??0}`),
+  metric("Mappings",mcpManagement.ready_mapping_count??mappingRows.length,`Audit ${mcpManagement.audit_count??auditRows.length}`),
+  metric("Registry",uiPathShort(mcpManagement.registry_path||"--",24),"path")
+ ].join("");
+ policy.textContent=`策略：${p.external_launch_enabled?"允许外部启动":"不启动外部进程"} · ${p.requires_review_before_tool_export?"审核后导出":"未要求审核"} · ${p.requires_agent_allowlist?"需要 Agent allowlist":"未要求 allowlist"} · ${p.tool_execution_mode||"--"}`;
+ servers.innerHTML=serverRows.length?serverRows.map(s=>{const h=s.health||{};return `<div class="module-item ${s.server_id===activeMcpServerId?"ready":(h.status||"")} " data-mcp-server="${escapeHtml(s.server_id)}"><div class="title">${escapeHtml(s.label||s.server_id)} · ${escapeHtml(uiStatusLabel(h.status||"unknown"))}</div><div class="muted">${escapeHtml(s.transport||"--")} · ${escapeHtml(s.review_state||"--")} · ${escapeHtml(s.trust_level||"--")} · ${s.enabled?"启用":"关闭"}</div><div class="muted">${escapeHtml((h.issues||[]).join(", ")||uiPathShort(s.command||s.url||""))}</div></div>`}).join(""):'<div class="empty">暂无 MCP Server</div>';
+ mappings.innerHTML=mappingRows.length?mappingRows.map(m=>`<div class="proposal"><div class="title">${escapeHtml(m.internal_tool_name||m.mcp_tool_name)} · ${escapeHtml(uiRiskLabel(m.risk_level||"medium"))}</div><div class="muted">${escapeHtml(m.server_label||m.mcp_server)} · ${escapeHtml(m.target||"--")}.${escapeHtml(m.operation||"--")} · ${m.confirmation_required?"需要确认":"无需确认"}</div></div>`).join(""):'<div class="empty">暂无可导出的工具映射</div>';
+ audit.innerHTML=auditRows.length?auditRows.slice(-20).reverse().map(a=>`${escapeHtml(fmtTime(a.at)||a.at||"--")} · ${escapeHtml(a.action||"--")} · ${escapeHtml(a.server_id||"--")} · ${escapeHtml(a.message||"")}`).join("<br>"):"--";
+ bindMcpClicks();
+}
+function renderSafety(){
+ const metrics=$("safetyMetrics"),status=$("safetyStatusBox"),history=$("safetyHistoryList");
+ if(!metrics||!status||!history)return;
+ if(safetyLoading&&!safetyState){metrics.innerHTML='<div class="empty">安全状态加载中...</div>';status.textContent='';history.innerHTML='';return}
+ if(!safetyState){metrics.innerHTML='<div class="empty">暂无安全状态</div>';status.textContent='点击刷新安全状态读取 /desktop/safety';history.innerHTML='<div class="empty">暂无历史</div>';return}
+ setValue("safetyReason",safetyState.reason||"");
+ metrics.innerHTML=[
+  metric("状态",safetyState.active?(safetyState.mode==="hard_stop"?"硬停止":"Soft Stop"):"安全正常",`rev ${safetyState.revision??0}`),
+  metric("模式",safetyState.mode||"normal",safetyState.resume_confirmation_required?"恢复需确认":"可恢复"),
+  metric("Actor",safetyState.actor||"--",safetyState.updated_at||"--")
+ ].join("");
+ status.innerHTML=`原因：${escapeHtml(safetyState.reason||"--")}<br>状态文件：${escapeHtml(uiPathShort(safetyState.state_path||"--",86))}`;
+ history.innerHTML=(safetyState.history||[]).length?safetyState.history.slice(-30).reverse().map(h=>`<div class="proposal"><div class="title">${escapeHtml(h.at||"--")} · ${escapeHtml(h.action||"--")}</div><div class="muted">${escapeHtml(h.mode||"--")} · ${escapeHtml(h.actor||"--")} · ${escapeHtml(h.reason||"")}</div></div>`).join(""):'<div class="empty">暂无停止/恢复记录</div>';
+}
+function metric(label,value,detail){return `<div class="metric"><div class="value">${escapeHtml(value)}</div><div class="label">${escapeHtml(label)} · ${escapeHtml(detail)}</div></div>`}
+function kv(obj){return Object.entries(obj).map(([k,v])=>`<div>${escapeHtml(k)}</div><div>${escapeHtml(v??"--")}</div>`).join("")}
+function valueOf(id){return ($(id)?.value||"").trim()}
+function setValue(id,value){const el=$(id);if(el&&document.activeElement!==el)el.value=value}
+function forceValue(id,value){const el=$(id);if(el)el.value=value}
+function boolFromSelect(id){return valueOf(id)==="true"}
+function jsonValue(id,fallback){try{return JSON.parse(valueOf(id)||JSON.stringify(fallback))}catch(err){alert(`${id} JSON 无效：${err.message||err}`);throw err}}
+function linesValue(id){return textLines(valueOf(id))}
+function scrollMessagesToEnd(){const box=$("messages"); if(!box)return; const go=()=>{box.scrollTop=box.scrollHeight}; go(); requestAnimationFrame(go); setTimeout(go,80)}
+function bindDynamicClicks(){
+ document.querySelectorAll("[data-session]").forEach(el=>el.onclick=()=>{state.active_session_id=el.dataset.session;saveStateDebounced();render()});
+ document.querySelectorAll("[data-task]").forEach(el=>el.onclick=()=>{const t=state.tasks.find(x=>x.id===el.dataset.task);if(t){t.status=el.dataset.status;touch(t);saveStateDebounced();render()}});
+}
+function bindWorkflowRunClicks(){document.querySelectorAll("[data-workflow-run]").forEach(el=>el.onclick=()=>{activeWorkflowRunId=el.dataset.workflowRun;activeWorkflowNodeId="";renderWorkflows()})}
+function syncWorkflowAgentForNode(nodeId){
+ const run=(workflows?.runs||[]).find(r=>r.run_id===activeRunId());
+ const defNodes=run?.definition?.nodes||workflowDefinitionByName(activeWorkflowName)?.nodes||[];
+ const def=defNodes.find(n=>n.node_id===nodeId)||{};
+ const state=run?.nodes?.[nodeId]||{};
+ const agent=state.assigned_agent||def.assigned_agent||valueOf("workflowAgentId")||"ecommerce";
+ forceValue("workflowAgentId",agent);
+ const select=$("workflowAgentSelect");if(select&&[...select.options].some(o=>o.value===agent))select.value=agent;
+}
+function bindWorkflowGraphNodeClicks(){document.querySelectorAll("[data-workflow-node-select]").forEach(el=>el.onclick=e=>{if(e.target.closest("[data-workflow-action]"))return;activeWorkflowNodeId=el.dataset.workflowNodeSelect;syncWorkflowAgentForNode(activeWorkflowNodeId);renderWorkflows()})}
+function workflowPromptJsonObject(title,fallback){const raw=prompt(title,JSON.stringify(fallback,null,2));if(raw===null)return null;try{const parsed=JSON.parse(raw||"{}");if(!parsed||Array.isArray(parsed)||typeof parsed!=="object")throw new Error("需要 JSON object");return parsed}catch(err){alert(`JSON 无效：${err.message||err}`);return null}}
+function bindWorkflowNodeClicks(){document.querySelectorAll("[data-workflow-node]").forEach(el=>el.onclick=()=>{const node_id=el.dataset.workflowNode,act=el.dataset.workflowAction,agent_id=valueOf("workflowAgentId")||"ecommerce";activeWorkflowNodeId=node_id;if(act==="assign")workflowAction("assign_agent",{node_id,agent_id});else if(act==="dry")workflowAction("run_node",{node_id,dry_run:true});else if(act==="run")workflowAction("run_node",{node_id,dry_run:false});else if(act==="claim")workflowAction("claim_agent_task",{node_id,agent_id});else if(act==="complete"){const outputs=workflowPromptJsonObject("节点 outputs JSON",{submitted_from:"desktop_console",at:new Date().toISOString()});if(outputs)workflowAction("complete_agent_task",{node_id,agent_id,outputs})}else if(act==="signal"){const signal_payload=workflowPromptJsonObject("节点 signal_payload JSON",{submitted_from:"desktop_console",at:new Date().toISOString()});if(signal_payload)workflowAction("signal_node",{node_id,actor:agent_id,signal_payload})}else if(act==="retry")workflowAction("retry_node",{node_id,actor:"desktop_console"});else if(act==="reset")workflowAction("reset_run",{actor:"desktop_console"});else if(act==="approve")workflowAction("approve_review",{node_id,reviewer:agent_id})})}
+function fillAssistModelForm(model){setValue("assistModelId",model.model_id||"");setValue("assistModelLabel",model.display_name||model.model_id||"");setValue("assistModelProvider",model.provider||"openai_compatible");setValue("assistModelName",model.model||"");setValue("assistModelBaseUrl",model.endpoint||"");setValue("assistModelRole",model.role||"review");setValue("assistModelEnabled",model.enabled===false?"false":"true");setValue("assistModelNotes",model.notes||"")}
+function bindModelClicks(){document.querySelectorAll("[data-assist-model]").forEach(el=>el.onclick=()=>{activeAssistModelId=el.dataset.assistModel;renderModels()})}
+function fillSkillForm(skill){setValue("skillName",skill.name||"");setValue("skillVersion",skill.version||"0.1.0");setValue("skillStatus",skill.status||"candidate");setValue("skillRisk",skill.risk_level||"low");setValue("skillOwner",skill.owner_agent_id||"skill_runner");setValue("skillWorkspacePath",skill.workspace_path||`state/agents/${skill.owner_agent_id||"skill_runner"}/workspace`);setValue("skillDescription",skill.description||"");setValue("skillTriggers",(skill.trigger_intents||[]).join("\n"));setValue("skillTools",(skill.tool_allowlist||[]).join("\n"));setValue("skillSteps",JSON.stringify(skill.steps||[],null,2))}
+function bindSkillClicks(){document.querySelectorAll("[data-skill-name]").forEach(el=>el.onclick=()=>{activeSkillName=el.dataset.skillName;renderSkillsManagement()})}
+function fillKnowledgeSourceForm(source){setValue("knowledgeSourceId",source.source_id||"");setValue("knowledgeSourceLabel",source.label||source.source_id||"");setValue("knowledgeSourceKind",source.kind||"folder");setValue("knowledgeSourceKb",source.knowledge_base_id||"");setValue("knowledgeSourcePath",source.path||"");setValue("knowledgeSourceEnabled",source.enabled===false?"false":"true");setValue("knowledgeSourceNotes",source.notes||"")}
+function bindKnowledgeClicks(){document.querySelectorAll("[data-knowledge-source]").forEach(el=>el.onclick=e=>{if(e.target.closest("[data-knowledge-sync]"))return;activeKnowledgeSourceId=el.dataset.knowledgeSource;renderKnowledgeBase()});document.querySelectorAll("[data-kb-index]").forEach(btn=>btn.onclick=()=>postKnowledge({action:"index",knowledge_base_id:btn.dataset.kbIndex}));document.querySelectorAll("[data-knowledge-sync]").forEach(btn=>btn.onclick=()=>postKnowledge({action:"sync_source",source_id:btn.dataset.knowledgeSync,index_after:true}))}
+function fillMcpForm(server){setValue("mcpServerId",server.server_id||"");setValue("mcpServerLabel",server.label||server.server_id||"");setValue("mcpTransport",server.transport||"stdio");setValue("mcpCommand",server.command||"");setValue("mcpUrl",server.url||"");setValue("mcpEnabled",server.enabled?"true":"false");setValue("mcpReviewState",server.review_state||"candidate");setValue("mcpTrustLevel",server.trust_level||"untrusted");setValue("mcpArgs",(server.args||[]).join("\n"));setValue("mcpOwners",(server.owner_agent_ids||[]).join("\n"));setValue("mcpFilesystemScopes",(server.filesystem_scopes||[]).join("\n"));setValue("mcpNetworkScopes",(server.network_scopes||[]).join("\n"));setValue("mcpTools",JSON.stringify(server.tools||[],null,2));setValue("mcpNotes",server.notes||"")}
+function bindMcpClicks(){document.querySelectorAll("[data-mcp-server]").forEach(el=>el.onclick=()=>{activeMcpServerId=el.dataset.mcpServer;renderMcpManagement()})}
+function mobileSecurityHtml(security){
+ if(!security||!Object.keys(security).length)return"安全姿态：当前快照没有移动端安全摘要。";
+ const tokens=security.tokens||{},warnings=security.warnings||[];
+ const tokenLine=[`命令网关 ${tokens.command_gateway?"已配置":"未配置"}`,`Android ${tokens.android_endpoint?"已配置":"未配置"}`,`iOS ${tokens.ios_endpoint?"已配置":"未配置"}`].join(" · ");
+ const warningLine=warnings.length?warnings.slice(0,5).map(w=>`<div class="proposal"><div class="title">${escapeHtml(uiRiskLabel(w.severity||"medium"))} · ${escapeHtml(w.title||w.warning_id||"--")}</div><div class="muted">${escapeHtml(w.detail||"")}</div></div>`).join(""):"<div>风险提示：暂无阻断项；公网访问仍必须使用 HTTPS/WSS 或 Tailscale。</div>";
+ return [`安全姿态：${escapeHtml(uiStatusLabel(security.status||"review"))} · 网络范围：${escapeHtml(mobileNetworkScopeLabel(security.network_scope||"--"))} · Token：${escapeHtml(tokenLine)}`,warningLine,security.operator_hint?`建议：${escapeHtml(security.operator_hint)}`:""].filter(Boolean).join("<br>");
+}
+function mobileNetworkScopeLabel(scope){
+ return ({local_only:"本机",tailscale:"Tailscale",private_lan:"局域网",public_or_unknown:"公网/未知",mixed:"混合"})[scope]||uiStatusLabel(scope||"--");
+}
+function mobileBindingHtml(binding){
+ if(!binding||!Object.keys(binding).length)return"绑定：当前快照没有统一 binding 信息。";
+ const network=binding.network||{},android=binding.android||{},ios=binding.ios||{},tokens=binding.tokens||{},steps=binding.setup_steps||[];
+ const tokenLine=Object.entries(tokens).map(([key,value])=>`${key} ${(value||{}).configured?"已配置":"未配置"}`).join(" · ")||"--";
+ const stepLine=steps.length?steps.slice(0,4).map(s=>`<div class="proposal"><div class="title">${escapeHtml(uiRiskLabel(s.severity||"low"))} · ${escapeHtml(s.title||s.id||"--")}</div><div class="muted">${escapeHtml(s.detail||"")}</div></div>`).join(""):"";
+ return [
+  `Workspace: ${escapeHtml(binding.workspace_id||"--")} · 网络 ${escapeHtml(mobileNetworkScopeLabel(network.scope||"--"))}`,
+  `Token: ${escapeHtml(tokenLine)}`,
+  `Android pairing: ${escapeHtml(android.pairing_page_url||"--")}`,
+  `iOS PWA: ${escapeHtml(ios.pwa_url||"--")}`,
+  stepLine
+ ].filter(Boolean).join("<br>");
+}
+function renderMobileManagement(){
+ const metrics=$("mobileMetrics"),status=$("mobileStatusBox"),securityBox=$("mobileSecurityBox"),androidBox=$("mobileAndroidBox"),iosBox=$("mobileIosBox"),paths=$("mobilePathBox"),shortcuts=$("mobileShortcutList"),actionBox=$("mobileActionBox"),companionBox=$("mobileCompanionBox"),bindingBox=$("mobileBindingBox"),workerBox=$("mobileAndroidWorkerBox");
+ if(!metrics||!status||!androidBox||!iosBox||!paths||!shortcuts)return;
+ if(mobileLoading&&!mobileManagement){metrics.innerHTML='<div class="empty">移动端 Bridge 快照加载中...</div>';status.textContent='';if(securityBox)securityBox.textContent='';if(bindingBox)bindingBox.textContent='';if(workerBox)workerBox.textContent='';androidBox.textContent='';iosBox.textContent='';paths.textContent='';shortcuts.innerHTML='';if(companionBox)companionBox.textContent='';return}
+ if(!mobileManagement){metrics.innerHTML='<div class="empty">暂无移动端快照</div>';status.textContent='点击刷新移动端读取 /desktop/mobile-management';if(securityBox)securityBox.textContent='--';if(bindingBox)bindingBox.textContent='--';if(workerBox)workerBox.textContent='--';androidBox.textContent='--';iosBox.textContent='--';paths.textContent='--';shortcuts.innerHTML='<div class="empty">暂无 Shortcuts</div>';if(companionBox)companionBox.textContent='--';return}
+ const android=mobileManagement.android||{},ios=mobileManagement.ios||{},binding=mobileManagement.binding||{},androidEndpoint=android.endpoint||{},iosEndpoint=ios.endpoint||{},androidHealth=androidEndpoint.health||{},iosHealth=iosEndpoint.health||{},device=android.active_device||{},apk=android.apk||{},installed=android.installed||{},companion=android.companion||{},worker=android.worker||companion.worker||{};
+ const androidOnline=!!androidHealth.ok,iosOnline=!!iosHealth.ok,deviceSerial=device.serial||"",apkExists=!!apk.exists,installedOk=!!installed.installed;
+ metrics.innerHTML=[
+  metric("Android Endpoint",androidOnline?"online":"offline",`port ${androidEndpoint.port||"--"}`),
+  metric("ADB Device",deviceSerial?"connected":"missing",deviceSerial||android.device_ip||"--"),
+  metric("APK",apkExists?(installedOk?"installed":"built"):"missing",uiPathShort(apk.path||android.apk_path||"--",28)),
+  metric("iOS Endpoint",iosOnline?"online":"offline",`port ${iosEndpoint.port||"--"}`),
+  metric("Android Worker",uiStatusLabel(worker.status||"unknown"),`${worker.online_device_count||0}/${worker.device_count||0} online`)
+ ].join("");
+ status.innerHTML=`Android receiver: ${escapeHtml(android.receiver_url||"--")}<br>iOS base: ${escapeHtml(iosEndpoint.tailscale_base_url||"--")}<br>PC Tailscale: ${escapeHtml(androidEndpoint.pc_tailscale_ip||iosEndpoint.pc_tailscale_ip||"--")}`;
+ if(securityBox)securityBox.innerHTML=mobileSecurityHtml(mobileManagement.security||{});
+ if(bindingBox)bindingBox.innerHTML=mobileBindingHtml(binding);
+ setValue("mobileWorkspaceId",binding.workspace_id||mobileManagement.default_workspace_id||"local-ecommerce");
+ setValue("mobileAndroidPairingUrl",(binding.android||{}).pairing_page_url||android.pairing_url||"");
+ setValue("mobileIosPwaUrl",(binding.ios||{}).pwa_url||"");
+ setValue("mobileAndroidReceiverUrl",android.receiver_url||"");
+ setValue("mobileIosBaseUrl",iosEndpoint.tailscale_base_url||"");
+ setValue("mobileAdbDeviceIp",android.device_ip||"");
+ setValue("mobileAdbKnownPort",android.known_port||"");
+ androidBox.innerHTML=[
+  `Health: ${escapeHtml(androidOnline?"online":"offline")} · HTTP ${escapeHtml(androidHealth.status??"--")}`,
+  `Local: ${escapeHtml(androidEndpoint.local_health_url||"--")}`,
+  `Tailscale: ${escapeHtml(androidEndpoint.tailscale_health_url||"--")}`,
+  `ADB: ${escapeHtml(uiPathShort(android.adb_path||"--",90))}`,
+  `Device: ${escapeHtml(deviceSerial||"--")} · ${escapeHtml(device.state||"--")} · ${escapeHtml(device.detail||"--")}`,
+  `Package: ${escapeHtml(installedOk?"installed":"not installed")} · ${escapeHtml(installed.version_name||"--")} · ${escapeHtml(installed.last_update_time||"--")}`
+ ].join("<br>");
+ if(workerBox){
+  const queue=worker.queue||{},permissions=worker.permissions||{},update=worker.update||{},lifecycle=worker.lifecycle||{},promotion=worker.promotion_gate||{},caps=worker.capabilities||[];
+  const statusClass=worker.status==="ready"?"ready":(worker.status==="endpoint_offline"||worker.status==="offline"?"blocked":"needs_attention");
+  const statusCounts=Object.entries(queue.status_counts||worker.command_status_counts||{}).map(([k,v])=>`${k} ${v}`).join(" · ")||"--";
+  workerBox.innerHTML=[
+   `<div class="proposal ${statusClass}"><div class="title">Android Control Worker · ${escapeHtml(uiStatusLabel(worker.status||"--"))}</div><div class="muted">role ${escapeHtml(worker.role||"controlled_execution_worker")} · devices ${escapeHtml(worker.online_device_count||0)}/${escapeHtml(worker.device_count||0)} · capabilities ${escapeHtml(worker.capability_count||caps.length||0)}</div></div>`,
+   `Queue: pending ${escapeHtml(queue.pending??worker.pending_command_count??0)} · running ${escapeHtml(queue.inflight??worker.inflight_command_count??0)} · ${escapeHtml(statusCounts)}`,
+   `Permissions: gaps ${escapeHtml(permissions.gap_count??worker.permission_gap_count??0)} · receive ${lifecycle.can_receive_commands?"yes":"no"} · automation ${lifecycle.can_run_automation?"yes":"no"} · screenshot ${lifecycle.can_capture_screen?"yes":"no"}`,
+   `Update: APK ${update.apk_exists?"built":"missing"} · installed ${update.installed?"yes":"no"} · current ${escapeHtml(update.installed_version_name||"--")} · release ${escapeHtml(update.release_version_name||"--")} · ${update.update_available?"update available":"no update flag"}`,
+   `Promotion: ${escapeHtml(promotion.status||"--")} · serving ${promotion.serving_allowed?"allowed":"blocked"} · required ${(promotion.required_actions||[]).map(x=>escapeHtml(x)).join(", ")||"--"}`,
+   caps.length?`Capabilities: ${caps.slice(0,12).map(c=>`<span class="chip">${escapeHtml(c)}</span>`).join(" ")}`:""
+  ].filter(Boolean).join("<br>");
+ }
+ iosBox.innerHTML=[
+  `Health: ${escapeHtml(iosOnline?"online":"offline")} · HTTP ${escapeHtml(iosHealth.status??"--")}`,
+  `Local: ${escapeHtml(iosEndpoint.local_health_url||"--")}`,
+  `Terminal: ${escapeHtml(uiStatusLabel(ios.terminal_status||"--"))}`
+ ].join("<br>");
+ shortcuts.innerHTML=(ios.shortcuts||[]).length?(ios.shortcuts||[]).map(s=>`<div class="proposal"><div class="title">${escapeHtml(s.name||"--")} · ${s.confirmation_required?"需要确认":"可直接执行"}</div><div class="muted">${escapeHtml(s.description||"")}</div><div class="muted">${escapeHtml(s.url||"")}</div></div>`).join(""):'<div class="empty">暂无 iOS Shortcut 定义</div>';
+ paths.innerHTML=[
+  `Bridge root: ${escapeHtml(uiPathShort(android.bridge_root||"--",110))}`,
+  `APK: ${escapeHtml(uiPathShort(apk.path||android.apk_path||"--",110))}`,
+  `Reconnect script: ${escapeHtml(uiPathShort(android.reconnect_script||"--",110))}`,
+  `Companion state: ${escapeHtml(uiPathShort(companion.state_path||"--",110))}`,
+  `Binding workspace: ${escapeHtml(binding.workspace_id||mobileManagement.default_workspace_id||"--")}`,
+  `手机链接落盘: state/mobile-links/links.jsonl 和 latest-link.txt`
+ ].join("<br>");
+ if(companionBox){
+  const devices=companion.devices||[],commands=companion.commands||{},recent=companion.recent_commands||[],counts=companion.command_status_counts||{};
+  const countLine=Object.entries(counts).map(([k,v])=>`${k} ${v}`).join(" · ")||"commands --";
+  const tiers=((companion.permission_policy||{}).tiers||[]).map(t=>`${t.label||t.tier}:${t.allowed?"允许":"阻止"}${t.requires_confirmation?"/需确认":""}`).join(" · ");
+  const postureLine=d=>{const p=d.permission_posture||{},gaps=(p.gaps||[]).slice(0,3).map(g=>`${g.id||"gap"}:${g.message||""}`).join(" · ");return p.status?`<div class="muted">permissions ${escapeHtml(p.status)} · ops ${escapeHtml(p.available_operation_count??0)}/${escapeHtml(p.operation_count??0)} · gaps ${escapeHtml(p.gap_count??((p.gaps||[]).length))}${gaps?` · ${escapeHtml(gaps)}`:""}</div>`:""};
+  companionBox.innerHTML=[
+   `主控终端：本地桌面端 + iOS；Android 是被控执行端。`,
+   `Devices: ${escapeHtml(companion.device_count||0)} · Pending commands: ${escapeHtml(companion.pending_command_count||0)} · ${escapeHtml(countLine)}`,
+   tiers?`权限分级：${escapeHtml(tiers)}`:"",
+   ...(devices.length?devices.map(d=>`<div class="proposal"><div class="title">${escapeHtml(d.device_id||"--")} · ${d.online?"online":"offline"} · pending ${escapeHtml(d.pending_command_count||0)} · running ${escapeHtml(d.inflight_command_count||0)}</div><div class="muted">battery ${escapeHtml(d.battery_pct??"--")} · app ${escapeHtml(d.current_app||"--")} · apps ${escapeHtml(d.installed_app_count||0)}${d.last_command?` · last ${escapeHtml(d.last_command.operation||"--")}:${escapeHtml(d.last_command.status||"--")}`:""}</div>${postureLine(d)}</div>`):['<div class="empty">暂无 Android Companion heartbeat。安装 APK 后手机端需要上报 /android/heartbeat。</div>']),
+   ...recent.slice(-8).map(item=>`<div class="proposal"><div class="title">${escapeHtml(item.device_id||"--")} · ${escapeHtml(item.operation||"--")} · ${escapeHtml(item.status||"--")} · ${escapeHtml((item.permission||{}).label||(item.permission||{}).tier||"--")}</div><div class="muted">${escapeHtml(item.message||JSON.stringify(item.result||{}))}</div></div>`),
+   ...Object.entries(commands).flatMap(([deviceId,items])=>(items||[]).slice(0,8).map(item=>`<div class="proposal"><div class="title">${escapeHtml(deviceId)} · ${escapeHtml(item.operation||"--")} · ${escapeHtml((item.permission||{}).label||(item.permission||{}).tier||"--")}</div><div class="muted">${escapeHtml(JSON.stringify(item.params||{}))}</div></div>`))
+  ].join("<br>");
+ }
+ if(actionBox&&!actionBox.textContent.trim())actionBox.textContent="--";
+}
+function addMessage(role,text,metadata={}){const session=activeSession();if(!session)return;const m={id:id("msg"),role,text:String(text||""),created_at:now(),updated_at:now(),metadata};session.messages=session.messages||[];session.messages.push(m);session.messages=session.messages.slice(-300);touch(session);state.active_session_id=session.id}
+function mergeRemote(remote){Object.assign(state,remote);ensureState();render()}
+async function loadState(){try{const r=await fetch(desktopStateUrl(),{cache:"no-store",headers:authHeaders()});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);mergeRemote(d.state);$("syncDot").classList.add("on");$("connStatus").textContent="共享状态已同步"}catch(err){$("connStatus").textContent=`状态同步失败：${err.message||err}`;$("syncDot").classList.remove("on")}}
+async function loadModuleManagement(scan=false){moduleManagementLoading=true;renderModuleManagement();try{const options=scan?{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify({action:"scan"})}:{cache:"no-store",headers:authHeaders()};const r=await fetch(moduleManagementUrl(),options);const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);moduleManagement=d.module_management;if(d.ecosystem_review)ecosystemReview=d.ecosystem_review;moduleManagementLoading=false;renderModuleManagement();renderGovernance()}catch(err){moduleManagementLoading=false;moduleManagement={overview:{status:"error",module_count:"--",attention_count:1,blocked_count:1,ready_count:0,action_count:1},modules:[{module_id:"module_management",label:"统一模块管理",status:"blocked",summary:"读取失败",description:err.message||String(err)}],action_items:[{module_id:"module_management",priority:"high",title:"模块快照读取失败",detail:err.message||String(err),endpoint:"/desktop/module-management"}]};renderModuleManagement()}}
+async function loadServices(){servicesLoading=true;renderServices();try{const d=await fetchJson(servicesUrl(),{cache:"no-store",headers:authHeaders()});servicesState={services:d.services||{services:[],actions:[]},service_ports:d.service_ports||{services:[],issues:[]}};servicesLoading=false;renderServices()}catch(err){servicesLoading=false;servicesState={services:{services:[],actions:[{at:now(),action:"snapshot_failed",service_id:"desktop_services",status:err.message||String(err)}]},service_ports:{services:[],issues:[{severity:"high",title:"服务快照读取失败",detail:err.message||String(err)}]}};renderServices()}}
+async function postServiceAction(action,service_id){servicesLoading=true;renderServices();try{await fetchJson(servicesUrl(),postOptions({action,service_id,actor:"desktop_console"}));await loadServices();loadModuleManagement(false);return true}catch(err){servicesLoading=false;renderServices();alert(`服务动作失败：${err.message||err}`);return false}}
+async function restartCoreServices(){if(!confirm("重启前端、事件桥和命令网关？命令网关会短暂断开当前控制台。"))return;for(const service_id of ["frontend","event_bridge","command_gateway"]){const ok=await postServiceAction("restart",service_id);if(!ok)break}}
+function bindServiceClicks(){document.querySelectorAll("[data-service-action]").forEach(btn=>btn.onclick=()=>postServiceAction(btn.dataset.serviceAction,btn.dataset.serviceId));document.querySelectorAll("[data-service-health]").forEach(btn=>btn.onclick=()=>window.open(btn.dataset.serviceHealth,"_blank"))}
+async function loadServicePorts(){portsLoading=true;renderServicePorts();try{const d=await fetchJson(servicePortsUrl(),{cache:"no-store",headers:authHeaders()});portsState=d.service_ports||{services:[],issues:[]};portsLoading=false;renderServicePorts()}catch(err){portsLoading=false;portsState={services:[],issues:[{severity:"high",title:"端口快照读取失败",detail:err.message||String(err)}],duplicate_ports:{},config:{overrides:{}},config_path:"读取失败"};renderServicePorts()}}
+async function postServicePort(payload){portsLoading=true;renderServicePorts();try{const d=await fetchJson(servicePortsUrl(),postOptions({actor:"desktop_console",...payload}));portsState=d.service_ports||d.service_port_action?.service_ports||portsState;portsLoading=false;renderServicePorts();loadModuleManagement(false);loadServices();return d}catch(err){portsLoading=false;renderServicePorts();alert(`端口动作失败：${err.message||err}`);throw err}}
+function bindPortClicks(){document.querySelectorAll("[data-port-save]").forEach(btn=>btn.onclick=()=>{const service_id=btn.dataset.portSave,port=valueOf(`portInput_${service_id}`);if(!port)return alert("端口不能为空");postServicePort({action:"save_port",service_id,port:Number(port)})});document.querySelectorAll("[data-port-reset]").forEach(btn=>btn.onclick=()=>postServicePort({action:"reset_port",service_id:btn.dataset.portReset}));document.querySelectorAll("[data-open-url]").forEach(btn=>btn.onclick=()=>window.open(btn.dataset.openUrl,"_blank"))}
+async function loadDiagnostics(){diagnosticsLoading=true;renderDiagnostics();try{const d=await fetchJson(diagnosticsUrl(),{cache:"no-store",headers:authHeaders()});diagnosticsState=d.diagnostics;diagnosticsLoading=false;renderDiagnostics()}catch(err){diagnosticsLoading=false;diagnosticsState={checks:[{name:"desktop diagnostics",ok:false,category:"desktop",severity:"high",detail:err.message||String(err)}],issues:[{issue_id:"diagnostics-read-failed",severity:"high",title:"诊断读取失败",detail:err.message||String(err),repair_steps:[]}],desktop_state:{revision:"--"}};renderDiagnostics()}}
+async function postDiagnostics(payload){diagnosticsLoading=true;renderDiagnostics();try{const d=await fetchJson(diagnosticsUrl(),postOptions({actor:"desktop_console",...payload}));diagnosticsState=d.diagnostics||d.diagnostic_action?.diagnostics||diagnosticsState;diagnosticsLoading=false;renderDiagnostics();loadModuleManagement(false);loadServices();loadServicePorts();return d}catch(err){diagnosticsLoading=false;renderDiagnostics();alert(`诊断动作失败：${err.message||err}`);throw err}}
+function bindDiagnosticClicks(){document.querySelectorAll("[data-diagnostic-repair]").forEach(btn=>btn.onclick=()=>postDiagnostics({action:"repair",issue_id:btn.dataset.diagnosticRepair}))}
+async function loadLogs(logId=""){logsLoading=true;renderLogs();const headers=authHeaders();const results=await Promise.allSettled([fetchJson(logsUrl(logId||activeLogId),{cache:"no-store",headers}),fetchJson(actionLogUrl(80),{cache:"no-store",headers})]);const logResult=results[0],actionResult=results[1];if(logResult.status==="fulfilled"){logsState=logResult.value.logs||{logs:[]};if(logsState.selected?.log_id)activeLogId=logsState.selected.log_id}else{const err=logResult.reason;logsState={logs:[{log_id:"logs-read-failed",path:"读取失败",size_bytes:0,updated_at:now(),error_count:1,warning_count:0,tail:[err.message||String(err)]}],selected:null}}if(actionResult.status==="fulfilled"){actionLogState=actionResult.value.action_log||{events:[]}}else{const err=actionResult.reason;actionLogState={event_count:1,available_event_count:1,source_counts:{error:1},events:[{source_label:"Action Log",status:"failed",timestamp:now(),action:"snapshot_failed",target:"/desktop/action-log",actor:"desktop_console",message:err.message||String(err)}]}}logsLoading=false;renderLogs()}
+function bindLogClicks(){document.querySelectorAll("[data-log-id]").forEach(el=>el.onclick=()=>{activeLogId=el.dataset.logId;loadLogs(activeLogId)})}
+async function loadContext(){contextLoading=true;renderContext();try{const d=await fetchJson(contextUrl(),{cache:"no-store",headers:authHeaders()});contextState=d.context;contextLoading=false;renderContext()}catch(err){contextLoading=false;contextState={policy:{},active_session:{title:"读取失败",message_count:0},project_summary:{root:"--",strategy:err.message||String(err),desktop_projects:0,desktop_tasks:0},suggestions:[{priority:"high",title:"上下文快照读取失败",detail:err.message||String(err)}]};renderContext()}}
+async function saveContext(){const maxRecent=Number(valueOf("contextMaxRecent")||12),summarizeAfter=Number(valueOf("contextSummarizeAfter")||20);const policy={mode:valueOf("contextMode")||"balanced",max_recent_messages:Number.isFinite(maxRecent)?maxRecent:12,summarize_after_messages:Number.isFinite(summarizeAfter)?summarizeAfter:20,include_project_docs:boolFromSelect("contextProjectDocs"),include_recent_events:boolFromSelect("contextRecentEvents"),include_learning_records:boolFromSelect("contextLearningRecords"),pinned_context:linesValue("contextPinned")};contextLoading=true;renderContext();try{const d=await fetchJson(contextUrl(),postOptions({policy,actor:"desktop_console"}));contextState=d.context;contextLoading=false;renderContext();loadModuleManagement(false)}catch(err){contextLoading=false;renderContext();alert(`上下文策略保存失败：${err.message||err}`)}}
+async function loadProjectRuntime(){projectRuntimeLoading=true;renderProjectRuntime();try{const d=await fetchJson(projectRuntimeUrl(),{cache:"no-store",headers:authHeaders()});projectRuntimeState=d.project_runtime;projectRuntimeLoading=false;renderProjectRuntime()}catch(err){projectRuntimeLoading=false;projectRuntimeState={project_count:"--",blocked_count:1,review_required_count:0,profiles:[{project_id:"project-runtime-read-failed",title:"项目运行策略读取失败",workspace_path:"--",start_command:"--",execution_policy:{allowed:false,risk_level:"blocked",blockers:[{issue_id:"project_runtime_read_failed",detail:err.message||String(err)}],warnings:[]}}],policy:{audit_log:"读取失败"}};renderProjectRuntime()}}
+async function loadProjectOverview(){projectOverviewLoading=true;renderProjectOverview();try{const d=await fetchJson(projectOverviewUrl(),{cache:"no-store",headers:authHeaders()});projectOverviewState=d.project_overview;projectOverviewLoading=false;renderProjectOverview()}catch(err){projectOverviewLoading=false;projectOverviewState={overview:{markdown:`# Project Overview\n\n读取失败：${err.message||String(err)}\n`,summary:{},path:"读取失败"},changes:[{change_id:"overview-read-failed",status:"failed",note:err.message||String(err),author:"desktop_console",created_at:now(),diff:""}],pending_count:0};renderProjectOverview()}}
+async function postProjectOverview(payload){projectOverviewLoading=true;renderProjectOverview();try{const d=await fetchJson(projectOverviewUrl(),postOptions({author:"desktop_console",reviewer:"desktop_console",...payload}));projectOverviewState=d.project_overview;projectOverviewLoading=false;renderProjectOverview();loadModuleManagement(false);return d}catch(err){projectOverviewLoading=false;renderProjectOverview();alert(`项目概览动作失败：${err.message||err}`);throw err}}
+function saveProjectOverview(){postProjectOverview({action:"save",markdown:valueOf("projectOverviewMarkdown"),propose:true,note:"Manual desktop console edit"})}
+function regenerateProjectOverview(){postProjectOverview({action:"refresh",propose:true})}
+function bindProjectOverviewClicks(){document.querySelectorAll("[data-project-change]").forEach(btn=>btn.onclick=()=>{const action=btn.dataset.projectAction,change_id=btn.dataset.projectChange;const review_note=prompt(action==="approve"?"审核通过说明（可选）":"拒绝说明（可选）","")||"";postProjectOverview({action,change_id,review_note})})}
+async function loadSearchManagement(){searchManagementLoading=true;renderSearchManagement();try{const r=await fetch(searchManagementUrl(),{cache:"no-store",headers:authHeaders()});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);searchManagement=d.search_management;searchManagementLoading=false;renderSearchManagement()}catch(err){searchManagementLoading=false;searchManagement={status:"error",web_search:{},knowledge_retrieval:{},missing_capabilities:[{priority:"high",title:"Search/RAG 读取失败",detail:err.message||String(err)}],recommendations:[],model_capability_matrix:[],catalog_roles:{}};renderSearchManagement()}}
+async function saveSearchManagement(){const payload={action:"save_runtime_config",web_search_provider:valueOf("searchWebProvider"),knowledge_backend:valueOf("searchKnowledgeBackend"),embedding_provider:valueOf("searchEmbeddingProvider"),embedding_model:valueOf("searchEmbeddingModel"),embedding_base_url:valueOf("searchEmbeddingBaseUrl"),reranker:valueOf("searchRerankerProvider"),reranker_model:valueOf("searchRerankerModel"),reranker_base_url:valueOf("searchRerankerBaseUrl")};const key=valueOf("searchEmbeddingApiKey");if(key)payload.embedding_api_key=key;searchManagementLoading=true;renderSearchManagement();try{const r=await fetch(searchManagementUrl(),{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);searchManagement=d.search_management;$("searchEmbeddingApiKey").value="";searchManagementLoading=false;renderSearchManagement();loadModuleManagement(false)}catch(err){searchManagementLoading=false;searchManagement={status:"error",web_search:{},knowledge_retrieval:{},missing_capabilities:[{priority:"high",title:"Search/RAG 保存失败",detail:err.message||String(err)}],recommendations:[],model_capability_matrix:[],catalog_roles:{}};renderSearchManagement()}}
+async function loadModels(){learningLoading=true;renderModels();const headers=authHeaders();const results=await Promise.allSettled([fetchJson(learningUrl(),{cache:"no-store",headers}),fetchJson(modelCatalogUrl(),{cache:"no-store",headers})]);const learningResult=results[0],catalogResult=results[1];if(learningResult.status==="fulfilled"){learning=learningResult.value.learning}else{const err=learningResult.reason;learning={dataset:{count:"--",path:""},model_providers:[],assist_models:[],review_committee_policy:{enabled:false,label:"读取失败"},review_committee_summary:{},error:err.message||String(err)}}if(catalogResult.status==="fulfilled"){modelCatalogState=catalogResult.value}else{const err=catalogResult.reason;modelCatalogState={error:err.message||String(err),local_model_policy:{role_assignments:[],scheduler_benchmark:{status:"read_failed",case_count:0},hardware:{}},brain_replacement:{adapter_registry:{adapters:[],adapter_count:0},replacement_gate:{auto_replace_allowed:false}}}}learningLoading=false;renderModels()}
+function schedulerBenchmarkOutputs(){return {json_validity_route_plan:{route:"tool",tool_calls:[],workflow_steps:[],confidence:0.9},tool_call_accuracy_browser:{route:"executor",tool_calls:[{name:"browser.open_url",url:"https://example.com"}]},workflow_step_completeness_publish:{route:"workflow",workflow_steps:["intake","asset_check","review_gate","upload_product"]},context_drift_followup:{route:"agent",context_retained_ids:["order-42","ecom-demo"],irrelevant_context_ids:[]}}}
+async function runSchedulerBenchmark(){learningLoading=true;renderModels();try{modelCatalogState=await fetchJson(modelCatalogUrl(),postOptions({action:"evaluate_scheduler_benchmark",outputs_by_case_id:schedulerBenchmarkOutputs(),actor:"desktop_console"}));learningLoading=false;renderModels()}catch(err){learningLoading=false;renderModels();alert(`Benchmark 失败：${err.message||err}`)}}
+async function postLearning(payload){learningLoading=true;renderModels();try{const d=await fetchJson(learningUrl(),postOptions(payload));if(d.learning)learning=d.learning;learningLoading=false;renderModels();loadModuleManagement(false);return d}catch(err){learningLoading=false;learning={dataset:{count:"--",path:""},model_providers:[],assist_models:[],review_committee_policy:{enabled:false,label:"动作失败"},review_committee_summary:{},error:err.message||String(err)};renderModels();throw err}}
+function saveAssistModel(){const model_id=valueOf("assistModelId");if(!model_id)return alert("请填写 model_id");const payload={action:"save_assist_model",model:{model_id,display_name:valueOf("assistModelLabel")||model_id,provider:valueOf("assistModelProvider")||"openai_compatible",endpoint:valueOf("assistModelBaseUrl"),model:valueOf("assistModelName"),api_key:valueOf("assistModelApiKey"),enabled:boolFromSelect("assistModelEnabled"),role:valueOf("assistModelRole")||"review",priority:50,notes:valueOf("assistModelNotes")}};activeAssistModelId=model_id;postLearning(payload).then(()=>$("assistModelApiKey").value="").catch(err=>alert(`保存辅助模型失败：${err.message||err}`))}
+function deleteAssistModel(){const model_id=valueOf("assistModelId")||activeAssistModelId;if(!model_id)return alert("请先选择辅助模型");if(!confirm(`删除辅助模型 ${model_id}？`))return;postLearning({action:"delete_assist_model",model_id}).then(()=>{activeAssistModelId="";}).catch(err=>alert(`删除辅助模型失败：${err.message||err}`))}
+async function loadAgents(){agentManagementLoading=true;renderAgents();try{const d=await fetchJson(agentManagementUrl(),{cache:"no-store",headers:authHeaders()});agentManagement=d.agent_management;agentManagementLoading=false;renderAgents()}catch(err){agentManagementLoading=false;agentManagement={distribution_summary:{status:"blocked",counts:{},gaps:[{priority:"high",title:"Agent 管理读取失败",detail:err.message||String(err)}]},agents:[],remote_targets:[]};renderAgents()}}
+async function saveAgents(){if(!agentManagement)return alert("请先刷新 Agent 快照");agentManagementLoading=true;renderAgents();try{const d=await fetchJson(agentManagementUrl(),postOptions({action:"save",state:agentManagement}));agentManagement=d.agent_management;agentManagementLoading=false;renderAgents();loadModuleManagement(false)}catch(err){agentManagementLoading=false;renderAgents();alert(`保存 Agent 配置失败：${err.message||err}`)}}
+async function loadSkills(){skillsLoading=true;renderSkillsManagement();try{const d=await fetchJson(skillsUrl(),{cache:"no-store",headers:authHeaders()});skillsManagement=d.skills;skillsLoading=false;renderSkillsManagement()}catch(err){skillsLoading=false;skillsManagement={count:"--",status_counts:{},skills:[],skill_sources:{sources:[]},candidate_reviews:[],missing_owner_count:"--",store_path:"读取失败"};renderSkillsManagement()}}
+async function postSkills(payload){skillsLoading=true;renderSkillsManagement();try{const d=await fetchJson(skillsUrl(),postOptions(payload));if(d.skills)skillsManagement=d.skills;skillsLoading=false;renderSkillsManagement();loadModuleManagement(false);return d}catch(err){skillsLoading=false;renderSkillsManagement();throw err}}
+function newSkill(){const name=`skill_${Date.now().toString(36)}`;activeSkillName=name;forceValue("skillName",name);forceValue("skillVersion","0.1.0");forceValue("skillStatus","candidate");forceValue("skillRisk","low");forceValue("skillOwner","skill_runner");forceValue("skillWorkspacePath","state/agents/skill_runner/workspace");forceValue("skillDescription","");forceValue("skillTriggers","");forceValue("skillTools","");forceValue("skillSteps","[]");forceValue("skillRunInputs","{}");forceValue("skillRunResult","新 Skill 草稿，保存后进入 registry。")}
+function skillPayload(action){return {action,name:valueOf("skillName"),description:valueOf("skillDescription"),status:valueOf("skillStatus")||"candidate",version:valueOf("skillVersion")||"0.1.0",risk_level:valueOf("skillRisk")||"low",trigger_intents:linesValue("skillTriggers"),tool_allowlist:linesValue("skillTools"),steps:valueOf("skillSteps")||"[]",success_criteria:[],rollback_strategy:"manual_review",owner_agent_id:valueOf("skillOwner")||"skill_runner",workspace_path:valueOf("skillWorkspacePath"),source_type:"human",review_gate:"core_review",allow_owner_reassign:true,reviewer:"desktop_console"}}
+function saveSkill(){const name=valueOf("skillName");if(!name)return alert("请填写 Skill 名称");activeSkillName=name;postSkills(skillPayload("save")).catch(err=>alert(`保存 Skill 失败：${err.message||err}`))}
+function deleteSkill(){const name=valueOf("skillName")||activeSkillName;if(!name)return alert("请先选择 Skill");if(!confirm(`删除 Skill ${name}？`))return;postSkills({action:"delete",name,reviewer:"desktop_console"}).then(()=>{activeSkillName=""}).catch(err=>alert(`删除 Skill 失败：${err.message||err}`))}
+function promoteSkill(){const name=valueOf("skillName")||activeSkillName;if(!name)return alert("请先选择 Skill");postSkills({action:"promote",name,reviewer:"desktop_console",core_review_approved:true,review_reason:"Manual web desktop promotion approval."}).catch(err=>alert(`Promote 失败：${err.message||err}`))}
+function runSkill(dry_run=true){const name=valueOf("skillName")||activeSkillName;if(!name)return alert("请先选择 Skill");let inputs={};try{inputs=jsonValue("skillRunInputs",{})}catch{return}postSkills({action:dry_run?"dry_run":"run",name,inputs,reviewer:"desktop_console",dry_run}).then(d=>forceValue("skillRunResult",JSON.stringify(d.skill_run||d,null,2))).catch(err=>{forceValue("skillRunResult",err.message||String(err));alert(`Skill 运行失败：${err.message||err}`)})}
+async function loadKnowledge(){knowledgeLoading=true;renderKnowledgeBase();try{const d=await fetchJson(knowledgeBaseUrl(),{cache:"no-store",headers:authHeaders()});knowledgeBase=d.knowledge_base;knowledgeLoading=false;renderKnowledgeBase()}catch(err){knowledgeLoading=false;knowledgeBase={count:"--",knowledge_bases:[],external_sources:[],job_history:{jobs:[{status:"failed",job_type:"snapshot",summary:err.message||String(err)}]}};renderKnowledgeBase()}}
+async function postKnowledge(payload){knowledgeLoading=true;renderKnowledgeBase();try{const d=await fetchJson(knowledgeBaseUrl(),postOptions(payload));if(d.knowledge_base)knowledgeBase=d.knowledge_base;knowledgeLoading=false;renderKnowledgeBase();loadModuleManagement(false);return d}catch(err){knowledgeLoading=false;renderKnowledgeBase();alert(`知识库动作失败：${err.message||err}`);throw err}}
+function saveKnowledgeSource(){const source_id=valueOf("knowledgeSourceId"),path=valueOf("knowledgeSourcePath"),knowledge_base_id=valueOf("knowledgeSourceKb");if(!source_id||!path||!knowledge_base_id)return alert("source_id、路径、knowledge_base_id 必填");activeKnowledgeSourceId=source_id;postKnowledge({action:"register_source",source_id,label:valueOf("knowledgeSourceLabel")||source_id,kind:valueOf("knowledgeSourceKind")||"folder",path,knowledge_base_id,enabled:boolFromSelect("knowledgeSourceEnabled"),notes:valueOf("knowledgeSourceNotes")})}
+async function loadMcp(){mcpLoading=true;renderMcpManagement();try{const d=await fetchJson(mcpManagementUrl(),{cache:"no-store",headers:authHeaders()});mcpManagement=d.mcp_management;mcpLoading=false;renderMcpManagement()}catch(err){mcpLoading=false;mcpManagement={server_count:"--",enabled_count:0,ready_count:0,attention_count:1,servers:[],tool_mappings:[],audit_log:[{action:"snapshot_failed",message:err.message||String(err)}],policy:{}};renderMcpManagement()}}
+async function postMcp(payload){mcpLoading=true;renderMcpManagement();try{const d=await fetchJson(mcpManagementUrl(),postOptions(payload));if(d.mcp_management)mcpManagement=d.mcp_management;mcpLoading=false;renderMcpManagement();loadModuleManagement(false);return d}catch(err){mcpLoading=false;renderMcpManagement();alert(`MCP 动作失败：${err.message||err}`);throw err}}
+function newMcp(){const id=`mcp-${Date.now().toString(36)}`;activeMcpServerId=id;["mcpCommand","mcpUrl","mcpArgs","mcpOwners","mcpFilesystemScopes","mcpNetworkScopes","mcpNotes"].forEach(key=>forceValue(key,""));forceValue("mcpServerId",id);forceValue("mcpServerLabel",id);forceValue("mcpTransport","stdio");forceValue("mcpEnabled","false");forceValue("mcpReviewState","candidate");forceValue("mcpTrustLevel","untrusted");forceValue("mcpTools","[]")}
+function mcpPayload(action){const server_id=valueOf("mcpServerId");if(!server_id)throw new Error("server_id 必填");return {action,server_id,label:valueOf("mcpServerLabel")||server_id,transport:valueOf("mcpTransport")||"stdio",command:valueOf("mcpCommand"),url:valueOf("mcpUrl"),args:linesValue("mcpArgs"),enabled:boolFromSelect("mcpEnabled"),review_state:valueOf("mcpReviewState")||"candidate",trust_level:valueOf("mcpTrustLevel")||"untrusted",workspace_scope:"project",owner_agent_ids:linesValue("mcpOwners"),filesystem_scopes:linesValue("mcpFilesystemScopes"),network_scopes:linesValue("mcpNetworkScopes"),tools:jsonValue("mcpTools",[]),notes:valueOf("mcpNotes"),reviewer:"desktop_console"}}
+function saveMcp(){try{const payload=mcpPayload("save_server");activeMcpServerId=payload.server_id;postMcp(payload)}catch(err){alert(`MCP Server 无法保存：${err.message||err}`)}}
+function mcpAction(action){const server_id=valueOf("mcpServerId")||activeMcpServerId;if(!server_id)return alert("请先选择 MCP Server");const payload={action,server_id,reviewer:"desktop_console"};if(action==="approve_server")payload.decision="approved";postMcp(payload)}
+function deleteMcp(){const server_id=valueOf("mcpServerId")||activeMcpServerId;if(!server_id)return alert("请先选择 MCP Server");if(!confirm(`删除 MCP Server ${server_id}？`))return;postMcp({action:"delete_server",server_id,reviewer:"desktop_console"}).then(()=>{activeMcpServerId=""})}
+async function loadMobile(){mobileLoading=true;renderMobileManagement();try{const d=await fetchJson(mobileManagementUrl(),{cache:"no-store",headers:authHeaders()});mobileManagement=d.mobile_management;mobileLoading=false;renderMobileManagement()}catch(err){mobileLoading=false;mobileManagement={android:{endpoint:{health:{ok:false,status:0}}},ios:{endpoint:{health:{ok:false,status:0}},shortcuts:[]}};renderMobileManagement();const box=$("mobileActionBox");if(box)box.textContent=`移动端快照读取失败：${err.message||err}`}}
+async function postMobile(payload){mobileLoading=true;renderMobileManagement();try{const d=await fetchJson(mobileManagementUrl(),postOptions(payload));if(d.mobile_management)mobileManagement=d.mobile_management;mobileLoading=false;renderMobileManagement();const box=$("mobileActionBox");if(box)box.textContent=`${uiStatusLabel(d.result?.status||"ok")} · ${d.result?.message||payload.action}`;loadModuleManagement(false);loadServices();return d}catch(err){mobileLoading=false;renderMobileManagement();alert(`移动端动作失败：${err.message||err}`);throw err}}
+async function approveAndroidApk(){const reason=prompt("APK 发布审批原因","Desktop smoke passed; allow Android controlled update.");if(reason===null)return;await postMobile({action:"approve_android_apk_release",reviewer:"desktop_console",reason})}
+async function startAndroidLifecycleWorkflow(){activeWorkflowName="android.command_lifecycle_acceptance.v1";const inputs={project_root:workflows?.project_root||"",device_id:valueOf("mobileCommandDeviceId")||"android_device",artifact_id:"manual_acceptance_artifact",artifact_label:"android_acceptance",caption:"desktop acceptance",product_data_path:"state/ecommerce_tasks/productData.json",draft_only:true,confirmed_high_risk:false};await loadWorkflows("save_builtin_definition",{workflow_name:activeWorkflowName});await loadWorkflows("start_run",{workflow_name:activeWorkflowName,project_root:inputs.project_root,inputs})}
+function renderStateMaintenance(state){
+ const box=$("stateMaintenanceBox");if(!box)return;
+ if(!state){box.innerHTML='<div class="empty">暂无状态维护快照</div>';return}
+ const summary=state.summary||{},components=state.components||[];
+ box.innerHTML=[`组件 ${escapeHtml(summary.component_count||components.length)} · 条目 ${escapeHtml(summary.total_count||0)} · 关注 ${escapeHtml(summary.attention_count||0)} · ${escapeHtml(summary.total_size_bytes||0)} bytes`,...components.map(c=>`<div class="proposal"><div class="title">${escapeHtml(c.label||c.component_id)} · ${c.needs_attention?"需关注":"正常"} · ${escapeHtml(c.count||0)} 项</div><div class="muted">${escapeHtml(c.schema_version||"--")} · ${escapeHtml(uiPathShort(c.path||"--",110))}</div></div>`)].join("<br>");
+}
+async function loadStateMaintenance(){try{const d=await fetchJson(stateMaintenanceUrl(),{cache:"no-store",headers:authHeaders()});renderStateMaintenance(d.state_maintenance);return d}catch(err){renderStateMaintenance({summary:{component_count:"--",total_count:"--",attention_count:1},components:[{label:"状态维护读取失败",component_id:"state_maintenance",needs_attention:true,count:0,path:err.message||String(err)}]})}}
+async function postStateMaintenance(payload){try{const d=await fetchJson(stateMaintenanceUrl(),postOptions({actor:"desktop_console",...payload}));renderStateMaintenance(d.state_maintenance);const box=$("mobileActionBox");if(box)box.textContent=`${uiStatusLabel(d.result?.status||"ok")} · ${d.result?.message||payload.action}`;return d}catch(err){alert(`状态维护动作失败：${err.message||err}`);throw err}}
+function mobileAdbPayload(action){return {action,device_ip:valueOf("mobileAdbDeviceIp"),known_port:valueOf("mobileAdbKnownPort"),build:true}}
+function mobilePairingPayload(){return {action:"create_android_pairing",workspace_id:valueOf("mobileWorkspaceId")||mobileManagement?.default_workspace_id||"local-ecommerce",ttl_minutes:30}}
+function mobileCommandPayload(){
+ const operation=valueOf("mobileCommandOperation")||"app.launch",value=valueOf("mobileCommandValue"),params={actor:"desktop_console"};
+ if(operation==="app.launch"||operation==="app.close")params.app_name=value;else if(operation==="url.open")params.url=value;else if(operation==="android.screenshot.capture"||operation==="screenshot.capture"||operation==="android.screenshot.request_permission"||operation==="android.ui_snapshot")params.purpose=value||"desktop_console_screenshot";else if(operation==="pdd.share_image")params.artifact_id=value;else if(operation==="pdd.create_listing"){params.artifact_id=value;params.draft_only=true}else if(operation==="device.status"||operation==="list_installed_apps")params.query=value||operation;else if(operation==="accessibility.tap")params.target=value;else params.text=value;
+ return {action:"enqueue_android_command",device_id:valueOf("mobileCommandDeviceId")||"android_device",operation,params};
+}
+async function loadSafety(){safetyLoading=true;renderSafety();try{const d=await fetchJson(safetyUrl(),{cache:"no-store",headers:authHeaders()});safetyState=d.safety;safetyLoading=false;renderSafety()}catch(err){safetyLoading=false;safetyState={active:false,mode:"unknown",reason:err.message||String(err),history:[],revision:"--"};renderSafety()}}
+async function postSafety(payload){safetyLoading=true;renderSafety();try{const d=await fetchJson(safetyUrl(),postOptions(payload));safetyState=d.safety;safetyLoading=false;renderSafety();loadModuleManagement(false);return d}catch(err){safetyLoading=false;renderSafety();alert(`安全动作失败：${err.message||err}`);throw err}}
+function softStop(){postSafety({action:"panic_stop",mode:"soft_stop",reason:valueOf("safetyReason")||"Web console soft stop",actor:"web_desktop"})}
+function hardStop(){postSafety({action:"hard_stop",reason:valueOf("safetyReason")||"Web console hard stop",actor:"web_desktop"})}
+function resumeSafety(){let confirmation=valueOf("safetyConfirmation");if(safetyState?.mode==="hard_stop"&&!confirmation){confirmation=prompt("硬停止恢复需要输入 RESUME_HARD_STOP","")||""}postSafety({action:"resume",reason:valueOf("safetyReason")||"Web console resume",actor:"web_desktop",confirmation_text:confirmation})}
+function loadManagementSnapshots(){loadModuleManagement();loadServices();loadServicePorts();loadDiagnostics();loadLogs();loadContext();loadProjectRuntime();loadProjectOverview();loadSearchManagement();loadWorkflows();loadModels();loadAgents();loadSkills();loadKnowledge();loadMcp();loadMobile();loadStateMaintenance();loadSafety();loadEvolution();loadGovernance()}
+async function loadWorkflows(action="snapshot",payload={}){workflowsLoading=true;renderWorkflows();try{const body={workflow_name:payload.workflow_name||activeWorkflowName,action,project_root:workflows?.project_root||"",...payload};const options={method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)};const r=await fetch(workflowsUrl(),options);const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||d.detail||`HTTP ${r.status}`);workflows=d.workflows;workflowsLoading=false;activeWorkflowName=workflows.selected_workflow_name||body.workflow_name||activeWorkflowName;const run=d.action_result?.data?.run;if(run?.run_id){activeWorkflowName=run.workflow_name||activeWorkflowName;activeWorkflowRunId=run.run_id}renderWorkflows();loadModuleManagement(false)}catch(err){workflowsLoading=false;workflows={overview:{definition_count:"--",run_count:"--",active_run_count:"--",status_counts:{blocked:1}},definitions:[],builtin_definitions:[],runs:[],default_definition:{nodes:[]},error:err.message||String(err)};renderWorkflows()}}
+function workflowInputs(){rememberWorkflowParamValues();const def=workflowDefinitionByName(activeWorkflowName);const project_root=workflows?.project_root||"";const inputs={project_root};Object.entries(workflowParamValues[activeWorkflowName]||{}).forEach(([key,value])=>{inputs[key]=value});(def?.metadata?.parameters||[]).forEach(p=>{if(inputs[p.name]===undefined&&p.default!==undefined)inputs[p.name]=p.default;if(p.type==="number"&&inputs[p.name]!==undefined&&inputs[p.name]!=="")inputs[p.name]=Number(inputs[p.name])});return {workflow_name:activeWorkflowName,project_root,inputs}}
+function activeRunId(){const selected=(workflows?.runs||[]).filter(r=>r.workflow_name===activeWorkflowName);return activeWorkflowRunId||selected[0]?.run_id||""}
+async function workflowAction(action,extra={}){const run_id=activeRunId();const payload={workflow_name:activeWorkflowName,project_root:workflows?.project_root||"",...extra};if(run_id)payload.run_id=run_id;return loadWorkflows(action,payload)}
+async function loadEvolution(action="snapshot"){evolutionLoading=true;renderEvolution();try{const options=action==="snapshot"?{cache:"no-store",headers:authHeaders()}:{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify({action})};const r=await fetch(evolutionUrl(),options);const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);evolution=d.evolution;evolutionLoading=false;renderEvolution();if(action==="enforce_skill_ownership")loadModuleManagement(false)}catch(err){evolutionLoading=false;evolution={status:"blocked",action_items:[{priority:"high",title:"进化快照读取失败",detail:err.message||String(err),category:"evolution"}],loop_steps:[],agent_skill_distribution:{agents:[],missing_owner_count:"--"},training:{}};renderEvolution()}}
+async function buildEvolutionPackage(){return postEvolution({action:"build_cloud_training_package",core_review_approved:true,reviewer:"desktop_console",review_reason:"Manual web desktop approval for training package generation."})}
+function textLines(value){return String(value||"").replaceAll("；","\n").replaceAll(";","\n").split(/\r?\n/).map(v=>v.trim().replace(/^[-*\s]+/,"")).filter(Boolean).slice(0,40)}
+async function postEvolution(payload){evolutionLoading=true;renderEvolution();try{const r=await fetch(evolutionUrl(),{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);evolution=d.evolution;evolutionLoading=false;renderEvolution();loadModuleManagement(false)}catch(err){evolutionLoading=false;evolution={status:"blocked",action_items:[{priority:"high",title:"进化动作失败",detail:err.message||String(err),category:"evolution"}],loop_steps:[],agent_skill_distribution:{agents:[],missing_owner_count:"--"},training:{}};renderEvolution()}}
+function ingestPaper(){const title=$("paperTitle").value.trim(),summary=$("paperSummary").value.trim();if(!title||!summary)return alert("论文标题和方法摘要不能为空");postEvolution({action:"ingest_paper",title,source:$("paperSource").value.trim(),owner_agent_id:$("paperOwner").value.trim()||"programming",summary})}
+function ingestVideo(){const title=$("videoTitle").value.trim(),actions=textLines($("videoActions").value),frames=($("videoFrames").value||"").split(",").map(x=>x.trim()).filter(Boolean);if(!title||(!actions.length&&!frames.length))return alert("视频标题，以及截图/帧或操作序列不能为空");postEvolution({action:"ingest_video",title,source:$("videoSource").value.trim(),owner_agent_id:$("videoOwner").value.trim()||"video_animation",summary:actions.length?`从视频操作序列提取 ${actions.length} 个动作。`:"",operation_sequence:actions,frames})}
+async function loadGovernance(scan=false){governanceLoading=true;renderGovernance();try{const options=scan?{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify({action:"scan"})}:{cache:"no-store",headers:authHeaders()};const r=await fetch(ecosystemReviewUrl(),options);const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);ecosystemReview=d.ecosystem_review;governanceLoading=false;renderGovernance()}catch(err){governanceLoading=false;ecosystemReview={score:{total:"--",status:"error",dimensions:[]},systems:{module_governance:{portfolio:{top_risks:[]}}},proposals:[{title:`治理读取失败：${err.message||err}`,category:"ecosystem_review",risk_level:"medium",status:"pending"}],pending_count:1,approved_count:0};renderGovernance()}}
+async function saveState(){pendingSave=false;try{const payload={client_id:"desktop_console",state:{...state,updated_at:now()}};const r=await fetch(desktopStateUrl(),{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||`HTTP ${r.status}`);mergeRemote(d.state);$("syncDot").classList.add("on")}catch(err){$("connStatus").textContent=`保存失败：${err.message||err}`;$("syncDot").classList.remove("on")}}
+function saveStateDebounced(){if(pendingSave)return;pendingSave=true;setTimeout(saveState,350)}
+async function sendCommand(text){const value=(text||$("prompt").value).trim();if(!value)return;addMessage("user",value);$("prompt").value="";render();saveStateDebounced();setStatus("发送中...");try{const r=await window.SPIRITKIN_BRIDGE.postCommand(commandUrl(),{text:value,channel:"desktop",metadata:{frontend:"desktop_console",session_id:state.active_session_id}},{token:authToken()});const d=r.data;if(Array.isArray(d.events))d.events.forEach(applyEvent);else if(d.reply)addMessage("assistant",d.reply.text||d.reply.spoken_text||"");if(!r.ok){setStatus(`命令未完成：${d.error||`HTTP ${r.status}`}`,"bad");if(!d.events&&!d.reply)addMessage("system",`发送失败：${d.error||`HTTP ${r.status}`}`);saveStateDebounced();return}setStatus("");saveStateDebounced()}catch(err){addMessage("system",`发送失败：${err.message||err}`);setStatus("发送失败","bad");render();saveStateDebounced()}}
+function applyEvent(ev){if(!ev||!ev.type)return;if(ev.type==="runtime.snapshot"){(ev.payload?.events||[]).forEach(applyEvent);return}if(ev.type==="desktop.state_updated"){loadState();return}const p=ev.payload||ev;state.events.push({type:ev.type,time:new Date().toLocaleTimeString(),payload:p});state.events=state.events.slice(-120);if(ev.type==="assistant.message"){const text=p.text||p.spoken_text||"";if(text)addMessage("assistant",text,{agent_name:p.agent_name,response_kind:p.response_kind});const s=p.data?.scheduler||{};state.lastRoute={agent_name:p.agent_name,route:s.route,domain:s.domain,reason:s.reason};state.pending=p.requires_confirmation?{target:p.data?.pending_target,operation:p.data?.pending_operation,risk_level:p.data?.risk_level}:state.pending}if(ev.type==="assistant.confirmation_requested"){state.pending={target:p.pending_target,operation:p.pending_operation,risk_level:p.risk_level,text:p.text||p.spoken_text}}if(ev.type==="assistant.execution_updated"){state.lastExecution=p;state.pending=null}if(ev.type==="assistant.task_updated"){upsert(state.tasks,{...p,id:p.task_id||p.id||id("task"),title:p.request||p.title||"Runtime 任务",updated_at:now()})}if(ev.type==="assistant.project_updated"){upsert(state.projects,{...p,id:p.project_id||p.id||id("project"),title:p.project_type||p.title||"Runtime 项目",updated_at:now()})}render();saveStateDebounced()}
+function upsert(list,item){const idx=list.findIndex(x=>x.id===item.id);if(idx>=0)list[idx]={...list[idx],...item};else list.push(item)}
+const bridgeConn=window.SPIRITKIN_BRIDGE.createRealtimeConnection({getUrl:wsUrl,getToken:authToken,onEvent:applyEvent,onStatus:status=>{const pill=$("wsStatus");if(status==="connecting"){pill.textContent="ws: connecting"}else if(status==="connected"){pill.textContent="ws: connected";pill.className="pill ok"}else if(status==="error"){pill.textContent="ws: error";pill.className="pill bad"}else if(status==="reconnecting"){pill.textContent="ws: reconnecting";pill.className="pill warnText"}}});
+function connectWs(){bridgeConn.connect()}
+function avatarUrl(){const ws=encodeURIComponent(wsUrl());const cmd=encodeURIComponent(commandUrl());const token=authToken()?`&token=${encodeURIComponent(authToken())}`:"";return `avatar_3d.html?config=models/spirit3d/manifest.json&v=runtime-stage-3&embed=1&ws=${ws}&cmd=${cmd}${token}`}
+function loadAvatar(){$("avatarFrame").src=avatarUrl()}
+function handleAvatarHostMessage(event){const data=event?.data||{};if(data.type!=="spiritkin.open_suggestion")return;setWorkspacePage("chat");$("prompt").value=String(data.prompt||"").slice(0,500);$("prompt").focus();setStatus("已打开建议对应的对话，确认内容后再发送。")}
+window.addEventListener("message",handleAvatarHostMessage);
+function newSession(){const t=now();const title=`会话 ${new Date().toLocaleTimeString()}`;state.sessions.push({id:id("session"),title,status:"active",created_at:t,updated_at:t,messages:[]});state.active_session_id=state.sessions[state.sessions.length-1].id;saveStateDebounced();render()}
+function addProject(){const title=$("projectTitle").value.trim();if(!title)return;const t=now();state.projects.push({id:id("project"),title,status:"active",created_at:t,updated_at:t});$("projectTitle").value="";saveStateDebounced();render()}
+function addTask(){const title=$("taskTitle").value.trim();if(!title)return;const t=now();state.tasks.push({id:id("task"),title,status:"pending",created_at:t,updated_at:t,source:"desktop_console"});$("taskTitle").value="";saveStateDebounced();render()}
+function setWorkspacePage(page){
+ document.querySelector(".app")?.classList.toggle("management-mode",page==="management");
+ document.querySelectorAll("[data-workspace-page]").forEach(btn=>{const on=btn.dataset.workspacePage===page;btn.classList.toggle("active",on);if(btn.getAttribute("role")==="tab")btn.setAttribute("aria-selected",on?"true":"false")});
+}
+function openManagementTab(tab){
+ document.querySelectorAll(".management-nav [data-tab]").forEach(btn=>{const on=btn.dataset.tab===tab;btn.classList.toggle("active",on);btn.setAttribute("aria-selected",on?"true":"false")});
+ document.querySelectorAll(".management-content .panel").forEach(p=>p.classList.remove("active"));
+ $(`tab${tab[0].toUpperCase()}${tab.slice(1)}`)?.classList.add("active");
+ setWorkspacePage("management");
+}
+document.querySelectorAll("[data-workspace-page]").forEach(btn=>btn.onclick=()=>setWorkspacePage(btn.dataset.workspacePage));
+document.querySelectorAll(".management-nav [data-tab]").forEach(btn=>btn.onclick=()=>openManagementTab(btn.dataset.tab));
+document.querySelectorAll("[data-tab-open]").forEach(btn=>btn.onclick=()=>openManagementTab(btn.dataset.tabOpen));
+$("apiUrl").value=initialApiBase();
+$("wsUrl").value=initialWsUrl();
+$("authToken").value=queryParams.get("token")||localStorage.getItem("spiritkin_console_token")||"";
+$("reloadBtn").onclick=()=>{persistConnectionSettings();loadState();loadManagementSnapshots();connectWs();loadAvatar()};
+$("newSessionBtn").onclick=newSession;$("addProjectBtn").onclick=addProject;$("addTaskBtn").onclick=addTask;
+$("sendBtn").onclick=()=>sendCommand();$("confirmBtn").onclick=()=>sendCommand("确认执行");$("cancelBtn").onclick=()=>sendCommand("取消执行");
+$("saveNoteBtn").onclick=()=>{const text=$("prompt").value.trim();if(text){addMessage("system",text);$("prompt").value="";saveStateDebounced();render()}};
+$("quickSelect").onchange=e=>{if(e.target.value){$("prompt").value=e.target.value;e.target.value=""}};
+$("prompt").onkeydown=e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))sendCommand()};
+$("reloadAvatarBtn").onclick=loadAvatar;[$("openAvatarBtn"),$("openAvatarPanelBtn")].filter(Boolean).forEach(btn=>btn.onclick=()=>window.open(avatarUrl(),"spiritkin_avatar","width=480,height=720"));
+$("compactAvatarBtn").onclick=()=>document.body.classList.toggle("avatar-hidden");
+$("refreshModulesBtn").onclick=()=>loadModuleManagement(false);$("scanModulesBtn").onclick=()=>loadModuleManagement(true);
+$("refreshServicesBtn").onclick=loadServices;$("restartCoreServicesBtn").onclick=restartCoreServices;
+$("refreshPortsBtn").onclick=loadServicePorts;$("repairPortsBtn").onclick=()=>postServicePort({action:"repair_duplicates"});$("resetPortsBtn").onclick=()=>{if(confirm("清除所有端口覆盖？需要按提示重启受影响服务。"))postServicePort({action:"reset_all"})};
+$("refreshDiagnosticsBtn").onclick=loadDiagnostics;$("repairDiagnosticsBtn").onclick=()=>postDiagnostics({action:"repair_all"});
+$("refreshLogsBtn").onclick=()=>loadLogs(activeLogId);
+$("refreshContextBtn").onclick=loadContext;$("saveContextBtn").onclick=saveContext;
+$("refreshProjectOverviewBtn").onclick=()=>{loadProjectRuntime();loadProjectOverview()};$("regenerateProjectOverviewBtn").onclick=regenerateProjectOverview;$("saveProjectOverviewBtn").onclick=saveProjectOverview;
+$("refreshSearchBtn").onclick=loadSearchManagement;$("saveSearchBtn").onclick=saveSearchManagement;
+$("refreshWorkflowsBtn").onclick=()=>loadWorkflows();$("saveWorkflowDefinitionBtn").onclick=()=>loadWorkflows("save_builtin_definition",{workflow_name:activeWorkflowName});$("startWorkflowBtn").onclick=()=>loadWorkflows("start_run",workflowInputs());$("workflowRunNextDryBtn").onclick=()=>workflowAction("run_next",{dry_run:true});$("workflowRunNextBtn").onclick=()=>workflowAction("run_next",{dry_run:false});$("archiveWorkflowRunBtn").onclick=()=>workflowAction("archive_run",{actor:"desktop_console"});$("cleanupWorkflowRunsBtn").onclick=()=>loadWorkflows("cleanup_runs",{workflow_name:activeWorkflowName,keep_recent:30,include_archived:true,actor:"desktop_console"});
+$("refreshModelsBtn").onclick=loadModels;$("runSchedulerBenchmarkBtn").onclick=runSchedulerBenchmark;$("saveAssistModelBtn").onclick=saveAssistModel;$("deleteAssistModelBtn").onclick=deleteAssistModel;
+$("refreshAgentsBtn").onclick=loadAgents;$("saveAgentsBtn").onclick=saveAgents;
+$("refreshSkillsBtn").onclick=loadSkills;$("newSkillBtn").onclick=newSkill;$("saveSkillBtn").onclick=saveSkill;$("dryRunSkillBtn").onclick=()=>runSkill(true);$("promoteSkillBtn").onclick=promoteSkill;$("deleteSkillBtn").onclick=deleteSkill;
+$("refreshKnowledgeBtn").onclick=loadKnowledge;$("indexAllKnowledgeBtn").onclick=()=>postKnowledge({action:"index_all"});$("indexUnindexedKnowledgeBtn").onclick=()=>postKnowledge({action:"index_unindexed"});$("saveKnowledgeSourceBtn").onclick=saveKnowledgeSource;
+$("refreshMcpBtn").onclick=loadMcp;$("newMcpBtn").onclick=newMcp;$("saveMcpBtn").onclick=saveMcp;$("approveMcpBtn").onclick=()=>mcpAction("approve_server");$("enableMcpBtn").onclick=()=>mcpAction("enable_server");$("disableMcpBtn").onclick=()=>mcpAction("disable_server");$("deleteMcpBtn").onclick=deleteMcp;
+$("refreshMobileBtn").onclick=loadMobile;$("startAndroidEndpointBtn").onclick=()=>postMobile({action:"start_android_endpoint"});$("restartAndroidEndpointBtn").onclick=()=>postMobile({action:"restart_android_endpoint"});$("approveAndroidApkBtn").onclick=approveAndroidApk;$("startAndroidLifecycleWorkflowBtn").onclick=startAndroidLifecycleWorkflow;$("reconnectAndroidAdbBtn").onclick=()=>postMobile(mobileAdbPayload("adb_reconnect"));$("installAndroidBridgeBtn").onclick=()=>postMobile(mobileAdbPayload("install_android_bridge"));$("startIosEndpointBtn").onclick=()=>postMobile({action:"start_ios_endpoint"});$("restartIosEndpointBtn").onclick=()=>postMobile({action:"restart_ios_endpoint"});
+$("createAndroidPairingBtn").onclick=()=>postMobile(mobilePairingPayload());
+$("refreshStateMaintenanceBtn").onclick=loadStateMaintenance;$("cleanupStateMaintenanceBtn").onclick=()=>postStateMaintenance({action:"cleanup_all",keep_recent:30,keep_android_commands:300,keep_android_history:120,keep_kb_jobs:80,keep_skill_run_audit_events:500,keep_project_runtime_events:500});
+$("queueAndroidCommandBtn").onclick=()=>postMobile(mobileCommandPayload());$("clearAndroidCommandsBtn").onclick=()=>postMobile({action:"clear_android_commands",device_id:valueOf("mobileCommandDeviceId")});
+$("refreshSafetyBtn").onclick=loadSafety;$("softStopBtn").onclick=softStop;$("hardStopBtn").onclick=hardStop;$("resumeSafetyBtn").onclick=resumeSafety;
+$("refreshEvolutionBtn").onclick=()=>loadEvolution("snapshot");$("exportEvolutionDatasetBtn").onclick=()=>loadEvolution("export_self_training_dataset");$("buildEvolutionPackageBtn").onclick=buildEvolutionPackage;$("enforceSkillOwnershipBtn").onclick=()=>loadEvolution("enforce_skill_ownership");$("seedDomainSkillsBtn").onclick=()=>loadEvolution("seed_domain_skill_templates");$("ingestPaperBtn").onclick=ingestPaper;$("ingestVideoBtn").onclick=ingestVideo;
+$("refreshGovernanceBtn").onclick=()=>loadGovernance(false);$("scanGovernanceBtn").onclick=()=>loadGovernance(true);
+loadState();loadManagementSnapshots();connectWs();loadAvatar();syncTimer=setInterval(loadState,15000);render();
+</script>
+</body>
+</html>

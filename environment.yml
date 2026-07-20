@@ -1,0 +1,35 @@
+# environment.yml
+name: spirit_kin_env   # ← 必须和你本地 conda env name 一致！
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch>=2.1.0
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.8  # 根据你的驱动调整（11.8 / 12.1）
+  - cudatoolkit=11.8
+  - numpy
+  - opencv
+  - pip
+  - pip:
+    - speechrecognition==3.10.0
+    - pyaudio==0.2.13
+    - faster-whisper==1.0.2
+    - transformers>=4.37.0
+    - accelerate>=0.25.0
+    - einops>=0.7.0
+    - sentencepiece>=0.1.99
+    - tiktoken>=0.5.1
+    - qwen-vl-utils[decord]>=0.0.8
+    - lmdeploy>=0.4.0
+    - pyttsx3==2.90
+    - websockets>=12.0      # Live2D 通信必需
+    - gradio>=4.0.0
+    - APScheduler>=3.10,<4
+    - SQLAlchemy>=2.0,<3
+    - playwright>=1.40,<2
+    - pillow>=9.5.0
+    - pytesseract>=0.3.10

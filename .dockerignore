@@ -1,0 +1,69 @@
+# 忽略所有前端文件（后端镜像不需要）
+frontend/
+
+# 忽略 Git 和 IDE 文件
+.git
+.gitignore
+.vscode/
+.idea/
+.agents/
+.claude/
+.od-skills/
+.ci_venv/
+.venv/
+.pytest_cache/
+
+# 忽略 Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 忽略测试和文档
+tests/
+backend/tests/
+backend/models/
+examples/
+
+# 忽略 Conda 环境
+conda-meta/
+envs/
+
+# 忽略日志和临时文件
+*.log
+tmp/
+temp/
+archive/
+runtime/
+dist/
+build/
+design/
+browser-extension/
+*.tar.gz
+*.png
+
+# 忽略本地配置
+config/local.yaml
+.env
+.env.cloud
+
+# 忽略运行态和客户端内容。Runtime Host 专用镜像需要 backend/config，
+# 因此不再从构建上下文中排除服务端源码。
+state/
+backend/state/
+desktop/
+ios/
+output/
+tools/
+
+# 保留 mobile-link-bridge/out/mobile-link-bridge.apk 及发布清单供云控下载；
+# 只忽略 Android 编译中间产物。
+mobile-link-bridge/out/gen/
+mobile-link-bridge/out/classes.dex
+mobile-link-bridge/out/*.class
+mobile-link-bridge/out/mobile-link-bridge-unsigned.apk
+mobile-link-bridge/out/mobile-link-bridge-aligned.apk
+mobile-link-bridge/out/*.idsig
+
+# 忽略模型（若需在构建时下载，可保留；否则挂载）
+# *.moc3
+# textures/

@@ -1,0 +1,180 @@
+/* 生成自/对齐 design/tokens.json v4 · Web 端日/夜双主题单一源。
+   变量名 --fx-* 与 tokens.json 一一对应；:root 为日主题，[data-theme="dark"] 为夜主题，
+   prefers-color-scheme:dark 下未显式指定 data-theme 的页面自动跟随系统夜主题。
+   铁律：只提供颜色 token，不含任何布局；各页颜色一律走 var(--fx-*)，禁裸 hex。 */
+
+/* v4 字体打包：Orbitron 仅用于纯拉丁品牌位，JetBrains Mono 用于代码/终端/数据。
+   所有 Web 字体均为本地 WOFF2；中文正文继续走系统 CJK 字体，不打包 CJK 字体。 */
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../fonts/orbitron-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../fonts/jetbrains-mono.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/inter-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --font-ui: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-brand-latin: Orbitron, Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  /* Generated from design/tokens.json v4 (light). Legacy names remain aliases. */
+  --fx-primary: #126db6;
+  --fx-primary-strong: #126db6;
+  --fx-accent-gold: #b44a00;
+  --fx-copper: #b44a00;
+  --fx-canvas: #eef5fa;
+  --fx-surface: #f5fbff;
+  --fx-surface-2: #e9f2f7;
+  --fx-surface-3: #deeaf1;
+  --fx-text: #273a4c;
+  --fx-text-muted: #4d667b;
+  --fx-text-faint: #5f7689;
+  --fx-line: #c4d4df;
+  --fx-line-strong: #70869a;
+  --fx-success: #187a43;
+  --fx-success-bg: #e7f5ec;
+  --fx-warning: #875900;
+  --fx-warning-bg: #fff3d6;
+  --fx-danger: #b52a2e;
+  --fx-danger-bg: #fcebec;
+  --fx-info: #126db6;
+  --fx-info-bg: #e8f2fb;
+  --fx-hover: var(--fx-surface-3);
+  --fx-selected: var(--fx-surface-3);
+  --fx-gold-wash: var(--fx-warning-bg);
+  --fx-ok-wash: var(--fx-success-bg);
+  --fx-slate: var(--fx-text-faint);
+  --fx-text-2: var(--fx-text-muted);
+  --fx-focus: #126db6;
+  --fx-ink: #080d14;
+  --fx-ink-2: #070d15;
+  --fx-ink-3: #0b1120;
+  --fx-ink-text: #dbeafe;
+  --fx-glow: transparent;
+  --fx-on-primary: #ffffff;
+  --fx-shadow-1: 0 1px 0 rgba(39, 58, 76, .06);
+  --fx-shadow-2: 0 2px 8px rgba(39, 58, 76, .09);
+  --fx-shadow-card: 0 8px 22px rgba(39, 58, 76, .10);
+  --fx-primary-gradient: linear-gradient(135deg, #126db6 0%, #0e6f9f 100%);
+  --fx-primary-gradient-hover: linear-gradient(135deg, #287dc0 0%, #126db6 100%);
+  --fx-primary-glow: 0 0 0 1px rgba(18, 109, 182, .28);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+[data-theme="dark"] {
+  --fx-primary: #e28e3a;
+  --fx-primary-strong: #e28e3a;
+  --fx-accent-gold: #e99541;
+  --fx-copper: #e99541;
+  --fx-canvas: #15110c;
+  --fx-surface: #1f1914;
+  --fx-surface-2: #2a221c;
+  --fx-surface-3: #372e27;
+  --fx-text: #f0eae4;
+  --fx-text-muted: #aca39b;
+  --fx-text-faint: #8b837b;
+  --fx-line: #4e463f;
+  --fx-line-strong: #73665d;
+  --fx-success: #5bcc80;
+  --fx-success-bg: #173523;
+  --fx-warning: #efbc4b;
+  --fx-warning-bg: #3a2b10;
+  --fx-danger: #ff6b68;
+  --fx-danger-bg: #3b1d1c;
+  --fx-info: #75afff;
+  --fx-info-bg: #172a43;
+  --fx-hover: var(--fx-surface-3);
+  --fx-selected: var(--fx-surface-3);
+  --fx-gold-wash: var(--fx-warning-bg);
+  --fx-ok-wash: var(--fx-success-bg);
+  --fx-slate: var(--fx-text-faint);
+  --fx-text-2: var(--fx-text-muted);
+  --fx-focus: #e28e3a;
+  --fx-ink: #070d15;
+  --fx-ink-2: #060b12;
+  --fx-ink-3: #0b1120;
+  --fx-ink-text: #dbeafe;
+  --fx-glow: rgba(226, 142, 58, .18);
+  --fx-on-primary: #1f1914;
+  --fx-shadow-1: 0 0 0 1px var(--fx-line);
+  --fx-shadow-2: 0 0 0 1px var(--fx-primary);
+  --fx-shadow-card: 0 0 0 1px var(--fx-line);
+  --fx-primary-gradient: linear-gradient(135deg, #e99541 0%, #e28e3a 100%);
+  --fx-primary-gradient-hover: linear-gradient(135deg, #f0a75f 0%, #e99541 100%);
+  --fx-primary-glow: 0 0 0 1px rgba(226, 142, 58, .32);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --fx-primary: #e28e3a;
+    --fx-primary-strong: #e28e3a;
+    --fx-accent-gold: #e99541;
+    --fx-copper: #e99541;
+    --fx-canvas: #15110c;
+    --fx-surface: #1f1914;
+    --fx-surface-2: #2a221c;
+    --fx-surface-3: #372e27;
+    --fx-text: #f0eae4;
+    --fx-text-muted: #aca39b;
+    --fx-text-faint: #8b837b;
+    --fx-line: #4e463f;
+    --fx-line-strong: #73665d;
+    --fx-success: #5bcc80;
+    --fx-success-bg: #173523;
+    --fx-warning: #efbc4b;
+    --fx-warning-bg: #3a2b10;
+    --fx-danger: #ff6b68;
+    --fx-danger-bg: #3b1d1c;
+    --fx-info: #75afff;
+    --fx-info-bg: #172a43;
+    --fx-hover: var(--fx-surface-3);
+    --fx-selected: var(--fx-surface-3);
+    --fx-gold-wash: var(--fx-warning-bg);
+    --fx-ok-wash: var(--fx-success-bg);
+    --fx-slate: var(--fx-text-faint);
+    --fx-text-2: var(--fx-text-muted);
+    --fx-focus: #e28e3a;
+    --fx-ink: #070d15;
+    --fx-ink-2: #060b12;
+    --fx-ink-3: #0b1120;
+    --fx-ink-text: #dbeafe;
+    --fx-glow: rgba(226, 142, 58, .18);
+    --fx-on-primary: #1f1914;
+    --fx-shadow-1: 0 0 0 1px var(--fx-line);
+    --fx-shadow-2: 0 0 0 1px var(--fx-primary);
+    --fx-shadow-card: 0 0 0 1px var(--fx-line);
+    --fx-primary-gradient: linear-gradient(135deg, #e99541 0%, #e28e3a 100%);
+    --fx-primary-gradient-hover: linear-gradient(135deg, #f0a75f 0%, #e99541 100%);
+    --fx-primary-glow: 0 0 0 1px rgba(226, 142, 58, .32);
+  }
+}

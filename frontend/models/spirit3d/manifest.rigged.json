@@ -1,0 +1,182 @@
+{
+  "version": "spiritkin.avatar3d.v1",
+  "format": "glb",
+  "name": "SpiritKinAI Rigged Candidate",
+  "model": "models/spirit3d/SpiritKinAI.rigged.glb",
+  "camera": {
+    "fov": 35,
+    "near": 0.1,
+    "far": 100,
+    "position": [
+      0,
+      1.05,
+      3.4
+    ],
+    "target": [
+      0,
+      0.95,
+      0
+    ]
+  },
+  "controls": {
+    "min_distance": 1.2,
+    "max_distance": 5.8
+  },
+  "lights": {
+    "hemisphere_intensity": 1.8,
+    "directional_intensity": 2.4,
+    "directional_position": [
+      2,
+      4,
+      3
+    ]
+  },
+  "stage": {
+    "floor_radius": 1.0,
+    "floor_opacity": 0,
+    "floor_visible": false
+  },
+  "fit": {
+    "base_scale": 1,
+    "target_size": 1.7,
+    "auto_fit": true,
+    "center": true,
+    "ground": true
+  },
+  "transform": {
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "rotation_deg": [
+      0,
+      0,
+      0
+    ],
+    "scale": 1
+  },
+  "motion": {
+    "idle_bob": 0.0015,
+    "speaking_bob": 0.008,
+    "idle_yaw": 0.003,
+    "speaking_yaw": 0.012,
+    "breathing_scale": 0.003,
+    "bone_motion": 0,
+    "procedural_bones": false
+  },
+  "visemes": {
+    "idle": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "open": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "a": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "aa": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "o": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "ou": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "oh": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "i": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "ih": {
+      "keywords": [],
+      "intensity": 0
+    },
+    "ee": {
+      "keywords": [],
+      "intensity": 0
+    }
+  },
+  "expressions": {
+    "neutral": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0,
+        "bob": 0,
+        "scale": 1
+      }
+    },
+    "happy": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0.06,
+        "bob": 0.012,
+        "scale": 1.03
+      }
+    },
+    "thinking": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": -0.05,
+        "bob": 0.004,
+        "scale": 1.01
+      }
+    },
+    "waiting": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0.025,
+        "bob": 0.004,
+        "scale": 1.01
+      }
+    },
+    "alert": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": 0.1,
+        "bob": 0.008,
+        "scale": 1.04
+      }
+    },
+    "error": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": -0.08,
+        "bob": -0.006,
+        "scale": 0.97
+      }
+    },
+    "confused": {
+      "keywords": [],
+      "intensity": 0,
+      "pose": {
+        "yaw": -0.1,
+        "bob": 0.004,
+        "scale": 1.02
+      }
+    }
+  },
+  "pipeline": {
+    "source": "blender_avatar3d_pipeline.py",
+    "rigging": "heuristic_auto_weights_safe_overlay",
+    "expressions": "disabled_by_default",
+    "frontend_motion_mode": "safe_overlay_until_polished",
+    "requires_manual_polish": true
+  }
+}

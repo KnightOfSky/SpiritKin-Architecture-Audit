@@ -1,0 +1,12 @@
+{
+  "version": "spiritkin.avatar3d.v1",
+  "format": "vrm",
+  "model": "models/spirit3d/SpiritKinAI.vrm",
+  "camera": { "fov": 35, "near": 0.1, "far": 100, "position": [0, 1.25, 3.2], "target": [0, 1.05, 0] },
+  "controls": { "min_distance": 1.2, "max_distance": 5.5 },
+  "lights": { "hemisphere_intensity": 1.8, "directional_intensity": 2.4, "directional_position": [2, 4, 3] },
+  "stage": { "floor_radius": 1.0, "floor_opacity": 0, "floor_visible": false },
+  "fit": { "base_scale": 1, "target_size": 1.7, "auto_fit": true, "center": true, "ground": true },
+  "transform": { "position": [0, 0, 0], "rotation_deg": [0, 0, 0], "scale": 1 },
+  "motion": { "idle_bob": 0, "speaking_bob": 0.02, "idle_yaw": 0, "speaking_yaw": 0.04, "breathing_scale": 0, "bone_motion": 0.03 }
+}
